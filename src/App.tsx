@@ -1,0 +1,87 @@
+import React from 'react';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { EventProvider } from './contexts/EventContext';
+import { BookProvider } from './contexts/BookContext';
+import { TaskProvider } from './contexts/TaskContext';
+import { AssistantProvider } from './contexts/AssistantContext';
+import { GoalsProvider } from './contexts/GoalsContext';
+import { AuthorProvider } from './contexts/AuthorContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'; // Import ThemeProvider
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import LoginPage from './pages/LoginPage';
+import AdminDashboard from './pages/AdminDashboard';
+import UserDashboard from './pages/UserDashboard';
+import MyEventsPage from './pages/MyEventsPage';
+import RequestsPage from './pages/RequestsPage';
+import CatalogPage from './pages/CatalogPage';
+import BorrowedBooksPage from './pages/BorrowedBooksPage';
+import SettingsPage from './pages/SettingsPage';
+import FinesPage from './pages/FinesPage';
+import CollectionDistributionPage from './pages/CollectionDistributionPage';
+import FavoritesPage from './pages/FavoritesPage';
+
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth(); // useAuth is now available because it's inside AuthProvider
+  
+  if (loading) {
+    return <div>Yükleniyor...</div>; // Or a proper spinner component
+  }
+  
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
+};
+
+// A new component to access theme context
+const AppContent = () => {
+  const { theme, toggleTheme } = useTheme();
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <Header isDarkMode={theme === 'dark'} toggleDarkMode={toggleTheme} />
+      <main className="pt-16">
+        <Routes>
+          <Route path="/login" element={<LoginPage isDarkMode={theme === 'dark'} />} />
+          <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+          <Route path="/dashboard" element={<PrivateRoute><UserDashboard /></PrivateRoute>} />
+          <Route path="/my-events" element={<PrivateRoute><MyEventsPage /></PrivateRoute>} />
+          <Route path="/requests" element={<PrivateRoute><RequestsPage /></PrivateRoute>} />
+          <Route path="/catalog" element={<PrivateRoute><CatalogPage /></PrivateRoute>} />
+          <Route path="/borrowed-books" element={<PrivateRoute><BorrowedBooksPage /></PrivateRoute>} />
+          <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+          <Route path="/fines" element={<PrivateRoute><FinesPage /></PrivateRoute>} />
+          <Route path="/favorites" element={<PrivateRoute><FavoritesPage /></PrivateRoute>} />
+          <Route path="/collection-distribution" element={<PrivateRoute><CollectionDistributionPage /></PrivateRoute>} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AuthorProvider>
+          <EventProvider>
+            <GoalsProvider>
+              <BookProvider>
+                <TaskProvider>
+                  <AssistantProvider>
+                    <ThemeProvider> {/* Wrap with ThemeProvider */}
+                      <AppContent />
+                    </ThemeProvider>
+                  </AssistantProvider>
+                </TaskProvider>
+              </BookProvider>
+            </GoalsProvider>
+          </EventProvider>
+        </AuthorProvider>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;

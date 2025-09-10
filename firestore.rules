@@ -1,0 +1,251 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      // Check for admin role in the user's document in the 'users' collection
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Users collection rules
+    match /users/{userId} {
+      // Allow any authenticated user to read user data
+      allow read: if isAuthenticated();
+      
+      // Allow user creation during registration
+      allow create: if request.auth.uid == userId &&
+        request.resource.data.uid == userId &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.role == 'user' &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.lastLogin is timestamp;
+      
+      // Allow users to update their own data and admins to update any user
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      
+      // Allow admin to delete users
+      allow delete: if isAdmin();
+    }
+
+    // Books collection rules
+    match /books/{bookId} {
+      // Allow anyone to read books
+      allow read: if true;
+      
+      // Only admins can create, or delete books
+      allow create: if isAdmin();
+
+      allow delete: if isAdmin();
+
+      // Allow users to update ratings and admins to update any field
+      allow update: if isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings']));
+    }
+
+    // Authors collection rules
+    match /authors/{authorId} {
+      // Allow anyone to read authors
+      allow read: if true;
+      
+      // Only admins can create, update, or delete authors
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Reading Goals collection rules
+    match /readingGoals/{userId_goalType} {
+      allow read: if isAuthenticated() && request.auth.uid == userId_goalType.split('_')[0];
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.resource.data.userId;
+    }
+
+    // Events collection rules
+    match /events/{eventId} {
+      // Allow any authenticated user to read events
+      allow read: if isAuthenticated();
+      
+      // Only admins can create, update, or delete events
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Book statuses collection rules
+    match /bookStatuses/{bookId} {
+      // Allow any authenticated user to read book statuses
+      allow read: if isAuthenticated();
+      
+      // Only admins can create, update, or delete book statuses
+      allow create, update, delete: if isAdmin();
+    }
+
+    // User tasks collection rules
+    match /userTasks/{taskId} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      // Allow task creation during user registration and by the task owner
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.lastReset is timestamp;
+      
+      allow update: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      allow delete: if isAdmin();
+    }
+
+    // User achievements collection rules
+    match /userAchievements/{achievementId} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.completedAt is timestamp;
+      
+      allow update: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      allow delete: if isAdmin();
+    }
+
+    // User events collection rules
+    match /userEvents/{document=**} {
+      // Allow read if authenticated and the document belongs to the user or is admin
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      // Allow create if authenticated and the user is creating their own event registration
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.registeredAt is timestamp;
+      
+      // Allow delete if authenticated and the document belongs to the user or is admin
+      allow delete: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      // Prevent updates to event registrations
+      allow update: if false;
+    }
+
+    // Requests collection rules
+    match /requests/{requestId} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.title is string &&
+        request.resource.data.content is string &&
+        request.resource.data.priority in ['low', 'medium', 'high'] &&
+        request.resource.data.status == 'pending';
+      
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Borrowed books collection rules
+    match /borrowedBooks/{borrowedId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      
+      // Allow admins to create borrowed book records
+      allow create: if isAuthenticated() && isAdmin() &&
+        request.resource.data.userId is string &&
+        request.resource.data.borrowedAt is timestamp &&
+        request.resource.data.bookId is string;
+      
+      // Allow admins and book owners to update records
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (isOwner(resource.data.userId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['extended', 'dueDate', 'returnStatus']) &&
+          (
+            (request.resource.data.extended == true && !resource.data.extended) ||
+            request.resource.data.returnStatus in ['borrowed', 'returned', 'pending']
+          ))
+      );
+      
+      // Allow admins to delete borrowed book records
+      allow delete: if isAdmin();
+    }
+
+    // Borrow messages collection rules
+    match /borrowMessages/{messageId} {
+      // Allow any authenticated user to read all borrow messages
+      allow read: if isAuthenticated();
+      
+      // Allow users to create borrow requests
+      allow create: if isAuthenticated() &&
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.status == 'pending';
+      
+      // Allow admins to update borrow messages
+      allow update: if isAuthenticated() && isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Return messages collection rules
+    match /returnMessages/{messageId} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      allow create: if isAuthenticated() &&
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.status == 'pending';
+      
+      // Allow admins to update return messages
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Quotes collection rules
+    match /quotes/{quoteId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Favorites collection rules
+    match /favorites/{favoriteId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId &&
+        request.resource.data.bookId is string &&
+        request.resource.data.favoritedAt is timestamp;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    // Surveys collection rules
+    match /surveys/{surveyId} {
+      // Allow any authenticated user to read surveys
+      allow read: if isAuthenticated();
+      
+      // Only admins can create, update, or delete surveys
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Announcements collection rules
+    match /announcements/{announcementId} {
+      // Allow anyone to read announcements
+      allow read: if true;
+      
+      // Only admins can create, update, or delete announcements
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Allow admin to read all collections for reporting
+    match /{document=**} {
+      allow read: if isAdmin();
+    }
+  }
+}
