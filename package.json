@@ -7,6 +7,10 @@
   "type": "module",
   "homepage": "./",
   "main": "electron.cjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/comolas/kutuphane-projesi.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -63,6 +67,9 @@
     },
     "linux": {
       "target": "AppImage"
+    },
+    "publish": {
+      "provider": "github"
     }
   }
 }
