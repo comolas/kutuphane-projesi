@@ -138,7 +138,7 @@ const CollectionDistributionPage: React.FC = () => {
             className="flex items-center text-sm font-medium text-gray-600 hover:text-indigo-600"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Yönetim Paneline Geri Dön
+            Geri Dön
           </button>
         </div>
 
@@ -191,7 +191,7 @@ const CollectionDistributionPage: React.FC = () => {
             </div>
 
             {/* Right Column: Category Details */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="lg:col-span-1 bg-white rounded-2xl shadow-lg p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Kategori Detayları</h2>
                 <span className="text-sm font-bold text-gray-500">{totalBooks} Toplam Eser</span>
@@ -200,7 +200,7 @@ const CollectionDistributionPage: React.FC = () => {
                 {collections.map((collection, index) => {
                   const percentage = totalBooks > 0 ? (collection.data.length / totalBooks) * 100 : 0;
                   const color = chartColors[index % chartColors.length];
-                                    return (
+                  return (
                     <div key={`${collection.name}-${index}`} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                       <div className="flex justify-between items-center mb-1">
                         <span className="font-semibold text-base truncate" title={collection.name}>{collection.name}</span>

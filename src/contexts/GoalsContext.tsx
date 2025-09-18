@@ -50,11 +50,15 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const monthlyGoalSnap = await getDoc(monthlyGoalRef);
     if (monthlyGoalSnap.exists()) {
       setMonthlyGoal(monthlyGoalSnap.data() as Goal);
+    } else {
+      setMonthlyGoal(null);
     }
 
     const yearlyGoalSnap = await getDoc(yearlyGoalRef);
     if (yearlyGoalSnap.exists()) {
       setYearlyGoal(yearlyGoalSnap.data() as Goal);
+    } else {
+      setYearlyGoal(null);
     }
   }, [user]);
 

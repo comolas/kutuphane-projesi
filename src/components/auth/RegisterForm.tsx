@@ -66,7 +66,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   return (
     <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8 mx-auto">
       <div className="flex justify-center mb-6">
-        <img src="https://r.resimlink.com/wqGy2-Yc.jpg" alt="Data Koleji Logo" className="w-36 h-36 sm:w-30 sm:h-30" />
+        <img src="https://r.resimlink.com/BJq8au6HpG.png" alt="Data Koleji Logo" className="w-36 h-36 rounded-full border-4 border-indigo-400" />
       </div>
       
       <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 text-center">
@@ -139,7 +139,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             onChange={(e) => setPassword(e.target.value)}
             error={errors.password}
             placeholder="••••••••"
-            icon="lock"
           />
           <button
             type="button"
@@ -147,7 +146,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
             aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
           >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            {showPassword ? <EyeOff size={1} /> : <Eye size={1} />}
           </button>
         </div>
 

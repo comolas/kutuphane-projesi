@@ -8,6 +8,7 @@ const RequestsTab: React.FC = () => {
   const [requestSortOrder, setRequestSortOrder] = useState<'asc' | 'desc'>('desc');
   const [requestStatusFilter, setRequestStatusFilter] = useState<'all' | 'pending' | 'in-progress' | 'completed'>('all');
   const [requestPriorityFilter, setRequestPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+  const [requestCategoryFilter, setRequestCategoryFilter] = useState<'all' | 'Kitap Önerisi' | 'Teknik Sorun' | 'Üyelik Bilgileri' | 'Genel Geri Bildirim'>('all');
   const [requestSearchQuery, setRequestSearchQuery] = useState('');
   const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
@@ -29,8 +30,9 @@ const RequestsTab: React.FC = () => {
 
       const matchesStatus = requestStatusFilter === 'all' || request.status === requestStatusFilter;
       const matchesPriority = requestPriorityFilter === 'all' || request.priority === requestPriorityFilter;
+      const matchesCategory = requestCategoryFilter === 'all' || request.category === requestCategoryFilter;
 
-      return matchesSearch && matchesStatus && matchesPriority;
+      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
     })
     .sort((a, b) => {
       if (requestSortBy === 'priority') {
@@ -59,7 +61,7 @@ const RequestsTab: React.FC = () => {
       </div>
 
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <div className="md:col-span-2">
             <input
               type="text"
@@ -89,6 +91,17 @@ const RequestsTab: React.FC = () => {
             <option value="medium">Orta</option>
             <option value="high">Yüksek</option>
           </select>
+          <select
+            value={requestCategoryFilter}
+            onChange={(e) => setRequestCategoryFilter(e.target.value as any)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="all">Tüm Kategoriler</option>
+            <option value="Kitap Önerisi">Kitap Önerisi</option>
+            <option value="Teknik Sorun">Teknik Sorun</option>
+            <option value="Üyelik Bilgileri">Üyelik Bilgileri</option>
+            <option value="Genel Geri Bildirim">Genel Geri Bildirim</option>
+          </select>
         </div>
 
         <div className="overflow-x-auto">
@@ -97,6 +110,7 @@ const RequestsTab: React.FC = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Talep</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gönderen</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setRequestSortBy('createdAt'); setRequestSortOrder(requestSortOrder === 'asc' ? 'desc' : 'asc'); }}>Tarih</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => { setRequestSortBy('priority'); setRequestSortOrder(requestSortOrder === 'asc' ? 'desc' : 'asc'); }}>Öncelik</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
@@ -109,6 +123,7 @@ const RequestsTab: React.FC = () => {
                   <tr onClick={() => setExpandedRequestId(expandedRequestId === request.id ? null : request.id)} className="cursor-pointer hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{request.title}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.userData?.displayName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.category}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.createdAt.toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -145,7 +160,7 @@ const RequestsTab: React.FC = () => {
                   </tr>
                   {expandedRequestId === request.id && (
                     <tr>
-                      <td colSpan={6} className="p-6 bg-gray-50">
+                      <td colSpan={7} className="p-6 bg-gray-50">
                         <div className="text-sm text-gray-700 mb-4">{request.content}</div>
                         {request.response && (
                           <div className="mt-4 bg-white rounded-lg p-4 border">

@@ -62,31 +62,32 @@ const MyEventsPage: React.FC = () => {
   };
 
   const renderItemCard = (item: any) => {
+    console.log(item);
     switch (item.type) {
       case 'event':
         return (
-          <div key={item.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col">
-            <div className="p-6 flex-grow">
-              <div className="flex justify-between items-start mb-3">
-                <h2 className="text-xl font-bold text-gray-900">{item.name}</h2>
-                <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">Etkinlik</span>
-              </div>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3">{item.description}</p>
-              <div className="flex items-center text-sm text-gray-500 mb-2">
-                <Calendar className="w-4 h-4 mr-2 text-indigo-500" />
-                <span>{new Date(item.date).toLocaleDateString()}</span>
-              </div>
-              {item.location && (
-                <div className="flex items-center text-sm text-gray-500">
-                  <MapPin className="w-4 h-4 mr-2 text-indigo-500" />
-                  <span>{item.location}</span>
+          <div key={item.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">{item.name}</h2>
+              <div className="space-y-3 text-gray-600">
+                <div className="flex items-center">
+                  <Calendar className="w-5 h-5 mr-3 text-blue-500" />
+                  <span>{new Date(item.date).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 </div>
-              )}
+                {item.location && (
+                  <div className="flex items-center">
+                    <MapPin className="w-5 h-5 mr-3 text-blue-500" />
+                    <span>{item.location}</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-gray-700 mt-4">{item.description}</p>
             </div>
-            <div className="p-6 bg-gray-50 border-t border-gray-100">
-              <button 
+            <div className="mt-auto p-6 bg-gray-50 rounded-b-lg">
+              <button
                 onClick={() => handleLeaveEvent(item.id)}
-                className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-semibold"
+              >
                 Ayrıl
               </button>
             </div>
@@ -212,7 +213,7 @@ const MyEventsPage: React.FC = () => {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-3xl font-bold">Etkinlik ve Duyurularım</h1>
+            <h1 className="text-3xl font-bold">Etkinliklerim</h1>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

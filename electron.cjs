@@ -1,10 +1,9 @@
-const { app, BrowserWindow } = require('electron');
+const electron = require('electron');
+const app = electron.app;
+const BrowserWindow = electron.BrowserWindow;
 const path = require('path');
-const { autoUpdater } = require('electron-updater');
 
-const isDev = !app.isPackaged;
-
-function createWindow() {
+function createWindow(isDev) {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -14,23 +13,29 @@ function createWindow() {
     },
   });
 
+  // The port 5173 is hardcoded, but vite might use another one if it's busy.
   const startUrl = isDev ? 'http://localhost:5173' : `file://${path.join(__dirname, 'dist', 'index.html')}`;
   
   mainWindow.loadURL(startUrl);
 
-  // Open DevTools for debugging production build
-  mainWindow.webContents.openDevTools();
-
-  mainWindow.once('ready-to-show', () => {
-    autoUpdater.checkForUpdatesAndNotify();
-  });
+  // Open DevTools only in development
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  const isDev = !app.isPackaged;
+  createWindow(isDev);
+
+  // Only require and check for updates in a packaged app
+  if (!isDev) {
+    const { autoUpdater } = require('electron-updater');
+    autoUpdater.checkForUpdatesAndNotify();
+  }
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) createWindow(isDev);
   });
 });
 

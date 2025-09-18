@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Calendar, Star, CheckCircle, Heart } from 'lucide-react';
+import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Calendar, Star, CheckCircle, Heart, AlertCircle } from 'lucide-react';
 import { Book } from '../types';
 import { useBooks } from '../contexts/BookContext';
 import { db } from '../firebase/config';
@@ -125,6 +125,15 @@ const CatalogPage: React.FC = () => {
     setShowBookDetails(true);
   };
 
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setTagQuery('');
+    setAvailability('all');
+    setSelectedCategory('all');
+    setSortOrder('default');
+    setCurrentPage(1);
+  };
+
   const filteredAndSortedBooks = allBooks.filter(book => {
     const matchesSearch = book.title.toLocaleLowerCase('tr-TR').includes(searchQuery.toLocaleLowerCase('tr-TR')) ||
       book.author.toLocaleLowerCase('tr-TR').includes(searchQuery.toLocaleLowerCase('tr-TR'));
@@ -141,12 +150,22 @@ const CatalogPage: React.FC = () => {
 
     return matchesSearch && matchesAvailability && matchesCategory && matchesTag;
   }).sort((a, b) => {
-    if (sortOrder === 'rating-desc') {
-      const avgRatingA = a.ratings ? a.ratings.reduce((acc, r) => acc + r.rating, 0) / a.ratings.length : 0;
-      const avgRatingB = b.ratings ? b.ratings.reduce((acc, r) => acc + r.rating, 0) / b.ratings.length : 0;
-      return avgRatingB - avgRatingA; // Sort descending by rating
+    switch (sortOrder) {
+      case 'title-asc':
+        return a.title.localeCompare(b.title, 'tr-TR');
+      case 'title-desc':
+        return b.title.localeCompare(a.title, 'tr-TR');
+      case 'author-asc':
+        return a.author.localeCompare(b.author, 'tr-TR');
+      case 'author-desc':
+        return b.author.localeCompare(a.author, 'tr-TR');
+      case 'rating-desc':
+        const avgRatingA = a.ratings ? a.ratings.reduce((acc, r) => acc + r.rating, 0) / a.ratings.length : 0;
+        const avgRatingB = b.ratings ? b.ratings.reduce((acc, r) => acc + r.rating, 0) / b.ratings.length : 0;
+        return avgRatingB - avgRatingA;
+      default:
+        return 0;
     }
-    return 0; // Default no sort
   });
 
   // Pagination logic
@@ -201,7 +220,7 @@ const CatalogPage: React.FC = () => {
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-6 mb-8">
+        <div className="flex flex-col md:flex-row gap-6 mb-4">
           <div className="flex-1">
             <div className="relative">
               <input
@@ -228,13 +247,20 @@ const CatalogPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 focus:ring-2 focus:ring-indigo-500"
             >
               <Filter className="w-5 h-5 mr-2" />
               <span>Filtrele</span>
+            </button>
+            <button
+              onClick={handleClearFilters}
+              className="flex items-center px-4 py-2 border border-red-200 bg-red-50 rounded-lg text-red-600 hover:bg-red-100 focus:ring-2 focus:ring-red-400"
+            >
+              <X className="w-5 h-5 mr-2" />
+              <span>Temizle</span>
             </button>
           </div>
         </div>
@@ -288,12 +314,51 @@ const CatalogPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
                   <option value="default">Varsayılan</option>
+                  <option value="title-asc">Başlığa Göre (A-Z)</option>
+                  <option value="title-desc">Başlığa Göre (Z-A)</option>
+                  <option value="author-asc">Yazara Göre (A-Z)</option>
+                  <option value="author-desc">Yazara Göre (Z-A)</option>
                   <option value="rating-desc">Puana Göre (Yüksekten Düşüğe)</option>
                 </select>
               </div>
             </div>
           </div>
         )}
+
+        <div className="mb-8 flex flex-wrap items-center gap-2">
+          {searchQuery && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800">
+              Aranan: {searchQuery}
+              <button onClick={() => setSearchQuery('')} className="ml-1.5 flex-shrink-0 text-gray-500 hover:text-gray-700">
+                <X className="w-4 h-4" />
+              </button>
+            </span>
+          )}
+          {tagQuery && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800">
+              Etiket: {tagQuery}
+              <button onClick={() => setTagQuery('')} className="ml-1.5 flex-shrink-0 text-gray-500 hover:text-gray-700">
+                <X className="w-4 h-4" />
+              </button>
+            </span>
+          )}
+          {selectedCategory !== 'all' && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+              Kategori: {selectedCategory}
+              <button onClick={() => setSelectedCategory('all')} className="ml-1.5 flex-shrink-0 text-indigo-500 hover:text-indigo-700">
+                <X className="w-4 h-4" />
+              </button>
+            </span>
+          )}
+          {availability !== 'all' && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+              Durum: {availability === 'available' ? 'Müsait' : availability === 'borrowed' ? 'Ödünç Verilmiş' : 'Kayıp'}
+              <button onClick={() => setAvailability('all')} className="ml-1.5 flex-shrink-0 text-orange-500 hover:text-orange-700">
+                <X className="w-4 h-4" />
+              </button>
+            </span>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {paginatedBooks.map(book => {

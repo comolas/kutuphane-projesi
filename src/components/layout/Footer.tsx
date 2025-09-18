@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, Mail, Phone, MapPin, X, Instagram, Facebook, Twitter, Youtube } from 'lucide-react';
+import { Book, Mail, Phone, MapPin, X, Instagram } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -12,24 +12,6 @@ const Footer: React.FC = () => {
       icon: Instagram,
       url: 'https://www.instagram.com/data_koleji/',
       color: 'hover:text-pink-600'
-    },
-    {
-      name: 'Facebook',
-      icon: Facebook,
-      url: 'https://www.facebook.com/datakolej',
-      color: 'hover:text-blue-600'
-    },
-    {
-      name: 'X (Twitter)',
-      icon: Twitter,
-      url: 'https://twitter.com/datakolej',
-      color: 'hover:text-gray-900 dark:hover:text-white'
-    },
-    {
-      name: 'Youtube',
-      icon: Youtube,
-      url: 'https://www.youtube.com/@datakolej',
-      color: 'hover:text-red-600'
     }
   ];
   
@@ -103,27 +85,18 @@ const Footer: React.FC = () => {
               </ul>
             </div>
             
-            {/* Newsletter */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white transition-colors duration-200">
-                Güncel Kalın
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm transition-colors duration-200">
-                En son güncellemeler ve kitap önerileri için bültenimize abone olun.
-              </p>
-              <div className="flex">
-                <input
-                  type="email"
-                  placeholder="E-posta adresiniz"
-                  className="flex-grow px-4 py-2 text-sm rounded-l-md focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors duration-200"
-                />
-                <button
-                  type="button"
-                  className="bg-indigo-900 hover:bg-indigo-800 text-white px-4 py-2 text-sm rounded-r-md transition-colors duration-200"
-                >
-                  Abone Ol!
-                </button>
-              </div>
+            {/* iPhone Mockup */}
+            <div className="flex justify-center items-center">
+                <div className="relative mx-auto border-black dark:border-gray-800 bg-black border-[10px] rounded-[2.5rem] h-[280px] w-[150px] shadow-xl">
+                    <div className="w-[70px] h-[10px] bg-black top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
+                    <div className="h-[20px] w-[3px] bg-black absolute -left-[13px] top-[60px] rounded-l-lg"></div>
+                    <div className="h-[32px] w-[3px] bg-black absolute -left-[13px] top-[90px] rounded-l-lg"></div>
+                    <div className="h-[32px] w-[3px] bg-black absolute -left-[13px] top-[130px] rounded-l-lg"></div>
+                    <div className="h-[48px] w-[3px] bg-black absolute -right-[13px] top-[110px] rounded-r-lg"></div>
+                    <div className="rounded-[2rem] overflow-hidden w-full h-full bg-white dark:bg-black">
+                        <img src="https://r.resimlink.com/L2H7vA3-u.png" className="w-full h-full object-cover" alt="App Screenshot"/>
+                    </div>
+                </div>
             </div>
           </div>
           

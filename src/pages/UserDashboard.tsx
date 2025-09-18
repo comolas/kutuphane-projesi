@@ -1,42 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
-import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRightIcon, Bot, Send, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle } from 'lucide-react';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
 import ItemDetailsModal from '../components/common/ItemDetailsModal';
 import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
-import ItemSlider from '../components/common/ItemSlider'; // Changed import
+import ItemSlider from '../components/common/ItemSlider';
+import Leaderboard from '../components/dashboard/Leaderboard'; // Lider tablosu import edildi
 
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useAssistant } from '../contexts/AssistantContext';
 import { useGoals } from '../contexts/GoalsContext';
 import { useAuthors } from '../contexts/AuthorContext';
 import { useEvents } from '../contexts/EventContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { auth } from '../firebase/config';
-import { db } from '../firebase/config';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
 import { getDailyQuote } from '../utils/quotes';
-import { Event, Survey, Announcement } from '../types'; // Import types
+import { Event, Survey, Announcement, Request as RequestType } from '../types';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, userData, isAdmin } = useAuth();
   
-  const { allBooks, borrowBook, recommendedBooks, fetchRecommendedBooks } = useBooks();
+  const { borrowedBooks, allBooks, borrowBook, recommendedBooks, fetchRecommendedBooks } = useBooks();
   const { monthlyGoal, yearlyGoal, fetchGoals, showConfetti, resetConfetti } = useGoals();
   const { featuredAuthor, featuredAuthorBooks } = useAuthors();
   const { allItems, fetchAllItems, joinedEvents, joinEvent } = useEvents();
+  const [userRequests, setUserRequests] = useState<RequestType[]>([]);
+
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [showRules, setShowRules] = useState(false);
-  const [showAssistant, setShowAssistant] = useState(false);
   const [showReadingGoalsModal, setShowReadingGoalsModal] = useState(false);
   const [showCongratulatoryModal, setShowCongratulatoryModal] = useState(false);
-  const [messageInput, setMessageInput] = useState('');
-  const { messages, isLoading, sendMessage } = useAssistant();
   const [dailyQuote, setDailyQuote] = useState<{text: string, author: string, book: string} | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentRecSlide, setCurrentRecSlide] = useState(0);
-  const [newBooks, setNewBooks] = useState<Book[][]>([]);
+  const [newBooks, setNewBooks] = useState<BookType[][]>([]);
   
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -45,6 +43,40 @@ const UserDashboard: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showItemDetailsModal, setShowItemDetailsModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Event | Survey | Announcement | null>(null);
+
+  // Fetch user-specific requests
+  useEffect(() => {
+    if (!user) return;
+    const fetchUserRequests = async () => {
+      const requestsRef = collection(db, 'requests');
+      const q = query(requestsRef, where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const requestsData = querySnapshot.docs.map(doc => doc.data() as RequestType);
+      setUserRequests(requestsData);
+    };
+    fetchUserRequests();
+  }, [user]);
+
+  const summaryStats = useMemo(() => {
+    const activeBooks = borrowedBooks.filter(b => b.returnStatus !== 'returned');
+    const nextDueBook = activeBooks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+    const totalFine = borrowedBooks.reduce((sum, book) => {
+        if (book.fineStatus === 'paid') return sum;
+        const today = new Date();
+        const diffTime = today.getTime() - new Date(book.dueDate).getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const fine = diffDays > 0 ? diffDays * 5 : 0;
+        return sum + fine;
+    }, 0);
+    const pendingRequestsCount = userRequests.filter(r => r.status === 'pending' || r.status === 'in-progress').length;
+
+    return {
+      activeBooksCount: activeBooks.length,
+      nextDueBook,
+      totalFine,
+      pendingRequestsCount
+    }
+  }, [borrowedBooks, userRequests]);
 
   const handleOpenItemModal = (item: Event | Survey | Announcement) => {
     setSelectedItem(item);
@@ -56,8 +88,6 @@ const UserDashboard: React.FC = () => {
     setShowItemDetailsModal(false);
   };
   
-  
-
   useEffect(() => {
     if (allBooks.length > 0) {
       const sortedBooks = [...allBooks].sort((a, b) => {
@@ -65,10 +95,10 @@ const UserDashboard: React.FC = () => {
         const dateB = b.addedDate ? (b.addedDate as any).seconds * 1000 : 0;
         return dateB - dateA;
       });
-      const latestBooks = sortedBooks.slice(0, 9);
+      const latestBooks = sortedBooks.slice(0, 12);
       const chunkedBooks = [];
-      for (let i = 0; i < latestBooks.length; i += 3) {
-        chunkedBooks.push(latestBooks.slice(i, i + 3));
+      for (let i = 0; i < latestBooks.length; i += 4) {
+        chunkedBooks.push(latestBooks.slice(i, i + 4));
       }
       setNewBooks(chunkedBooks);
     }
@@ -85,12 +115,11 @@ const UserDashboard: React.FC = () => {
       setShowCongratulatoryModal(true);
       const timer = setTimeout(() => {
         resetConfetti();
-      }, 5000); // Reset confetti state after 5 seconds
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [showConfetti, resetConfetti]);
 
-  // Check if user needs onboarding
   useEffect(() => {
     if (userData && !userData.hasCompletedOnboarding) {
       setShowOnboarding(true);
@@ -117,6 +146,17 @@ const UserDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error updating onboarding status:', error);
       setShowOnboarding(false);
+    }
+  };
+
+  const handleBorrowBook = async (book: BookType) => {
+    try {
+      await borrowBook(book);
+      await fetchGoals();
+      alert(`${book.title} başarıyla ödünç alındı!`);
+    } catch (error: any) {
+      alert(`Hata: ${error.message}`);
+      console.error(error);
     }
   };
 
@@ -178,14 +218,6 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageInput.trim()) return;
-
-    await sendMessage(messageInput);
-    setMessageInput('');
-  };
-
   const libraryRules = [
     'Kütüphane içerisinde sessiz olunmalıdır.',
     'Ödünç alınan kitaplar zamanında iade edilmelidir.',
@@ -198,8 +230,6 @@ const UserDashboard: React.FC = () => {
     'Kütüphane içerisinde cep telefonları sessiz modda tutulmalı ve görüşmeler kütüphane dışında yapılmalıdır.',
     'Kütüphane çalışma saatleri içerisinde uyulması gereken kurallara uymayan kullanıcılar kütüphane görevlileri tarafından uyarılabilir ve gerekli durumlarda kütüphane kullanım hakları geçici olarak kısıtlanabilir.'
   ];
-
-  
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
@@ -244,6 +274,10 @@ const UserDashboard: React.FC = () => {
               <DollarSign className="w-5 h-5" />
               <span>Cezalarım</span>
             </Link>
+            <Link to="/favorites" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+              <Heart className="w-5 h-5" />
+              <span>Favorilerim</span>
+            </Link>
             <Link to="/collection-distribution" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
               <PieChart className="w-5 h-5" />
               <span>Eser Dağılımı</span>
@@ -255,20 +289,9 @@ const UserDashboard: React.FC = () => {
               <ScrollText className="w-5 h-5" />
               <span>Kütüphane Kuralları</span>
             </button>
-            <button
-              onClick={() => setShowAssistant(true)}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors w-full text-left"
-            >
-              <Bot className="w-5 h-5" />
-              <span>Sanal Asistan</span>
-            </button>
             <Link to="/settings" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
               <Settings className="w-5 h-5" />
               <span>Ayarlar</span>
-            </Link>
-            <Link to="/favorites" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
-              <Heart className="w-5 h-5" />
-              <span>Favorilerim</span>
             </Link>
           </nav>
         </div>
@@ -284,7 +307,6 @@ const UserDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Library Rules Modal */}
       {showRules && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
@@ -324,104 +346,6 @@ const UserDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Virtual Assistant Modal */}
-      {showAssistant && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Bot className="w-6 h-6 mr-2 text-indigo-600" />
-                Sanal Asistan
-              </h2>
-              <button
-                onClick={() => setShowAssistant(false)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="flex-1 p-6 overflow-y-auto">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`mb-4 ${
-                    message.role === 'assistant' ? 'text-left' : 'text-right'
-                  }`}
-                >
-                  <div
-                    className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                      message.role === 'assistant'
-                        ? 'bg-gray-50 border border-gray-200'
-                        : 'bg-indigo-600 text-white'
-                    }`}
-                  >
-                    {typeof message.content === 'string' ? message.content : null}
-                    {message.toolCalls && message.toolCalls.map((toolCall, i) => {
-                        if (toolCall.functionName === 'search_books' || toolCall.functionName === 'recommend_books') {
-                            return (
-                                <div key={i}>
-                                    <h4 className="font-bold mt-2 mb-1">İşte bulduğum kitaplar:</h4>
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {toolCall.response.books.map(book => (
-                                            <div key={book.id} className="bg-white p-2 rounded-lg border">
-                                                <p className="font-bold">{book.title}</p>
-                                                <p>{book.author}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )
-                        }
-                        if (toolCall.functionName === 'get_library_rules') {
-                            return (
-                                <div key={i}>
-                                    <h4 className="font-bold mt-2 mb-1">Kütüphane Kuralları:</h4>
-                                    <ul className="list-disc list-inside">
-                                        {toolCall.response.rules.map((rule, j) => (
-                                            <li key={j}>{rule}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )
-                        }
-                        return null;
-                    })}
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="text-center text-gray-500">
-                  <div className="animate-pulse">Yanıt yazılıyor...</div>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 border-t border-gray-200">
-              <form onSubmit={handleSendMessage} className="flex space-x-2">
-                <input
-                  type="text"
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder="Mesajınızı yazın..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  disabled={isLoading}
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading || !messageInput.trim()}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Gönder
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Congratulatory Modal */}
       {showCongratulatoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
@@ -447,7 +371,6 @@ const UserDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
@@ -455,9 +378,7 @@ const UserDashboard: React.FC = () => {
         ></div>
       )}
 
-      {/* Main Content */}
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
         <div className="bg-indigo-900 text-white py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-4">
@@ -473,8 +394,51 @@ const UserDashboard: React.FC = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* At a Glance Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Link to="/borrowed-books" className="bg-white p-4 rounded-lg shadow-sm flex items-center hover:shadow-md transition-shadow">
+              <div className="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                <BookOpen className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Aktif Kitapların</p>
+                <p className="text-2xl font-bold text-gray-900">{summaryStats.activeBooksCount}</p>
+              </div>
+            </Link>
+            <Link to="/borrowed-books" className="bg-white p-4 rounded-lg shadow-sm flex items-center hover:shadow-md transition-shadow">
+              <div className="flex-shrink-0 bg-yellow-100 rounded-full p-3">
+                <Clock className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Yaklaşan Teslim</p>
+                <p className="text-lg font-bold text-gray-900 truncate">{summaryStats.nextDueBook && summaryStats.nextDueBook.title ? `${summaryStats.nextDueBook.title.substring(0, 15)}...` : '-'}</p>
+              </div>
+            </Link>
+            <Link to="/fines" className="bg-white p-4 rounded-lg shadow-sm flex items-center hover:shadow-md transition-shadow">
+              <div className="flex-shrink-0 bg-red-100 rounded-full p-3">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Ödenmemiş Ceza</p>
+                <p className="text-2xl font-bold text-gray-900">{summaryStats.totalFine} TL</p>
+              </div>
+            </Link>
+            <Link to="/requests" className="bg-white p-4 rounded-lg shadow-sm flex items-center hover:shadow-md transition-shadow">
+              <div className="flex-shrink-0 bg-purple-100 rounded-full p-3">
+                <MessageSquare className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Bekleyen Talepler</p>
+                <p className="text-2xl font-bold text-gray-900">{summaryStats.pendingRequestsCount}</p>
+              </div>
+            </Link>
+          </div>
+
+          <div className="mb-8">
+            <Leaderboard />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Daily Quote Section - Spanning full width */}
             <div className="lg:col-span-3 bg-gradient-to-r from-indigo-900 to-blue-800 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
               <div className="absolute top-4 right-4">
                 <Quote className="w-8 h-8 text-indigo-300 opacity-50" />
@@ -495,7 +459,6 @@ const UserDashboard: React.FC = () => {
               )}
             </div>
 
-            {/* Reading Goal Section - Spanning 1 column */}
             <section className="lg:col-span-1 flex flex-col">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center">
@@ -564,7 +527,6 @@ const UserDashboard: React.FC = () => {
               </div>
             </section>
 
-            {/* Personalized Recommendations Section - Spanning 2 columns */}
             <section className="lg:col-span-2">
               <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 flex items-center">
@@ -604,7 +566,7 @@ const UserDashboard: React.FC = () => {
                             {recommendedBooks.slice(slideIndex * 2, slideIndex * 2 + 2).map(book => (
                               <div
                                 key={book.id}
-                                className="bg-white rounded-xl shadow-sm overflow-hidden transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                                className="bg-white rounded-xl shadow-sm overflow-hidden transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-4 border-transparent hover:border-indigo-400"
                               >
                                 <div className="relative">
                                   <img
@@ -618,7 +580,7 @@ const UserDashboard: React.FC = () => {
                                   <p className="text-sm text-gray-600">{book.author}</p>
                                   <div className="mt-3 flex items-center justify-between">
                                     <button
-                                      onClick={() => borrowBook(book)}
+                                      onClick={() => handleBorrowBook(book)}
                                       className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium hover:bg-indigo-200 transition-colors"
                                     >
                                       Ödünç Al
@@ -645,18 +607,17 @@ const UserDashboard: React.FC = () => {
               </div>
             </section>
 
-            {/* Featured Author Section - Spanning full width */}
             <section className="lg:col-span-3 mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <Star className="w-6 h-6 mr-2 text-yellow-500" />
                 Öne Çıkan Yazar
               </h2>
               {featuredAuthor ? (
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden p-8 border border-indigo-900">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden p-8 border border-indigo-400">
                   <div className="flex flex-col items-center text-center">
                     <div className="mb-4">
                       <img
-                        className="h-52 w-52 object-cover rounded-full border-2 border-black"
+                        className="h-52 w-52 object-cover rounded-full border-4 border-black"
                         src={featuredAuthor.image}
                         alt={featuredAuthor.name}
                       />
@@ -678,7 +639,7 @@ const UserDashboard: React.FC = () => {
                               <h5 className="font-medium text-gray-900">{book.title}</h5>
                               <p className="text-sm text-gray-600 mb-3">{book.publisher}</p>
                               <button
-                                onClick={() => borrowBook(book)}
+                                onClick={() => handleBorrowBook(book)}
                                 className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors"
                               >
                                 Ödünç Al
@@ -697,7 +658,6 @@ const UserDashboard: React.FC = () => {
               )}
             </section>
 
-            {/* New Books Section - Spanning full width */}
             <section className="lg:col-span-3 mt-8">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center">
@@ -743,7 +703,7 @@ const UserDashboard: React.FC = () => {
                               {slide.map(book => (
                                 <div
                                   key={book.id}
-                                  className="bg-white rounded-xl shadow-sm overflow-hidden transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                                  className="bg-white rounded-xl shadow-sm overflow-hidden transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-4 border-transparent hover:border-indigo-400"
                                 >
                                   <div className="relative">
                                     <img
@@ -766,7 +726,7 @@ const UserDashboard: React.FC = () => {
                                         {book.addedDate && new Date((book.addedDate as any).seconds * 1000).toLocaleDateString()}
                                       </div>
                                       <button
-                                        onClick={() => borrowBook(book)}
+                                        onClick={() => handleBorrowBook(book)}
                                         className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium hover:bg-indigo-200 transition-colors"
                                       >
                                         Ödünç Al
@@ -807,7 +767,6 @@ const UserDashboard: React.FC = () => {
               </div>
             </section>
 
-            {/* Events, Surveys and Announcements Section */}
             <section className="lg:col-span-3 mt-8">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center">
@@ -815,7 +774,7 @@ const UserDashboard: React.FC = () => {
                   Etkinlikler, Anketler ve Duyurular
                 </h2>
               </div>
-              <ItemSlider items={allItems} onOpenItemModal={handleOpenItemModal} joinedEvents={joinedEvents} onJoinEvent={joinEvent} /> {/* Changed component and prop */}
+              <ItemSlider items={allItems} onOpenItemModal={handleOpenItemModal} joinedEvents={joinedEvents} onJoinEvent={joinEvent} />
             </section>
 
             
@@ -823,7 +782,6 @@ const UserDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Onboarding Tour */}
       <OnboardingTour
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}

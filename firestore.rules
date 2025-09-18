@@ -76,13 +76,31 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Event Registrations collection rules
+    match /eventRegistrations/{registrationId} {
+      // Allow admin to read all registrations, and users to read their own
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+
+      // Allow authenticated users to create their own registration
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+
+      // Allow users to delete their own registration, and admins to delete any
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Do not allow updates
+      allow update: if false;
+    }
+
     // Book statuses collection rules
     match /bookStatuses/{bookId} {
       // Allow any authenticated user to read book statuses
       allow read: if isAuthenticated();
       
-      // Only admins can create, update, or delete book statuses
-      allow create, update, delete: if isAdmin();
+      // Allow authenticated users to create and update book statuses
+      allow create, update: if isAuthenticated();
+      
+      // Only admins can delete book statuses
+      allow delete: if isAdmin();
     }
 
     // User tasks collection rules
@@ -147,21 +165,19 @@ service cloud.firestore {
         request.resource.data.title is string &&
         request.resource.data.content is string &&
         request.resource.data.priority in ['low', 'medium', 'high'] &&
+        request.resource.data.category in ['Kitap Önerisi', 'Teknik Sorun', 'Üyelik Bilgileri', 'Genel Geri Bildirim'] &&
         request.resource.data.status == 'pending';
       
       allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (isOwner(resource.data.userId) && resource.data.status == 'pending');
     }
 
     // Borrowed books collection rules
     match /borrowedBooks/{borrowedId} {
       allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
       
-      // Allow admins to create borrowed book records
-      allow create: if isAuthenticated() && isAdmin() &&
-        request.resource.data.userId is string &&
-        request.resource.data.borrowedAt is timestamp &&
-        request.resource.data.bookId is string;
+      // Allow users to create their own borrow records, and admins to create for anyone
+      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || isAdmin());
       
       // Allow admins and book owners to update records
       allow update: if isAuthenticated() && (
@@ -222,6 +238,9 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId &&
         request.resource.data.bookId is string &&
         request.resource.data.favoritedAt is timestamp;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['note'])
+                    && request.resource.data.note is string;
       allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 

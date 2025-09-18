@@ -1,12 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, AlertCircle, Clock, Search, Filter, X, SortAsc, SortDesc, ChevronRight, BookCheck, History } from 'lucide-react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { ChevronLeft, AlertCircle, Clock, Search, Filter, X, SortAsc, SortDesc, ChevronRight, BookCheck, History, ShieldQuestion, Book as BookIcon, Bookmark, Calendar as CalendarIcon } from 'lucide-react';
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import BookDetailsModal from '../components/common/BookDetailsModal';
 import { Book } from '../types';
+
+// Reusable Confirmation Modal Component
+const ConfirmationModal: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  title: string; 
+  message: string; 
+}> = ({ isOpen, onClose, onConfirm, title, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
+        <div className="p-6">
+          <div className="flex items-start">
+            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+              <ShieldQuestion className="h-6 w-6 text-indigo-600" aria-hidden="true" />
+            </div>
+            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">{message}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-xl">
+          <button
+            type="button"
+            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+          >
+            Onayla
+          </button>
+          <button
+            type="button"
+            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+            onClick={onClose}
+          >
+            Vazgeç
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const BorrowedBooksPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,7 +67,6 @@ const BorrowedBooksPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // State for tabs and filters
   const [activeTab, setActiveTab] = useState<'active' | 'returned'>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -24,6 +74,31 @@ const BorrowedBooksPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const booksPerPage = 12;
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', message: '', onConfirm: () => {} });
+
+  const readingStats = useMemo(() => {
+    const returned = borrowedBooks.filter(b => b.returnStatus === 'returned');
+    
+    const totalBooksRead = returned.length;
+
+    let favoriteCategory = '-';
+    if (totalBooksRead > 0) {
+      const categoryCounts = returned.reduce((acc, book) => {
+        acc[book.category] = (acc[book.category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      favoriteCategory = Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b);
+    }
+
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const booksThisMonth = returned.filter(b => b.returnedAt && b.returnedAt >= firstDayOfMonth).length;
+
+    return { totalBooksRead, favoriteCategory, booksThisMonth };
+  }, [borrowedBooks]);
 
   const handleReturn = async (bookId: string) => {
     try {
@@ -71,7 +146,7 @@ const BorrowedBooksPage: React.FC = () => {
       }
 
       await updateDoc(bookRef, { ratings: updatedRatings });
-      refetchAllBooks(); // Refresh book data after rating update
+      refetchAllBooks();
 
       const updatedBook = { ...selectedBook, ratings: updatedRatings };
       setSelectedBook(updatedBook);
@@ -102,13 +177,11 @@ const BorrowedBooksPage: React.FC = () => {
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
   const startIndex = (currentPage - 1) * booksPerPage;
   const endIndex = startIndex + booksPerPage;
   const currentBooks = filteredBooks.slice(startIndex, endIndex);
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, activeTab, sortBy, sortOrder]);
@@ -166,6 +239,15 @@ const BorrowedBooksPage: React.FC = () => {
           </button>
         </div>
 
+        <div className="flex justify-center">
+          <DotLottieReact
+            src="https://lottie.host/14df7d93-d29f-43c4-b928-0678071dc7e6/xr3hSXiymd.json"
+            loop
+            autoplay
+            style={{ width: '300px', height: '300px' }}
+          />
+        </div>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Ödünç Aldığım Kitaplar</h1>
           <p className="mt-2 text-gray-600">
@@ -182,9 +264,7 @@ const BorrowedBooksPage: React.FC = () => {
           </div>
         )}
 
-        {/* Tabs and Filters */}
         <div className="mb-6">
-          {/* Tabs */}
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-6" aria-label="Tabs">
               <button
@@ -212,7 +292,38 @@ const BorrowedBooksPage: React.FC = () => {
             </nav>
           </div>
 
-          {/* Search and other filters */}
+          {activeTab === 'returned' && (
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow-sm flex items-center">
+                <div className="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                  <BookIcon className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Toplam Okunan</p>
+                  <p className="text-2xl font-bold text-gray-900">{readingStats.totalBooksRead}</p>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm flex items-center">
+                <div className="flex-shrink-0 bg-green-100 rounded-full p-3">
+                  <Bookmark className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Favori Kategori</p>
+                  <p className="text-2xl font-bold text-gray-900">{readingStats.favoriteCategory}</p>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm flex items-center">
+                <div className="flex-shrink-0 bg-yellow-100 rounded-full p-3">
+                  <CalendarIcon className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Bu Ay Okunan</p>
+                  <p className="text-2xl font-bold text-gray-900">{readingStats.booksThisMonth}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -340,7 +451,14 @@ const BorrowedBooksPage: React.FC = () => {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => handleReturn(book.id)}
+                                  onClick={() => {
+                                    setModalContent({
+                                      title: 'İade Talebi Onayı',
+                                      message: `"${book.title}" adlı kitap için iade talebi oluşturmak istediğinizden emin misiniz?`,
+                                      onConfirm: () => handleReturn(book.id)
+                                    });
+                                    setShowConfirmModal(true);
+                                  }}
                                   className="w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
                                 >
                                   İade Et
@@ -348,7 +466,14 @@ const BorrowedBooksPage: React.FC = () => {
                               )}
                               {canExtend(book.id) && !book.returnStatus && (
                                 <button
-                                  onClick={() => handleExtend(book.id)}
+                                  onClick={() => {
+                                    setModalContent({
+                                      title: 'Süre Uzatma Onayı',
+                                      message: `"${book.title}" adlı kitabın süresini 7 gün uzatmak istediğinizden emin misiniz?`,
+                                      onConfirm: () => handleExtend(book.id)
+                                    });
+                                    setShowConfirmModal(true);
+                                  }}
                                   className="w-full px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   7 Gün Uzat
@@ -428,6 +553,13 @@ const BorrowedBooksPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         book={selectedBook}
         onRate={handleRate}
+      />
+      <ConfirmationModal 
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={modalContent.onConfirm}
+        title={modalContent.title}
+        message={modalContent.message}
       />
     </div>
   );

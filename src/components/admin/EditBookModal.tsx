@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { Book } from '../../types';
+import { Html5Qrcode } from 'html5-qrcode';
 
 interface EditBookModalProps {
   isOpen: boolean;
@@ -11,12 +12,72 @@ interface EditBookModalProps {
 
 const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, onSave }) => {
   const [editableBook, setEditableBook] = useState<Book | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [apiMessage, setApiMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (book) {
       setEditableBook({ ...book });
     }
   }, [book]);
+
+  const fetchBookData = useCallback(async (isbn: string) => {
+    setApiMessage('Kitap verileri aranıyor...');
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+      const data = await response.json();
+      if (data.items && data.items.length > 0) {
+        const volumeInfo = data.items[0].volumeInfo;
+        
+        setEditableBook(prev => ({
+          ...prev!,
+          title: volumeInfo.title || prev?.title || '',
+          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : prev?.author || '',
+          publisher: volumeInfo.publisher || prev?.publisher || '',
+          pageCount: volumeInfo.pageCount || prev?.pageCount || undefined,
+          dimensions: volumeInfo.dimensions ? `${volumeInfo.dimensions.height} x ${volumeInfo.dimensions.width}` : prev?.dimensions || undefined,
+          coverImage: volumeInfo.imageLinks?.thumbnail || prev?.coverImage || ''
+        }));
+        setApiMessage('Kitap bilgileri başarıyla bulundu ve forma eklendi!');
+      } else {
+        setApiMessage('Bu ISBN ile eşleşen bir kitap bulunamadı.');
+      }
+    } catch (error) {
+      console.error("Error fetching book data:", error);
+      setApiMessage('Kitap bilgileri alınırken bir hata oluştu.');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isScanning) return;
+
+    const scanner = new Html5Qrcode('reader');
+
+    const onScanSuccess = (decodedText: string) => {
+      setIsScanning(false);
+      setEditableBook(prev => prev ? { ...prev, isbn: decodedText } : null);
+      fetchBookData(decodedText);
+      scanner.stop().catch(err => console.error("Failed to stop scanner", err));
+    };
+
+    const onScanFailure = (error: string) => { console.error('Scan failed:', error); };
+
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    let cleanup = () => {};
+
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+            scanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+              .catch(err => console.error("Unable to start scanning", err));
+            cleanup = () => {
+                scanner.stop().catch(err => console.error("Failed to stop scanner on cleanup", err));
+            };
+        }
+    }).catch(err => console.error("Error getting cameras", err));
+
+    return cleanup;
+  }, [isScanning, fetchBookData]);
 
   if (!isOpen || !editableBook) return null;
 
@@ -50,7 +111,16 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
             <X className="w-6 h-6" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {isScanning && (
+          <div className="p-6">
+            <div id="reader" style={{ width: '100%' }}></div>
+            <button onClick={() => setIsScanning(false)} className="mt-4 w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              Taramayı İptal Et
+            </button>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className={`p-6 grid grid-cols-1 md:grid-cols-2 gap-4 ${isScanning ? 'hidden' : ''}`}>
+          {apiMessage && <div className="md:col-span-2 text-center p-2 rounded-md bg-blue-100 text-blue-800">{apiMessage}</div>}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">Kitap Adı</label>
             <input
@@ -75,6 +145,29 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
               required
             />
           </div>
+
+          <div className="md:col-span-2">
+            <label htmlFor="isbn" className="block text-sm font-medium text-gray-700">ISBN</label>
+            <div className="mt-1 flex rounded-md shadow-sm">
+              <input
+                type="text"
+                id="isbn"
+                name="isbn"
+                value={editableBook.isbn || ''}
+                onChange={handleChange}
+                className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Manuel ISBN girişi"
+              />
+              <button
+                type="button"
+                onClick={() => setIsScanning(true)}
+                className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100"
+              >
+                ISBN Tara
+              </button>
+            </div>
+          </div>
+          
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">Kategori</label>
             <input

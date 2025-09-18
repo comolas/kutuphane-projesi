@@ -78,7 +78,7 @@ const ItemSlider: React.FC<ItemSliderProps> = ({ items = [], onOpenItemModal, jo
                   const date = 'date' in item ? new Date(item.date).toLocaleDateString() : null;
 
                   return (
-                    <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col">
+                    <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col border-4 border-transparent hover:border-indigo-400">
                       <div className="relative">
                         <img
                           src={item.coverImage || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%23e2e8f0'/%3E%3Ctext x='50%' y='50%' font-family='Arial' font-size='20' fill='%23a0aec0' dominant-baseline='middle' text-anchor='middle'%3E${title}%3C/text%3E%3C/svg%3E`}

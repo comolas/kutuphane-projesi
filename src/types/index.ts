@@ -5,6 +5,7 @@ export interface Rating {
 
 export interface Book {
   id: string;
+  isbn?: string;
   title: string;
   author: string;
   publisher: string;
@@ -22,6 +23,16 @@ export interface Book {
   binding?: string;
   theme?: string[];
   mood?: string;
+}
+
+export interface Author {
+  id: string;
+  name: string;
+  image: string;
+  biography: string;
+  tags: string[];
+  featured: boolean;
+  monthlyFeaturedDate?: Date;
 }
 
 export interface Event {

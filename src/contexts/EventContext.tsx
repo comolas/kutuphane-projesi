@@ -31,20 +31,21 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const fetchAllItems = useCallback(async () => {
     try {
       const eventsCollectionRef = collection(db, 'events');
-      const surveysCollectionRef = collection(db, 'surveys');
       const announcementsCollectionRef = collection(db, 'announcements');
 
-      const [eventsSnapshot, surveysSnapshot, announcementsSnapshot] = await Promise.all([
+      const [eventsAndSurveysSnapshot, announcementsSnapshot] = await Promise.all([
         getDocs(eventsCollectionRef),
-        getDocs(surveysCollectionRef),
         getDocs(announcementsCollectionRef),
       ]);
 
-      const eventsData = eventsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' })) as Event[];
-      const surveysData = surveysSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'survey' })) as Survey[];
+      const eventsAndSurveysData = eventsAndSurveysSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { ...data, id: doc.id } as Event | Survey;
+      });
+      
       const announcementsData = announcementsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'announcement' })) as Announcement[];
       
-      setAllItems([...eventsData, ...surveysData, ...announcementsData]);
+      setAllItems([...eventsAndSurveysData, ...announcementsData]);
     } catch (error) {
       console.error("Error fetching items:", error);
     }
@@ -77,7 +78,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         joinedEvents: arrayUnion(eventId)
       });
 
-      // Add a document to eventRegistrations collection
       await addDoc(collection(db, 'eventRegistrations'), {
         eventId: eventId,
         userId: user.uid,
@@ -98,7 +98,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         joinedEvents: arrayRemove(eventId)
       });
 
-      // Remove the document from eventRegistrations collection
       const registrationsRef = collection(db, 'eventRegistrations');
       const q = query(registrationsRef, where('eventId', '==', eventId), where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
@@ -130,10 +129,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const addSurvey = async (survey: Omit<Survey, 'id' | 'type'>): Promise<Survey> => {
-    const newSurveyRef = await addDoc(collection(db, 'surveys'), {
+    const surveyWithData = {
       ...survey,
+      type: 'survey' as const,
       createdAt: serverTimestamp(),
-    });
+    };
+    const newSurveyRef = await addDoc(collection(db, 'events'), surveyWithData);
     const newSurvey = { ...survey, type: 'survey' as const, id: newSurveyRef.id };
     setAllItems(prev => [...prev, newSurvey]);
     return newSurvey;
@@ -141,7 +142,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const updateSurvey = async (survey: Survey) => {
     const { id, ...surveyData } = survey;
-    const surveyRef = doc(db, 'surveys', id);
+    const surveyRef = doc(db, 'events', id);
     await updateDoc(surveyRef, surveyData);
     setAllItems(prev => prev.map(s => s.id === id ? { ...s, ...surveyData } : s));
   };

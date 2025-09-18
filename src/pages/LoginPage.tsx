@@ -20,6 +20,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
   const [resetEmail, setResetEmail] = React.useState('');
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const [animatedTitle, setAnimatedTitle] = React.useState('');
+  const fullTitle = ' Kütüphanemize Hoş Geldiniz ';
+
+  React.useEffect(() => {
+    let i = 0;
+    setAnimatedTitle('');
+    const interval = setInterval(() => {
+      if (i < fullTitle.length) {
+        setAnimatedTitle(prev => prev + fullTitle.charAt(i));
+        i++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 150);
+    return () => clearInterval(interval);
+  }, []);
   
   const handleLoginSubmit = async (email: string, password: string) => {
     setIsLoading(true);
@@ -254,7 +270,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         {/* Info Section - Hidden on mobile */}
         <div className="hidden lg:flex flex-col justify-center p-12 xl:p-16 bg-indigo-900 text-white relative overflow-hidden">
           <div className="relative z-10">
-            <h2 className="text-2xl xl:text-3xl font-bold mb-6">Kütüphanemize Hoş Geldiniz</h2>
+            <h2 className="text-2xl xl:text-3xl font-bold mb-6">{animatedTitle}<span className="animate-pulse">|</span></h2>
             <p className="text-indigo-200 mb-8 max-w-md text-sm xl:text-base">
               Dijital kütüphanemizde binlerce kitaba erişim sağlayın. 
               Keşfedin, ödünç alın ve bilgi dünyasını keşfedin.
@@ -262,7 +278,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
             
             <div className="space-y-4 mb-8">
               {[
-                'Binlerce kitaba çevrimiçi erişim',
+                'Binlerce kitaba çevrimiçi erişin',
                 'Okuma ilerleyişinizi takip edin',
                 'Kişiselleştirilmiş öneriler alın',
                 'Okuma topluluklarına katılın'
@@ -274,19 +290,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
               ))}
             </div>
             
-            <div className="pt-4">
-              <p className="text-xs xl:text-sm text-indigo-200">
-                
-                <a href="#privacy-policy" onClick={() => console.log('Gizlilik Politikası tıklandı')} className="text-white underline hover:text-indigo-200 transition-colors duration-200">
-                  Gizlilik Politikası
-                </a>{' '}
-                ve{' '}
-                <a href="#terms-of-use" onClick={() => console.log('Kullanım Koşulları tıklandı')} className="text-white underline hover:text-indigo-200 transition-colors duration-200">
-                  Kullanım Koşulları
-                </a>
-                
-              </p>
-            </div>
+            
           </div>
         </div>
       </div>

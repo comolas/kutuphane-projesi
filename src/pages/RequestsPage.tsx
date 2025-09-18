@@ -1,22 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, Plus, AlertCircle, MessageSquare, Search, Filter, X, SortAsc, SortDesc, ChevronRight, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Plus, AlertCircle, MessageSquare, Search, Filter, X, SortAsc, SortDesc, ChevronRight, CheckCircle, Tag, ShieldQuestion, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, Timestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+
+// Reusable Confirmation Modal Component
+const ConfirmationModal: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  title: string; 
+  message: string; 
+}> = ({ isOpen, onClose, onConfirm, title, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
+        <div className="p-6">
+          <div className="flex items-start">
+            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <ShieldQuestion className="h-6 w-6 text-red-600" aria-hidden="true" />
+            </div>
+            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">{message}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-xl">
+          <button
+            type="button"
+            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+          >
+            Onayla
+          </button>
+          <button
+            type="button"
+            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+            onClick={onClose}
+          >
+            Vazgeç
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface Request {
   id: string;
   title: string;
   content: string;
   priority: 'low' | 'medium' | 'high';
+  category: string;
   status: 'pending' | 'in-progress' | 'completed';
   createdAt: Date;
   userId: string;
   response?: string;
   responseDate?: Date;
 }
+
+const requestCategories = ['Kitap Önerisi', 'Teknik Sorun', 'Üyelik Bilgileri', 'Genel Geri Bildirim'];
 
 const RequestsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,18 +79,22 @@ const RequestsPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [category, setCategory] = useState(requestCategories[3]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   
-  // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in-progress' | 'completed'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'createdAt' | 'priority'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const requestsPerPage = 3;
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     if (user) {
@@ -49,7 +106,7 @@ const RequestsPage: React.FC = () => {
     if (successMessage) {
       const timer = setTimeout(() => {
         setSuccessMessage('');
-      }, 3000); // Hide after 3 seconds
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
@@ -90,6 +147,7 @@ const RequestsPage: React.FC = () => {
         title,
         content,
         priority,
+        category,
         status: 'pending',
         createdAt: Timestamp.now(),
         userId: user.uid
@@ -98,12 +156,24 @@ const RequestsPage: React.FC = () => {
       setTitle('');
       setContent('');
       setPriority('medium');
+      setCategory(requestCategories[3]);
       setIsModalOpen(false);
       loadRequests();
       setSuccessMessage('Talebiniz başarıyla oluşturuldu!');
     } catch (error) {
       console.error('Error creating request:', error);
       setError('Talep oluşturulurken bir hata oluştu.');
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      await deleteDoc(doc(db, 'requests', requestId));
+      setRequests(prev => prev.filter(req => req.id !== requestId));
+      setSuccessMessage('Talebiniz başarıyla geri çekildi.');
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      setError('Talep geri çekilirken bir hata oluştu.');
     }
   };
 
@@ -158,7 +228,10 @@ const RequestsPage: React.FC = () => {
       const matchesPriority = 
         priorityFilter === 'all' || request.priority === priorityFilter;
 
-      return matchesSearch && matchesStatus && matchesPriority;
+      const matchesCategory = 
+        categoryFilter === 'all' || request.category === categoryFilter;
+
+      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
     })
     .sort((a, b) => {
       if (sortBy === 'createdAt') {
@@ -175,16 +248,14 @@ const RequestsPage: React.FC = () => {
       }
     });
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredRequests.length / requestsPerPage);
   const startIndex = (currentPage - 1) * requestsPerPage;
   const endIndex = startIndex + requestsPerPage;
   const currentRequests = filteredRequests.slice(startIndex, endIndex);
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, priorityFilter, sortBy, sortOrder]);
+  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, sortBy, sortOrder]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -278,7 +349,6 @@ const RequestsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Search and Filter Section */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -339,6 +409,20 @@ const RequestsPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kategori
+                  </label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="all">Tümü</option>
+                    {requestCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Sıralama
                   </label>
                   <select
@@ -372,19 +456,6 @@ const RequestsPage: React.FC = () => {
                     )}
                   </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sayfa
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">
-                      {totalPages > 0 ? `${currentPage} / ${totalPages}` : '0 / 0'}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      ({filteredRequests.length} talep)
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -394,7 +465,6 @@ const RequestsPage: React.FC = () => {
           {filteredRequests.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center min-h-[200px]">
               {requests.length === 0 ? (
-                // Case 1: User has NO requests at all.
                 <>
                   <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Henüz Talebiniz Yok</h3>
@@ -408,7 +478,6 @@ const RequestsPage: React.FC = () => {
                   </button>
                 </>
               ) : (
-                // Case 2: User has requests, but filter/search yielded no results.
                 <>
                   <Search className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Sonuç Bulunamadı</h3>
@@ -422,12 +491,12 @@ const RequestsPage: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{request.title}</h3>
-                    <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="mt-1 flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
                       <span>{request.createdAt.toLocaleDateString()}</span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(request.priority)}`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(request.priority)}`}>
                         {getPriorityText(request.priority)} Öncelik
                       </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         request.status === 'completed'
                           ? 'bg-green-100 text-green-800'
                           : request.status === 'in-progress'
@@ -436,22 +505,44 @@ const RequestsPage: React.FC = () => {
                       }`}>
                         {getStatusText(request.status)}
                       </span>
+                      {request.category && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          <Tag className="w-3 h-3 mr-1.5" />
+                          {request.category}
+                        </span>
+                      )}
                     </div>
                   </div>
+                  {request.status === 'pending' && (
+                    <button 
+                      onClick={() => {
+                        setModalContent({
+                          title: 'Talebi Geri Çek',
+                          message: `"${request.title}" başlıklı talebinizi geri çekmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+                          onConfirm: () => handleDeleteRequest(request.id)
+                        });
+                        setShowConfirmModal(true);
+                      }}
+                      className="flex items-center text-sm text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Geri Çek
+                    </button>
+                  )}
                 </div>
                 
                 <div className="mt-4 text-gray-700">{request.content}</div>
                 
                 {request.response && (
-                  <div className="mt-4 bg-indigo-50 rounded-lg p-4">
-                    <div className="flex items-start space-x-2">
-                      <MessageSquare className="w-5 h-5 text-indigo-600 mt-1" />
+                  <div className="mt-4 bg-indigo-50 rounded-r-lg p-4 border-l-4 border-indigo-400">
+                    <div className="flex items-start space-x-3">
+                      <MessageSquare className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-1" />
                       <div>
-                        <div className="font-medium text-gray-900">Kütüphane Yönetimi Yanıtı:</div>
-                        <div className="mt-2 text-gray-700">{request.response}</div>
+                        <div className="font-semibold text-gray-900">Kütüphane Yönetimi Yanıtı:</div>
+                        <div className="mt-1 text-gray-700">{request.response}</div>
                         {request.responseDate && (
-                          <div className="mt-2 text-sm text-gray-500">
-                            {request.responseDate.toLocaleDateString()}
+                          <div className="mt-2 text-xs text-gray-500">
+                            Yanıt Tarihi: {request.responseDate.toLocaleDateString()}
                           </div>
                         )}
                       </div>
@@ -467,7 +558,6 @@ const RequestsPage: React.FC = () => {
         {totalPages > 1 && (
           <div className="mt-8 flex justify-center">
             <div className="flex items-center space-x-2">
-              {/* Previous Button */}
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -477,7 +567,6 @@ const RequestsPage: React.FC = () => {
                 Önceki
               </button>
 
-              {/* Page Numbers */}
               {generatePageNumbers().map((page, index) => (
                 <React.Fragment key={index}>
                   {page === '...' ? (
@@ -497,7 +586,6 @@ const RequestsPage: React.FC = () => {
                 </React.Fragment>
               ))}
 
-              {/* Next Button */}
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -522,6 +610,19 @@ const RequestsPage: React.FC = () => {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4 p-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kategori
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  {requestCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Başlık
@@ -582,6 +683,14 @@ const RequestsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal 
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={modalContent.onConfirm}
+        title={modalContent.title}
+        message={modalContent.message}
+      />
     </div>
   );
 };

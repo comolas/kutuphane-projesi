@@ -1,40 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X } from 'lucide-react';
+import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History, ListFilter } from 'lucide-react';
 import { useBooks } from '../contexts/BookContext';
 
 const FinesPage: React.FC = () => {
   const navigate = useNavigate();
   const { borrowedBooks } = useBooks();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'unpaid' | 'paid'>('unpaid');
 
-  const calculateFine = (book: BorrowedBook): number => {
-    // If fine is already paid, return the stored fine amount
+  const calculateFine = (book: any): number => {
     if (book.fineStatus === 'paid') {
       return book.fineAmount || 0;
     }
-
-    // Calculate fine only if not paid
     const today = new Date();
-    const diffTime = today.getTime() - book.dueDate.getTime();
+    const diffTime = today.getTime() - new Date(book.dueDate).getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays * 5 : 0;
   };
 
-  const overdueBooksWithFines = borrowedBooks
-    .map(book => ({
-      ...book,
-      daysOverdue: Math.ceil(
-        (new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)
-      ),
-      fine: calculateFine(book)
-    }))
-    .filter(book => book.fine > 0);
+  const { unpaidFines, paidFines } = useMemo(() => {
+    const allFines = borrowedBooks
+      .map(book => ({
+        ...book,
+        daysOverdue: Math.max(0, Math.ceil((new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24))),
+        fine: calculateFine(book)
+      }))
+      .filter(book => book.fine > 0);
 
-  const totalFine = overdueBooksWithFines.reduce((sum, book) => 
-    book.fineStatus === 'paid' ? sum : sum + book.fine, 0
-  );
+    const unpaid = allFines.filter(book => book.fineStatus !== 'paid');
+    const paid = allFines.filter(book => book.fineStatus === 'paid');
+    
+    return { unpaidFines: unpaid, paidFines: paid };
+  }, [borrowedBooks]);
+
+  const totalUnpaidFine = unpaidFines.reduce((sum, book) => sum + book.fine, 0);
+
+  const currentList = activeTab === 'unpaid' ? unpaidFines : paidFines;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -65,35 +68,64 @@ const FinesPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <DollarSign className="w-8 h-8 text-red-500 mr-3" />
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Toplam Ceza</h2>
-                <p className="text-sm text-gray-500">Ödenmemiş cezalar için</p>
+        {activeTab === 'unpaid' && (
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <DollarSign className="w-8 h-8 text-red-500 mr-3" />
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Toplam Borcunuz</h2>
+                  <p className="text-sm text-gray-500">Ödenmemiş tüm cezalar</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-red-500">
+                {totalUnpaidFine} TL
               </div>
             </div>
-            <div className="text-2xl font-bold text-red-500">
-              {totalFine} TL
-            </div>
+            {totalUnpaidFine > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center text-sm"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  Nasıl Öderim?
+                </button>
+              </div>
+            )}
           </div>
-          {totalFine > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center text-sm"
-              >
-                <Info className="w-4 h-4 mr-2" />
-                Nasıl Öderim?
-              </button>
-            </div>
-          )}
+        )}
+
+        <div className="mb-6 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('unpaid')}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                activeTab === 'unpaid'
+                  ? 'border-indigo-500 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <AlertCircle className="w-5 h-5 mr-2" />
+              Ödenmemiş Cezalar
+            </button>
+            <button
+              onClick={() => setActiveTab('paid')}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                activeTab === 'paid'
+                  ? 'border-indigo-500 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <History className="w-5 h-5 mr-2" />
+              Ödeme Geçmişi
+            </button>
+          </nav>
         </div>
 
         <div className="space-y-4">
-          {overdueBooksWithFines.length > 0 ? (
-            overdueBooksWithFines.map(book => (
+          {currentList.length > 0 ? (
+            currentList.map(book => (
               <div key={`fine-${book.id}-${book.borrowedBy}`} className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-start space-x-4">
@@ -111,30 +143,37 @@ const FinesPage: React.FC = () => {
                           <Clock className="w-4 h-4 text-gray-400 mr-2" />
                           <span className="text-gray-600">Son Teslim Tarihi:</span>
                           <span className="ml-2 font-medium">
-                            {book.dueDate.toLocaleDateString()}
+                            {new Date(book.dueDate).toLocaleDateString()}
                           </span>
                         </div>
                         
-                        <div className="flex items-center text-sm">
-                          <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
-                          <span className="text-red-600">Gecikme:</span>
-                          <span className="ml-2 font-medium text-red-600">
-                            {book.daysOverdue} gün
-                          </span>
-                        </div>
+                        {book.daysOverdue > 0 && (
+                          <div className="flex items-center text-sm">
+                            <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
+                            <span className="text-red-600">Gecikme:</span>
+                            <span className="ml-2 font-medium text-red-600">
+                              {book.daysOverdue} gün
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-red-500">
+                      <div className={`text-2xl font-bold ${book.fineStatus === 'paid' ? 'text-green-600' : 'text-red-500'}`}>
                         {book.fine} TL
                       </div>
+                      {book.fineStatus !== 'paid' && book.daysOverdue > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          ({book.daysOverdue} gün x 5 TL)
+                        </p>
+                      )}
                       {book.fineStatus === 'paid' ? (
                         <div className="mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium inline-block">
-                          Ödeme Alındı
+                          Ödendi
                           {book.paymentDate && (
                             <div className="text-xs text-green-600 mt-1">
-                              {book.paymentDate.toLocaleDateString()}
+                              {new Date(book.paymentDate).toLocaleDateString()}
                             </div>
                           )}
                         </div>
@@ -151,8 +190,10 @@ const FinesPage: React.FC = () => {
             ) : (
             <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center">
                 <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">Harika! Hiç cezanız bulunmuyor.</h3>
-                <p className="text-gray-600">Kitaplarınızı zamanında getirdiğiniz için teşekkür ederiz.</p>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  {activeTab === 'unpaid' ? 'Harika! Ödenmemiş cezanız yok.' : 'Geçmişe ait ödenmiş bir cezanız bulunmuyor.'}
+                </h3>
+                <p className="text-gray-600">{activeTab === 'unpaid' ? 'Kitaplarınızı zamanında getirdiğiniz için teşekkür ederiz.' : 'Tüm kayıtlarınız burada görünecektir.'}</p>
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, User, Bell, Lock, Moon, Sun, Globe, Eye, EyeOff, Trophy, Calendar, Star, CheckCircle2, Save, Palette, Type, Layout, Award } from 'lucide-react';
+import { ChevronLeft, User, Trophy, Calendar, Star, CheckCircle2, Save, Palette, Type, Layout, Award } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTasks } from '../contexts/TaskContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -55,10 +55,8 @@ const SettingsPage: React.FC = () => {
     { id: 'profile', label: 'Profil', icon: User },
     { id: 'tasks', label: 'Görevler', icon: Calendar },
     { id: 'achievements', label: 'Başarımlar', icon: Trophy },
-    { id: 'appearance', label: 'Görünüm', icon: Palette },
-    { id: 'notifications', label: 'Bildirimler', icon: Bell },
-    { id: 'security', label: 'Güvenlik', icon: Lock },
-    { id: 'preferences', label: 'Tercihler', icon: Globe }
+    
+    
   ];
 
   const dailyTasks = tasks.filter(task => task.type === 'daily');
@@ -460,180 +458,9 @@ const SettingsPage: React.FC = () => {
               </div>
             )}
 
-            {activeTab === 'appearance' && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Tema
-                  </label>
-                  <div className="space-y-2">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="light"
-                        checked={customSettings.theme === 'light'}
-                        onChange={(e) => handleSettingChange(e.target.value, ['theme'])}
-                        className="h-4 w-4 text-indigo-600"
-                      />
-                      <Sun className="w-5 h-5 ml-2 mr-2" />
-                      <span>Açık Tema</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="dark"
-                        checked={customSettings.theme === 'dark'}
-                        onChange={(e) => handleSettingChange(e.target.value, ['theme'])}
-                        className="h-4 w-4 text-indigo-600"
-                      />
-                      <Moon className="w-5 h-5 ml-2 mr-2" />
-                      <span>Koyu Tema</span>
-                    </label>
-                  </div>
-                </div>
+            
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Yazı Boyutu
-                  </label>
-                  <select
-                    value={customSettings.fontSize}
-                    onChange={(e) => handleSettingChange(e.target.value, ['fontSize'])}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  >
-                    <option value="small">Küçük</option>
-                    <option value="medium">Orta</option>
-                    <option value="large">Büyük</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'notifications' && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    Bildirim Tercihleri
-                  </h3>
-                  <div className="space-y-4">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={customSettings.notifications.email}
-                        onChange={(e) => handleSettingChange(e.target.checked, ['notifications', 'email'])}
-                        className="h-4 w-4 text-indigo-600 rounded"
-                      />
-                      <span className="ml-3 text-gray-700">E-posta bildirimleri</span>
-                    </label>
-
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={customSettings.notifications.reminders}
-                        onChange={(e) => handleSettingChange(e.target.checked, ['notifications', 'reminders'])}
-                        className="h-4 w-4 text-indigo-600 rounded"
-                      />
-                      <span className="ml-3 text-gray-700">Teslim tarihi hatırlatmaları</span>
-                    </label>
-
-                    
-
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={customSettings.notifications.news}
-                        onChange={(e) => handleSettingChange(e.target.checked, ['notifications', 'news'])}
-                        className="h-4 w-4 text-indigo-600 rounded"
-                      />
-                      <span className="ml-3 text-gray-700">Kütüphane haberleri</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'security' && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Mevcut Şifre
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value="••••••••"
-                      disabled
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Şifre değişikliği için kütüphane personeli ile iletişime geçiniz.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'preferences' && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Dil
-                  </label>
-                  <select
-                    value={customSettings.language}
-                    onChange={(e) => handleSettingChange(e.target.value, ['language'])}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  >
-                    <option value="tr">Türkçe</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    Gizlilik Ayarları
-                  </h3>
-                  <div className="space-y-4">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={customSettings.privacy.showProfile}
-                        onChange={(e) => handleSettingChange(e.target.checked, ['privacy', 'showProfile'])}
-                        className="h-4 w-4 text-indigo-600 rounded"
-                      />
-                      <span className="ml-3 text-gray-700">Profil bilgilerimi göster</span>
-                    </label>
-
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={customSettings.privacy.showActivity}
-                        onChange={(e) => handleSettingChange(e.target.checked, ['privacy', 'showActivity'])}
-                        className="h-4 w-4 text-indigo-600 rounded"
-                      />
-                      <span className="ml-3 text-gray-700">Aktivitelerimi göster</span>
-                    </label>
-
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={customSettings.privacy.showReadingList}
-                        onChange={(e) => handleSettingChange(e.target.checked, ['privacy', 'showReadingList'])}
-                        className="h-4 w-4 text-indigo-600 rounded"
-                      />
-                      <span className="ml-3 text-gray-700">Okuma listemi göster</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
+            
           </div>
         </div>
 
