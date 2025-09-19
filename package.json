@@ -75,7 +75,9 @@
       "target": "AppImage"
     },
     "publish": {
-      "provider": "github"
+      "provider": "github",
+      "owner": "comolas",
+      "repo": "kutuphane-projesi"
     }
   }
 }
