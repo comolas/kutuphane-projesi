@@ -1,8 +1,3 @@
-export interface Rating {
-  userId: string;
-  rating: number;
-}
-
 export interface Book {
   id: string;
   isbn?: string;
@@ -15,7 +10,6 @@ export interface Book {
   coverImage: string;
   tags: string[];
   addedDate: string;
-  ratings?: Rating[];
   backCover?: string;
   pageCount?: number;
   dimensions?: string;
@@ -23,6 +17,8 @@ export interface Book {
   binding?: string;
   theme?: string[];
   mood?: string;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export interface Author {
@@ -64,4 +60,30 @@ export interface Announcement {
   author: string;
   type: 'announcement';
   coverImage?: string;
+}
+
+export interface Review {
+  id:string;
+  bookId?: string;
+  magazineId?: string;
+  userId: string;
+  userDisplayName: string;
+  rating: number;
+  reviewText: string;
+  createdAt: any; // Firestore Timestamp
+  status: 'pending' | 'approved' | 'rejected';
+  helpfulVotes?: string[];
+}
+
+export interface Magazine {
+  id: string;
+  title: string;
+  issue: string;
+  publicationDate: any; // Firestore Timestamp
+  coverImageUrl: string;
+  pdfUrl: string;
+  addedAt: any; // Firestore Timestamp
+  averageRating?: number;
+  reviewCount?: number;
+  tags?: string[];
 }

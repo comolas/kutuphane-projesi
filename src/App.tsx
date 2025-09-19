@@ -7,7 +7,9 @@ import { TaskProvider } from './contexts/TaskContext';
 import { AssistantProvider } from './contexts/AssistantContext';
 import { GoalsProvider } from './contexts/GoalsContext';
 import { AuthorProvider } from './contexts/AuthorContext';
+import { MagazineProvider } from './contexts/MagazineContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext'; // Import ThemeProvider
+import { ReviewProvider } from './contexts/ReviewContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
@@ -16,6 +18,7 @@ import UserDashboard from './pages/UserDashboard';
 import MyEventsPage from './pages/MyEventsPage';
 import RequestsPage from './pages/RequestsPage';
 import CatalogPage from './pages/CatalogPage';
+import MagazinesPage from './pages/MagazinesPage';
 import BorrowedBooksPage from './pages/BorrowedBooksPage';
 import SettingsPage from './pages/SettingsPage';
 import FinesPage from './pages/FinesPage';
@@ -51,6 +54,7 @@ const AppContent = () => {
           <Route path="/my-events" element={<PrivateRoute><MyEventsPage /></PrivateRoute>} />
           <Route path="/requests" element={<PrivateRoute><RequestsPage /></PrivateRoute>} />
           <Route path="/catalog" element={<PrivateRoute><CatalogPage /></PrivateRoute>} />
+          <Route path="/dergiler" element={<PrivateRoute><MagazinesPage /></PrivateRoute>} />
           <Route path="/borrowed-books" element={<PrivateRoute><BorrowedBooksPage /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
           <Route path="/fines" element={<PrivateRoute><FinesPage /></PrivateRoute>} />
@@ -76,8 +80,12 @@ function App() {
               <BookProvider>
                 <TaskProvider>
                   <AssistantProvider>
-                    <ThemeProvider> {/* Wrap with ThemeProvider */}
-                      <AppContent />
+                    <ThemeProvider>
+                      <ReviewProvider>
+                        <MagazineProvider>
+                          <AppContent />
+                        </MagazineProvider>
+                      </ReviewProvider>
                     </ThemeProvider>
                   </AssistantProvider>
                 </TaskProvider>

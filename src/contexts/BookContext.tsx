@@ -100,8 +100,29 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchAllBooks = async () => {
         try {
           const booksCollectionRef = collection(db, "books");
-          const querySnapshot = await getDocs(booksCollectionRef);
-          const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
+          const reviewsCollectionRef = collection(db, "reviews");
+
+          const [booksSnapshot, reviewsSnapshot] = await Promise.all([
+            getDocs(booksCollectionRef),
+            getDocs(reviewsCollectionRef)
+          ]);
+
+          const reviewsData = reviewsSnapshot.docs.map(doc => doc.data());
+
+          const booksData = booksSnapshot.docs.map(doc => {
+            const book = { ...doc.data(), id: doc.id } as Book;
+            const bookReviews = reviewsData.filter(review => review.bookId === book.id && review.status === 'approved');
+            const reviewCount = bookReviews.length;
+            const averageRating = reviewCount > 0
+              ? bookReviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
+              : 0;
+
+            return {
+              ...book,
+              averageRating: parseFloat(averageRating.toFixed(1)), // Format to one decimal place
+              reviewCount
+            };
+          }) as Book[];
           setAllBooks(booksData);
         } catch (error) {
           console.error("Error fetching all books:", error);

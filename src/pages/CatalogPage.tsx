@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Calendar, Star, CheckCircle, Heart, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Calendar, Star, CheckCircle, Heart, AlertCircle, MessageSquare } from 'lucide-react';
 import { Book } from '../types';
 import { useBooks } from '../contexts/BookContext';
 import { db } from '../firebase/config';
 import { collection, getDocs, addDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import ReviewModal from '../components/common/ReviewModal';
 
 const CatalogPage: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const CatalogPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showBookDetails, setShowBookDetails] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [userFavorites, setUserFavorites] = useState<string[]>([]); // State to store favorite book IDs
@@ -116,13 +118,14 @@ const CatalogPage: React.FC = () => {
     return `${baseUrl}${fileId}${viewSuffix}`;
   };
 
-  
-
-  
-
   const handleInspectBook = (book: Book) => {
     setSelectedBook(book);
     setShowBookDetails(true);
+  };
+
+  const handleInspectReviews = (book: Book) => {
+    setSelectedBook(book);
+    setShowReviewModal(true);
   };
 
   const handleClearFilters = () => {
@@ -160,9 +163,7 @@ const CatalogPage: React.FC = () => {
       case 'author-desc':
         return b.author.localeCompare(a.author, 'tr-TR');
       case 'rating-desc':
-        const avgRatingA = a.ratings ? a.ratings.reduce((acc, r) => acc + r.rating, 0) / a.ratings.length : 0;
-        const avgRatingB = b.ratings ? b.ratings.reduce((acc, r) => acc + r.rating, 0) / b.ratings.length : 0;
-        return avgRatingB - avgRatingA;
+        return (b.averageRating || 0) - (a.averageRating || 0);
       default:
         return 0;
     }
@@ -365,10 +366,6 @@ const CatalogPage: React.FC = () => {
             const bookStatus = getBookStatus(book.id);
             const userBorrowed = isBorrowed(book.id);
             const isPending = userBorrowed && book.borrowStatus === 'pending';
-            const averageRating = book.ratings
-              ? book.ratings.reduce((acc, rating) => acc + rating.rating, 0) / book.ratings.length
-              : 0;
-
             return (
               <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden relative">
                 <button
@@ -387,12 +384,12 @@ const CatalogPage: React.FC = () => {
                       <Star
                         key={star}
                         className={`w-4 h-4 ${
-                          averageRating >= star ? 'text-yellow-400' : 'text-gray-300'
+                          (book.averageRating || 0) >= star ? 'text-yellow-400' : 'text-gray-300'
                         }`}
                       />
                     ))}
                     <span className="ml-2 text-xs text-gray-600">
-                      {averageRating.toFixed(1)} ({book.ratings?.length || 0})
+                      {(book.averageRating || 0).toFixed(1)} ({book.reviewCount || 0})
                     </span>
                   </div>
                   <div className="mt-3 flex justify-between items-center">
@@ -413,8 +410,16 @@ const CatalogPage: React.FC = () => {
                         ? 'Ödünç Verildi' 
                         : 'Müsait'}
                     </span>
+                    <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleInspectReviews(book)}
+                      className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors flex items-center"
+                    >
+                      <MessageSquare className="w-3 h-3 mr-1" />
+                      Yorumlar
+                    </button>
                     {bookStatus === 'available' && !isPending && (
-                      <div className="flex space-x-2">
+                      <>
                         <button
                           onClick={() => handleInspectBook(book)}
                           className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors flex items-center"
@@ -428,8 +433,9 @@ const CatalogPage: React.FC = () => {
                         >
                           Ödünç Al
                         </button>
-                      </div>
+                      </>
                     )}
+                    </div>
                     {bookStatus === 'lost' && (
                       <div className="flex items-center text-red-600">
                         <AlertTriangle className="w-4 h-4 mr-1" />
@@ -616,6 +622,15 @@ const CatalogPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Review Modal */}
+      {showReviewModal && selectedBook && (
+        <ReviewModal
+          bookId={selectedBook.id}
+          bookTitle={selectedBook.title}
+          onClose={() => setShowReviewModal(false)}
+        />
       )}
     </div>
   );

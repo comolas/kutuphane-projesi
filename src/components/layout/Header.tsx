@@ -44,6 +44,12 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               Katalog
             </Link>
             <Link
+              to="/dergiler"
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-900 dark:hover:text-white transition-colors duration-200"
+            >
+              Dergiler
+            </Link>
+            <Link
               to="/yazarlar"
               className="text-gray-700 dark:text-gray-300 hover:text-indigo-900 dark:hover:text-white transition-colors duration-200"
             >

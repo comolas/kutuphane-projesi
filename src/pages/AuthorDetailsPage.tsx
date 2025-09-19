@@ -95,9 +95,7 @@ const AuthorDetailsPage: React.FC = () => {
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {books.map(book => {
                 const status = getBookStatus(book.id);
-                const averageRating = book.ratings && book.ratings.length > 0
-                  ? (book.ratings.reduce((acc, r) => acc + r.rating, 0) / book.ratings.length).toFixed(1)
-                  : 'N/A';
+                const averageRating = 'N/A'; // Placeholder
 
                 return (
                   <div key={book.id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col justify-between">

@@ -10,11 +10,13 @@ import EventManagementTab from '../components/admin/tabs/EventManagementTab';
 import ReportsTab from '../components/admin/tabs/ReportsTab';
 import QuoteManagementTab from '../components/admin/tabs/QuoteManagementTab';
 import AuthorManagementTab from '../components/admin/tabs/AuthorManagementTab'; // Import edildi
+import ReviewManagementTab from '../components/admin/tabs/ReviewManagementTab';
+import AdminMagazinesTab from '../components/admin/tabs/AdminMagazinesTab';
 import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
 import { Navigate } from 'react-router-dom';
-import { Book, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog } from 'lucide-react';
+import { Book, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen } from 'lucide-react';
 import { auth, db } from '../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -33,7 +35,7 @@ const AdminDashboard: React.FC = () => {
   const { isAdmin } = useAuth();
   const { refetchAllBooks, getBookStatus } = useBooks();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management'>('borrowed-books');
+  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management'>('borrowed-books');
   const [users, setUsers] = useState<UserData[]>([]);
   const [catalogBooks, setCatalogBooks] = useState<Book[]>([]);
 
@@ -178,6 +180,26 @@ const AdminDashboard: React.FC = () => {
                 </button>
 
                 <button
+                  onClick={() => { setActiveTab('magazine-management'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
+                    activeTab === 'magazine-management' ? 'bg-indigo-800' : ''
+                  }`}
+                >
+                  <BookOpen className="w-5 h-5" />
+                  <span>Dergi Yönetimi</span>
+                </button>
+
+                <button
+                  onClick={() => { setActiveTab('review-management'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
+                    activeTab === 'review-management' ? 'bg-indigo-800' : ''
+                  }`}
+                >
+                  <ClipboardList className="w-5 h-5" />
+                  <span>Yorum Yönetimi</span>
+                </button>
+
+                <button
                   onClick={() => { setActiveTab('quote-management'); setSidebarOpen(false); }}
                   className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
                     activeTab === 'quote-management' ? 'bg-indigo-800' : ''
@@ -305,6 +327,10 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'quote-management' && <QuoteManagementTab />}
 
         {activeTab === 'author-management' && <AuthorManagementTab />}
+
+        {activeTab === 'review-management' && <ReviewManagementTab />}
+
+        {activeTab === 'magazine-management' && <AdminMagazinesTab />}
 
       </div>
     </div>
