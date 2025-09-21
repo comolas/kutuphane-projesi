@@ -12,6 +12,7 @@ import QuoteManagementTab from '../components/admin/tabs/QuoteManagementTab';
 import AuthorManagementTab from '../components/admin/tabs/AuthorManagementTab'; // Import edildi
 import ReviewManagementTab from '../components/admin/tabs/ReviewManagementTab';
 import AdminMagazinesTab from '../components/admin/tabs/AdminMagazinesTab';
+import UpdateButton from '../components/common/UpdateButton'; // Added import
 import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
@@ -280,13 +281,16 @@ const AdminDashboard: React.FC = () => {
               </button>
               <h1 className="text-2xl font-bold ml-4">Admin Paneli</h1>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center px-4 py-2 bg-indigo-800 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <LogOut className="w-5 h-5 mr-2" />
-              Çıkış Yap
-            </button>
+            <div className="flex items-center space-x-4"> {/* Added a div to group buttons */}
+              <UpdateButton /> {/* Added UpdateButton here */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 bg-indigo-800 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <LogOut className="w-5 h-5 mr-2" />
+                Çıkış Yap
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -62,7 +62,7 @@ service cloud.firestore {
     // Magazines collection rules
     match /magazines/{magazineId} {
       // Allow any authenticated user to read magazines
-      allow read: if isAuthenticated();
+      allow read: if true;
       
       // Only admins can create, update, or delete magazines
       allow create, update, delete: if isAdmin();

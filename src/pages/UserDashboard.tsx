@@ -6,6 +6,7 @@ import ItemDetailsModal from '../components/common/ItemDetailsModal';
 import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
 import ItemSlider from '../components/common/ItemSlider';
 import Leaderboard from '../components/dashboard/Leaderboard'; // Lider tablosu import edildi
+import UpdateButton from '../components/common/UpdateButton'; // Added import
 
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,7 +22,7 @@ const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, userData, isAdmin } = useAuth();
   
-  const { borrowedBooks, allBooks, borrowBook, recommendedBooks, fetchRecommendedBooks } = useBooks();
+  const { borrowedBooks, allBooks, borrowBook, recommendedBooks, fetchRecommendedBooks, getBookStatus } = useBooks();
   const { monthlyGoal, yearlyGoal, fetchGoals, showConfetti, resetConfetti } = useGoals();
   const { featuredAuthor, featuredAuthorBooks } = useAuthors();
   const { allItems, fetchAllItems, joinedEvents, joinEvent } = useEvents();
@@ -60,6 +61,26 @@ const UserDashboard: React.FC = () => {
   const summaryStats = useMemo(() => {
     const activeBooks = borrowedBooks.filter(b => b.returnStatus !== 'returned');
     const nextDueBook = activeBooks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+    
+    let dueDateStatus = 'safe';
+    let dueDateText = 'Yaklaşan Teslim';
+    if (nextDueBook) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(nextDueBook.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+
+      const diffTime = dueDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        dueDateStatus = 'overdue';
+        dueDateText = 'Gecikmiş Kitap';
+      } else if (diffDays <= 3) {
+        dueDateStatus = 'dueSoon';
+      }
+    }
+
     const totalFine = borrowedBooks.reduce((sum, book) => {
         if (book.fineStatus === 'paid') return sum;
         const today = new Date();
@@ -74,7 +95,9 @@ const UserDashboard: React.FC = () => {
       activeBooksCount: activeBooks.length,
       nextDueBook,
       totalFine,
-      pendingRequestsCount
+      pendingRequestsCount,
+      dueDateStatus,
+      dueDateText
     }
   }, [borrowedBooks, userRequests]);
 
@@ -176,6 +199,18 @@ const UserDashboard: React.FC = () => {
     setCurrentRecSlide((prev) => (prev - 1 + Math.ceil(recommendedBooks.length / 4)) % Math.ceil(recommendedBooks.length / 4));
   };
 
+  const [currentAuthorBookSlide, setCurrentAuthorBookSlide] = useState(0);
+
+  const nextAuthorBookSlide = () => {
+    const slideCount = Math.ceil(featuredAuthorBooks.length / 3); // 3 books per slide
+    setCurrentAuthorBookSlide((prev) => (prev + 1) % slideCount);
+  };
+
+  const prevAuthorBookSlide = () => {
+    const slideCount = Math.ceil(featuredAuthorBooks.length / 3);
+    setCurrentAuthorBookSlide((prev) => (prev - 1 + slideCount) % slideCount);
+  };
+
   useEffect(() => {
     const timer = setInterval(nextSlide, 5000);
     return () => clearInterval(timer);
@@ -217,6 +252,13 @@ const UserDashboard: React.FC = () => {
       console.error('Çıkış yapılırken hata oluştu:', error);
     }
   };
+
+  const dueDateStyles = {
+    overdue: { bg: 'bg-red-100', icon: <AlertCircle className="w-6 h-6 text-red-600" /> },
+    dueSoon: { bg: 'bg-yellow-100', icon: <Clock className="w-6 h-6 text-yellow-600" /> },
+    safe: { bg: 'bg-blue-100', icon: <Clock className="w-6 h-6 text-blue-600" /> },
+  };
+  const currentDueDateStyle = dueDateStyles[summaryStats.dueDateStatus] || dueDateStyles.safe;
 
   const libraryRules = [
     'Kütüphane içerisinde sessiz olunmalıdır.',
@@ -389,6 +431,7 @@ const UserDashboard: React.FC = () => {
                 <Menu className="w-6 h-6" />
               </button>
               <h1 className="text-3xl font-bold">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
+              <UpdateButton /> {/* Added UpdateButton here */}
             </div>
           </div>
         </div>
@@ -406,11 +449,11 @@ const UserDashboard: React.FC = () => {
               </div>
             </Link>
             <Link to="/borrowed-books" className="bg-white p-4 rounded-lg shadow-sm flex items-center hover:shadow-md transition-shadow">
-              <div className="flex-shrink-0 bg-yellow-100 rounded-full p-3">
-                <Clock className="w-6 h-6 text-yellow-600" />
+              <div className={`flex-shrink-0 ${currentDueDateStyle.bg} rounded-full p-3`}>
+                {currentDueDateStyle.icon}
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Yaklaşan Teslim</p>
+                <p className={`text-sm font-medium ${summaryStats.dueDateStatus === 'overdue' ? 'text-red-700 font-bold' : 'text-gray-500'}`}>{summaryStats.dueDateText}</p>
                 <p className="text-lg font-bold text-gray-900 truncate">{summaryStats.nextDueBook && summaryStats.nextDueBook.title ? `${summaryStats.nextDueBook.title.substring(0, 15)}...` : '-'}</p>
               </div>
             </Link>
@@ -613,40 +656,83 @@ const UserDashboard: React.FC = () => {
                 Öne Çıkan Yazar
               </h2>
               {featuredAuthor ? (
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden p-8 border border-indigo-400">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="mb-4">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden p-8 border border-indigo-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                    {/* Left Column: Author Image */}
+                    <div className="md:col-span-1 flex justify-center">
                       <img
-                        className="h-52 w-52 object-cover rounded-full border-4 border-black"
+                        className="h-52 w-52 object-cover rounded-full border-4 border-indigo-200 shadow-lg"
                         src={featuredAuthor.image}
                         alt={featuredAuthor.name}
                       />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900">{featuredAuthor.name}</h3>
-                    <p className="mt-2 text-gray-600 max-w-2xl">{featuredAuthor.biography}</p>
                     
-                    <div className="mt-6 w-full">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Öne Çıkan Eserleri</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {featuredAuthorBooks.map(book => (
-                          <div key={book.id} className="bg-gray-50 rounded-lg overflow-hidden">
-                            <img
-                              src={book.coverImage}
-                              alt={book.title}
-                              className="w-full h-85 object-cover"
-                            />
-                            <div className="p-4">
-                              <h5 className="font-medium text-gray-900">{book.title}</h5>
-                              <p className="text-sm text-gray-600 mb-3">{book.publisher}</p>
-                              <button
-                                onClick={() => handleBorrowBook(book)}
-                                className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors"
-                              >
-                                Ödünç Al
+                    {/* Right Column: Author Details */}
+                    <div className="md:col-span-2">
+                      <h3 className="text-3xl font-bold text-gray-900">{featuredAuthor.name}</h3>
+                      <p className="mt-2 text-gray-600 text-lg">{featuredAuthor.biography}</p>
+                      <Link 
+                        to={`/author/${featuredAuthor.id}`}
+                        className="inline-flex items-center mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        Yazarın Sayfasına Git
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                      </Link>
+                      
+                      <div className="mt-8">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-xl font-semibold text-gray-800">Öne Çıkan Eserleri</h4>
+                          {featuredAuthorBooks.length > 3 && (
+                            <div className="flex space-x-2">
+                              <button onClick={prevAuthorBookSlide} className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                                <ChevronLeft className="w-5 h-5 text-gray-600" />
+                              </button>
+                              <button onClick={nextAuthorBookSlide} className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                                <ChevronRightIcon className="w-5 h-5 text-gray-600" />
                               </button>
                             </div>
+                          )}
+                        </div>
+                        <div className="relative overflow-hidden">
+                          <div
+                            className="flex transition-transform duration-500 ease-in-out"
+                            style={{ transform: `translateX(-${currentAuthorBookSlide * 100}%)` }}
+                          >
+                            {Array.from({ length: Math.ceil(featuredAuthorBooks.length / 3) }).map((_, slideIndex) => (
+                              <div key={slideIndex} className="w-full flex-shrink-0">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {featuredAuthorBooks.slice(slideIndex * 3, slideIndex * 3 + 3).map(book => {
+                                    const status = getBookStatus(book.id);
+                                    const isAvailable = status === 'available';
+                                    return (
+                                      <div key={book.id} className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+                                        <img
+                                          src={book.coverImage}
+                                          alt={book.title}
+                                          className="w-full h-64 object-cover"
+                                        />
+                                        <div className="p-4">
+                                          <h5 className="font-medium text-gray-900 truncate">{book.title}</h5>
+                                          <button
+                                            onClick={() => handleBorrowBook(book)}
+                                            disabled={!isAvailable}
+                                            className={`mt-2 w-full text-sm px-3 py-2 rounded-lg transition-colors ${
+                                              isAvailable
+                                                ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                            }`}
+                                          >
+                                            {isAvailable ? 'Ödünç Al' : (status === 'borrowed' ? 'Ödünç Alındı' : 'Kayıp')}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
                     </div>
                   </div>

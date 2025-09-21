@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { collection, doc, setDoc, getDocs, query, where, updateDoc, serverTimestamp, getDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, where, updateDoc, serverTimestamp, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from './AuthContext';
 
@@ -7,12 +7,15 @@ interface Task {
   id: string;
   title: string;
   description: string;
-  type: 'daily' | 'weekly';
+  type: 'daily' | 'weekly' | 'progressive';
   xpReward: number;
   completed: boolean;
   completedAt?: Date;
   userId: string;
   lastReset?: Date;
+  target?: number;
+  currentProgress?: number;
+  progressType?: 'pages' | 'favorites' | 'borrows';
 }
 
 interface Achievement {
@@ -55,6 +58,17 @@ export const useTasks = () => {
   return context;
 };
 
+const getNewTaskTemplate = (existingTaskIds: string[], type: 'daily' | 'weekly' | 'progressive'): Omit<Task, 'userId' | 'completed' | 'completedAt' | 'lastReset'> | undefined => {
+  const availableTemplates = allTaskTemplatesState.filter(
+    (template) => template.type === type && !existingTaskIds.includes(template.id)
+  );
+  if (availableTemplates.length > 0) {
+    const randomIndex = Math.floor(Math.random() * availableTemplates.length);
+    return availableTemplates[randomIndex];
+  }
+  return undefined;
+};
+
 const calculateLevel = (totalXP: number): UserProgress => {
   const baseXP = 100;
   const multiplier = 1.5;
@@ -76,96 +90,9 @@ const calculateLevel = (totalXP: number): UserProgress => {
   };
 };
 
-const defaultTasks = [
-  {
-    id: 'daily-reading',
-    title: 'Günlük Okuma',
-    description: 'En az 30 dakika kitap okuyun',
-    type: 'daily' as const,
-    xpReward: 50
-  },
-  {
-    id: 'daily-catalog-browse',
-    title: 'Katalog İncelemesi',
-    description: 'Kütüphane kataloğunu inceleyin ve yeni kitaplar keşfedin',
-    type: 'daily' as const,
-    xpReward: 25
-  },
-  {
-    id: 'daily-library-visit',
-    title: 'Kütüphane Ziyareti',
-    description: 'Kütüphaneyi ziyaret edin ve çalışma alanlarını kullanın',
-    type: 'daily' as const,
-    xpReward: 40
-  },
-  {
-    id: 'weekly-book-finish',
-    title: 'Kitap Bitirme',
-    description: 'Bir kitabı tamamlayın',
-    type: 'weekly' as const,
-    xpReward: 200
-  },
-  
-  {
-    id: 'weekly-book-review',
-    title: 'Kitap İncelemesi',
-    description: 'Okuduğunuz bir kitap hakkında detaylı inceleme yazın',
-    type: 'weekly' as const,
-    xpReward: 100
-  },
-  {
-    id: 'weekly-research',
-    title: 'Araştırma Projesi',
-    description: 'Kütüphane kaynaklarını kullanarak bir araştırma projesi yapın',
-    type: 'weekly' as const,
-    xpReward: 180
-  }
-];
 
-const achievementTemplates = [
-  {
-    level: 5,
-    title: 'Yeni Başlayan',
-    description: '5. seviyeye ulaştığınız için bu başarımı almaya hak kazandınız.',
-    icon: '🌱',
-    xpReward: 100
-  },
-  {
-    level: 10,
-    title: 'Orta Okuyucu',
-    description: '10. seviyeye ulaştığınız için bu başarımı almaya hak kazandınız.',
-    icon: '📚',
-    xpReward: 200
-  },
-  {
-    level: 15,
-    title: 'Deneyimli Okuyucu',
-    description: '15. seviyeye ulaştığınız için bu başarımı almaya hak kazandınız.',
-    icon: '🎓',
-    xpReward: 300
-  },
-  {
-    level: 20,
-    title: 'Kitap Kurdu',
-    description: '20. seviyeye ulaştığınız için bu başarımı almaya hak kazandınız.',
-    icon: '🐛',
-    xpReward: 400
-  },
-  {
-    level: 25,
-    title: 'Bilge Okuyucu',
-    description: '25. seviyeye ulaştığınız için bu başarımı almaya hak kazandınız.',
-    icon: '🦉',
-    xpReward: 500
-  },
-  {
-    level: 30,
-    title: 'Kütüphane Ustası',
-    description: '30. seviyeye ulaştığınız için bu başarımı almaya hak kazandınız.',
-    icon: '👑',
-    xpReward: 600
-  }
-];
+
+
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -176,7 +103,33 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     nextLevelXP: 100, 
     totalXP: 0 
   });
+  const [allTaskTemplatesState, setAllTaskTemplatesState] = useState<Omit<Task, 'userId' | 'completed' | 'completedAt' | 'lastReset' | 'currentProgress'>[]>([]);
+  const [achievementTemplatesState, setAchievementTemplatesState] = useState<Omit<Achievement, 'completed' | 'completedAt' | 'userId'>[]>([]);
   const { user, userData } = useAuth();
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      // Fetch task templates
+      const taskTemplatesCol = collection(db, 'taskTemplates');
+      const taskTemplatesSnapshot = await getDocs(taskTemplatesCol);
+      const loadedTaskTemplates = taskTemplatesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Omit<Task, 'userId' | 'completed' | 'completedAt' | 'lastReset' | 'currentProgress'>[];
+      setAllTaskTemplatesState(loadedTaskTemplates);
+
+      // Fetch achievement templates
+      const achievementTemplatesCol = collection(db, 'achievementTemplates');
+      const achievementTemplatesSnapshot = await getDocs(achievementTemplatesCol);
+      const loadedAchievementTemplates = achievementTemplatesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Omit<Achievement, 'completed' | 'completedAt' | 'userId'>[];
+      setAchievementTemplatesState(loadedAchievementTemplates);
+    };
+
+    fetchTemplates();
+  }, []); // Run once on mount
 
   useEffect(() => {
     if (!user) return;
@@ -196,24 +149,65 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
 
     try {
-      // Check if user already has tasks
       const tasksRef = collection(db, 'userTasks');
       const q = query(tasksRef, where('userId', '==', user.uid));
       const existingTasks = await getDocs(q);
 
       if (existingTasks.empty) {
-        // Create default tasks for new user
         const batch = [];
-        for (const task of defaultTasks) {
-          const taskRef = doc(db, 'userTasks', `${user.uid}_${task.id}`);
-          batch.push(setDoc(taskRef, {
-            ...task,
-            userId: user.uid,
-            completed: false,
-            createdAt: serverTimestamp(),
-            lastReset: serverTimestamp()
-          }));
+        const assignedTaskIds: string[] = [];
+
+        // Assign initial daily tasks (e.g., 2)
+        for (let i = 0; i < 2; i++) {
+          const newTaskTemplate = getNewTaskTemplate(assignedTaskIds, 'daily');
+          if (newTaskTemplate) {
+            const taskRef = doc(db, 'userTasks', `${user.uid}_${newTaskTemplate.id}`);
+            batch.push(setDoc(taskRef, {
+              ...newTaskTemplate,
+              userId: user.uid,
+              completed: false,
+              createdAt: serverTimestamp(),
+              lastReset: serverTimestamp(),
+              currentProgress: newTaskTemplate.currentProgress || 0,
+            }));
+            assignedTaskIds.push(newTaskTemplate.id);
+          }
         }
+
+        // Assign initial weekly tasks (e.g., 1)
+        for (let i = 0; i < 1; i++) {
+          const newTaskTemplate = getNewTaskTemplate(assignedTaskIds, 'weekly');
+          if (newTaskTemplate) {
+            const taskRef = doc(db, 'userTasks', `${user.uid}_${newTaskTemplate.id}`);
+            batch.push(setDoc(taskRef, {
+              ...newTaskTemplate,
+              userId: user.uid,
+              completed: false,
+              createdAt: serverTimestamp(),
+              lastReset: serverTimestamp(),
+              currentProgress: newTaskTemplate.currentProgress || 0,
+            }));
+            assignedTaskIds.push(newTaskTemplate.id);
+          }
+        }
+
+        // Assign initial progressive tasks (e.g., 1)
+        for (let i = 0; i < 1; i++) {
+          const newTaskTemplate = getNewTaskTemplate(assignedTaskIds, 'progressive');
+          if (newTaskTemplate) {
+            const taskRef = doc(db, 'userTasks', `${user.uid}_${newTaskTemplate.id}`);
+            batch.push(setDoc(taskRef, {
+              ...newTaskTemplate,
+              userId: user.uid,
+              completed: false,
+              createdAt: serverTimestamp(),
+              lastReset: serverTimestamp(),
+              currentProgress: newTaskTemplate.currentProgress || 0,
+            }));
+            assignedTaskIds.push(newTaskTemplate.id);
+          }
+        }
+
         await Promise.all(batch);
       }
     } catch (error) {
@@ -228,40 +222,81 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const tasksRef = collection(db, 'userTasks');
       const q = query(tasksRef, where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
-      
+
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const currentWeekStart = new Date(today);
       currentWeekStart.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
 
-      querySnapshot.forEach(async (taskDoc) => {
-        const data = taskDoc.data();
+      const tasksToUpdate: Promise<void>[] = [];
+      const tasksToDelete: string[] = [];
+      const tasksToAdd: Task[] = [];
+      const currentActiveTaskIds = tasks.map(t => t.id);
+
+      querySnapshot.forEach((taskDoc) => {
+        const data = taskDoc.data() as Task; // Cast to Task for type safety
         const lastReset = data.lastReset?.toDate() || new Date(0);
-        
+
+        let shouldReset = false;
         if (data.type === 'daily') {
           const lastResetDate = new Date(lastReset.getFullYear(), lastReset.getMonth(), lastReset.getDate());
           if (lastResetDate < today) {
-            // Reset daily task
-            await updateDoc(taskDoc.ref, {
-              completed: false,
-              completedAt: null,
-              lastReset: serverTimestamp()
-            });
+            shouldReset = true;
           }
         } else if (data.type === 'weekly') {
           const lastResetWeekStart = new Date(lastReset);
           lastResetWeekStart.setDate(lastReset.getDate() - lastReset.getDay());
-          
+
           if (lastResetWeekStart < currentWeekStart) {
-            // Reset weekly task
-            await updateDoc(taskDoc.ref, {
-              completed: false,
-              completedAt: null,
-              lastReset: serverTimestamp()
-            });
+            shouldReset = true;
           }
         }
+
+        if (shouldReset) {
+          tasksToDelete.push(taskDoc.id); // Mark old task for deletion
+
+          // Get a new task of the same type
+          const newTaskTemplate = getNewTaskTemplate(currentActiveTaskIds.concat(tasksToAdd.map(t => t.id)), data.type);
+          if (newTaskTemplate) {
+            const newTaskId = `${user.uid}_${newTaskTemplate.id}_${Date.now()}`; // Unique ID for the new task
+            const newTask: Task = {
+              ...newTaskTemplate,
+              id: newTaskId,
+              userId: user.uid,
+              completed: false,
+              createdAt: new Date(),
+              lastReset: new Date(),
+              currentProgress: newTaskTemplate.currentProgress || 0,
+            } as Task;
+            tasksToAdd.push(newTask);
+            tasksToUpdate.push(setDoc(doc(db, 'userTasks', newTaskId), {
+              ...newTask,
+              createdAt: serverTimestamp(),
+              lastReset: serverTimestamp(),
+            }));
+          } else {
+            console.warn(`No new task template found for type ${data.type} to replace ${data.title} during reset.`);
+          }
+        } else {
+          // Keep existing tasks that don't need reset
+          tasksToAdd.push({
+            id: taskDoc.id,
+            ...data,
+            completedAt: data.completedAt?.toDate(),
+            lastReset: data.lastReset?.toDate(),
+          } as Task);
+        }
       });
+
+      // Execute all Firestore operations
+      await Promise.all(tasksToUpdate);
+      for (const taskId of tasksToDelete) {
+        await deleteDoc(doc(db, 'userTasks', taskId));
+      }
+
+      // Update local state
+      setTasks(tasksToAdd);
+
     } catch (error) {
       console.error('Error checking and resetting tasks:', error);
     }
@@ -339,7 +374,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check if user reached a milestone level (every 5 levels)
     if (newLevel % 5 === 0) {
-      const achievementTemplate = achievementTemplates.find(a => a.level === newLevel);
+      const achievementTemplate = achievementTemplatesState.find(a => a.level === newLevel);
       if (achievementTemplate) {
         // Check if achievement already exists
         const existingAchievement = achievements.find(a => a.level === newLevel);
@@ -400,26 +435,60 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userRef = doc(db, 'users', user.uid);
       const newTotalXP = userProgress.totalXP + task.xpReward;
       const newProgress = calculateLevel(newTotalXP);
-      
+
       await updateDoc(userRef, {
         totalXP: newTotalXP,
         level: newProgress.level,
       });
 
-      // Update local state
-      setTasks(prev => prev.map(t => 
-        t.id === taskId 
+      // --- Dynamic Task Replacement Logic ---
+      let updatedTasks = tasks.map(t =>
+        t.id === taskId
           ? { ...t, completed: true, completedAt: new Date() }
           : t
-      ));
+      );
 
+      if (task.type === 'daily' || task.type === 'weekly') {
+        // Find a new task of the same type
+        const existingTaskIds = updatedTasks.map(t => t.id);
+        const newTaskTemplate = getNewTaskTemplate(existingTaskIds, task.type);
+
+        if (newTaskTemplate) {
+          // Remove the completed task and add the new one
+          updatedTasks = updatedTasks.filter(t => t.id !== taskId);
+
+          const newTaskId = `${user.uid}_${newTaskTemplate.id}_${Date.now()}`; // Unique ID for the new task
+          const newTask: Task = {
+            ...newTaskTemplate,
+            id: newTaskId,
+            userId: user.uid,
+            completed: false,
+            createdAt: new Date(),
+            lastReset: new Date(),
+            currentProgress: newTaskTemplate.currentProgress || 0,
+          } as Task;
+
+          const newTaskRef = doc(db, 'userTasks', newTaskId);
+          await setDoc(newTaskRef, {
+            ...newTask,
+            createdAt: serverTimestamp(),
+            lastReset: serverTimestamp(),
+          });
+
+          updatedTasks.push(newTask);
+        } else {
+          console.warn(`No new task template found for type ${task.type} to replace ${task.title}.`);
+        }
+      }
+      // Progressive tasks are not replaced immediately upon completion,
+      // they just stay completed. New progressive tasks are assigned during initialization or specific events.
+
+      setTasks(updatedTasks);
       setUserProgress(newProgress);
 
       // Show level up notification if applicable
       if (newProgress.level > userProgress.level) {
         alert(`🎉 Tebrikler! Seviye ${newProgress.level}'e yükseldiniz!`);
-        
-        // Check for new achievements
         await checkForNewAchievements(newProgress.level);
       }
     } catch (error) {

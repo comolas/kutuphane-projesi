@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, doc, addDoc, serverTimestamp, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc, serverTimestamp, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
 import { Magazine } from '../types';
@@ -28,13 +28,18 @@ export const MagazineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { user } = useAuth();
 
   const fetchMagazines = useCallback(async () => {
+    if (!user) {
+      console.warn("User not authenticated, skipping magazine fetch.");
+      return;
+    }
     try {
       const magazinesCollectionRef = collection(db, "magazines");
       const reviewsCollectionRef = collection(db, "reviews");
+      const approvedReviewsQuery = query(reviewsCollectionRef, where("status", "==", "approved"));
 
       const [magazinesSnapshot, reviewsSnapshot] = await Promise.all([
         getDocs(magazinesCollectionRef),
-        getDocs(reviewsCollectionRef)
+        user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] })
       ]);
 
       const reviewsData = reviewsSnapshot.docs.map(doc => doc.data());
@@ -57,7 +62,7 @@ export const MagazineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error("Error fetching magazines:", error);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (user) {

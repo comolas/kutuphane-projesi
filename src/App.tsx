@@ -26,6 +26,7 @@ import CollectionDistributionPage from './pages/CollectionDistributionPage';
 import FavoritesPage from './pages/FavoritesPage';
 import AuthorsPage from './pages/AuthorsPage';
 import AuthorDetailsPage from './pages/AuthorDetailsPage';
+import ProgressPage from './pages/ProgressPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth(); // useAuth is now available because it's inside AuthProvider
@@ -62,6 +63,7 @@ const AppContent = () => {
           <Route path="/collection-distribution" element={<PrivateRoute><CollectionDistributionPage /></PrivateRoute>} />
           <Route path="/yazarlar" element={<PrivateRoute><AuthorsPage /></PrivateRoute>} />
           <Route path="/author/:id" element={<PrivateRoute><AuthorDetailsPage /></PrivateRoute>} />
+          <Route path="/progress" element={<PrivateRoute><ProgressPage /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>

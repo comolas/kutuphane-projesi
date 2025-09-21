@@ -101,10 +101,11 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const booksCollectionRef = collection(db, "books");
           const reviewsCollectionRef = collection(db, "reviews");
+          const approvedReviewsQuery = query(reviewsCollectionRef, where("status", "==", "approved"));
 
           const [booksSnapshot, reviewsSnapshot] = await Promise.all([
             getDocs(booksCollectionRef),
-            getDocs(reviewsCollectionRef)
+            user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] })
           ]);
 
           const reviewsData = reviewsSnapshot.docs.map(doc => doc.data());
