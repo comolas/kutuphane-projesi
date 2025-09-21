@@ -63,7 +63,8 @@
     "files": [
       "dist/**/*",
       "electron.cjs",
-      "package.json"
+      "package.json",
+      "preload.cjs"
     ],
     "win": {
       "target": "nsis"

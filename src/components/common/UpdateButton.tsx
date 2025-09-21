@@ -4,10 +4,6 @@ import { useUpdate } from '../../contexts/UpdateContext';
 const UpdateButton: React.FC = () => {
   const { isUpdateAvailable, isUpdateDownloaded, downloadProgress, downloadUpdate, installUpdate } = useUpdate();
 
-  if (!isUpdateAvailable && !isUpdateDownloaded) {
-    return null; // Don't render button if no update is available or downloaded
-  }
-
   let buttonText = 'Uygulamayı Güncelle';
   let buttonColorClass = 'bg-blue-500 hover:bg-blue-700'; // Default blue
 
@@ -21,6 +17,9 @@ const UpdateButton: React.FC = () => {
   } else if (isUpdateDownloaded) {
     buttonText = 'Kurulum İçin Yeniden Başlat';
     buttonColorClass = 'bg-green-600 hover:bg-green-800'; // Darker green for downloaded
+  } else { // Added this else block for when no update is available or downloaded
+    buttonText = 'Uygulama Güncel'; // Or 'Güncelleme Yok'
+    buttonColorClass = 'bg-gray-500 hover:bg-gray-600'; // Gray for up-to-date
   }
 
   const handleClick = () => {
