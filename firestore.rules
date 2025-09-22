@@ -305,6 +305,15 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // App Info collection rules (for version checking)
+    match /appInfo/{docId} {
+      // Allow anyone to read app information (like version number)
+      allow read: if true;
+      
+      // Only admins can write to this collection
+      allow write: if isAdmin();
+    }
+
     // Allow admin to read all collections for reporting
     match /{document=**} {
       allow read: if isAdmin();

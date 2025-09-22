@@ -2,55 +2,101 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const path = require('path');
-const { ipcMain } = require('electron'); // Added ipcMain
+const { ipcMain } = require('electron');
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, getDoc } = require('firebase/firestore');
 
-let mainWindow; // Declared mainWindow globally
+// --- Firebase Configuration ---
+const firebaseConfig = {
+  apiKey: "AIzaSyD8YMDfxMgJkIyTI9WCtZRfXthUUpP5vPM",
+  authDomain: "data-49543.firebaseapp.com",
+  projectId: "data-49543",
+  storageBucket: "data-49543.appspot.com",
+  messagingSenderId: "172190505514",
+  appId: "1:172190505514:web:4b222b7ce52dbaeddb0153"
+};
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+// --- End of Firebase Configuration ---
+
+let mainWindow;
 
 function createWindow(isDev) {
-  mainWindow = new BrowserWindow({ // Assigned to global mainWindow
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.cjs') // Added preload script
+      preload: path.join(__dirname, 'preload.cjs')
     },
   });
 
-  // The port 5173 is hardcoded, but vite might use another one if it's busy.
   const startUrl = isDev ? 'http://localhost:5173' : `file://${path.join(__dirname, 'dist', 'index.html')}`;
   
   mainWindow.loadURL(startUrl);
 
-  // Open DevTools only in development
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }
 }
 
+// --- Custom Update Check Function ---
+async function checkForUpdatesFromFirebase() {
+  try {
+    const versionDocRef = doc(db, 'appInfo', 'version');
+    const docSnap = await getDoc(versionDocRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const latestVersion = data.latestVersion;
+      const currentVersion = app.getVersion();
+
+      console.log(`Current version: ${currentVersion}, Latest version from Firebase: ${latestVersion}`);
+
+      // Simple version comparison
+      if (latestVersion > currentVersion) {
+        console.log('Firebase: Update available.');
+        // Pass info object similar to electron-updater's
+        mainWindow.webContents.send('update_available', { version: latestVersion });
+      } else {
+        console.log('Firebase: Update not available.');
+        mainWindow.webContents.send('update_not_available');
+      }
+    } else {
+      console.log('Firebase: "appInfo/version" document not found.');
+      mainWindow.webContents.send('update_not_available');
+    }
+  } catch (error) {
+    console.error('Error checking for updates from Firebase:', error);
+    // If there's an error, assume no update is available to prevent issues
+    mainWindow.webContents.send('update_not_available');
+  }
+}
+
+
 app.whenReady().then(() => {
   const isDev = !app.isPackaged;
   createWindow(isDev);
 
-  // Only require and check for updates in a packaged app
   if (!isDev) {
     const { autoUpdater } = require('electron-updater');
-
-    // Set auto download to false so we can control the update process
     autoUpdater.autoDownload = false;
 
-    // Check for updates on app start
-    autoUpdater.checkForUpdates();
+    // --- Replaced original check with Firebase check ---
+    checkForUpdatesFromFirebase();
 
-    // Event listeners for autoUpdater
+    // Event listeners for autoUpdater (still used for download/install)
     autoUpdater.on('update-available', (info) => {
-      console.log('Update available:', info);
-      mainWindow.webContents.send('update_available', info);
+      // This event might still be triggered if checkForUpdates() is called elsewhere,
+      // but our primary check is now Firebase. We can choose to ignore it or log it.
+      console.log('Default updater: Update available. Source:', info);
     });
 
     autoUpdater.on('update-not-available', () => {
-      console.log('Update not available.');
-      mainWindow.webContents.send('update_not_available');
+      console.log('Default updater: Update not available.');
     });
 
     autoUpdater.on('download-progress', (progressObj) => {
@@ -68,12 +114,11 @@ app.whenReady().then(() => {
       mainWindow.webContents.send('update_error', err.message);
     });
 
-    // Listen for renderer process to request update download
     ipcMain.on('download_update', () => {
+      // Manually trigger the download from the default provider (GitHub)
       autoUpdater.downloadUpdate();
     });
 
-    // Listen for renderer process to request update installation
     ipcMain.on('install_update', () => {
       autoUpdater.quitAndInstall();
     });
