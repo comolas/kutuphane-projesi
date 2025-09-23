@@ -13,10 +13,6 @@ import ReviewModal from '../components/common/ReviewModal';
 const CatalogPage: React.FC = () => {
   const navigate = useNavigate();
   const { allBooks, borrowBook, isBorrowed, isBookBorrowed, getBookStatus, borrowMessages } = useBooks();
-
-const CatalogPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { allBooks, borrowBook, isBorrowed, isBookBorrowed, getBookStatus } = useBooks();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [tagQuery, setTagQuery] = useState('');
