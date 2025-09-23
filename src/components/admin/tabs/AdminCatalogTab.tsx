@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Book, Users } from '../../../types';
 import { useBooks } from '../../../contexts/BookContext';
-import { Search, Plus, BookOpen, Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Search, Plus, BookOpen, Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
 import LendBookModal from '../LendBookModal';
 import EditBookModal from '../EditBookModal';
 import BulkAddBookModal from '../BulkAddBookModal';
@@ -439,9 +439,184 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       </div>
 
       {showAddBookModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Yeni Kitap Ekle</h3>
+              <button
+                onClick={() => setShowManualAddModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleAddBook} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700">Kitap Adı</label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={newBook.title}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="author" className="block text-sm font-medium text-gray-700">Yazar</label>
+                <input
+                  type="text"
+                  id="author"
+                  name="author"
+                  value={newBook.author}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700">Kategori</label>
+                <input
+                  type="text"
+                  id="category"
+                  name="category"
+                  value={newBook.category}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="publisher" className="block text-sm font-medium text-gray-700">Yayıncı</label>
+                <input
+                  type="text"
+                  id="publisher"
+                  name="publisher"
+                  value={newBook.publisher}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700">Konum</label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={newBook.location}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700">Sayfa Sayısı</label>
+                <input
+                  type="number"
+                  id="pageCount"
+                  name="pageCount"
+                  value={newBook.pageCount}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">Kapak Resmi URL</label>
+                <input
+                  type="url"
+                  id="coverImage"
+                  name="coverImage"
+                  value={newBook.coverImage}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label htmlFor="backCover" className="block text-sm font-medium text-gray-700">Arka Kapak Açıklaması</label>
+                <textarea
+                  id="backCover"
+                  name="backCover"
+                  value={newBook.backCover}
+                  onChange={handleNewBookChange}
+                  rows={3}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="dimensions" className="block text-sm font-medium text-gray-700">Boyut</label>
+                <input
+                  type="text"
+                  id="dimensions"
+                  name="dimensions"
+                  value={newBook.dimensions}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: 20x13 cm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="weight" className="block text-sm font-medium text-gray-700">Ağırlık</label>
+                <input
+                  type="text"
+                  id="weight"
+                  name="weight"
+                  value={newBook.weight}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: 250g"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="binding" className="block text-sm font-medium text-gray-700">Cilt Türü</label>
+                <input
+                  type="text"
+                  id="binding"
+                  name="binding"
+                  value={newBook.binding}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: Karton Kapak"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Etiketler (virgülle ayırın)</label>
+                <input
+                  type="text"
+                  id="tags"
+                  name="tags"
+                  value={newBook.tags}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: macera, gençlik, fantastik"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowManualAddModal(false)}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  Kitabı Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showBulkAddModal && (
         <BulkAddBookModal
-          isOpen={showAddBookModal}
-          onClose={() => setShowAddBookModal(false)}
+          isOpen={showBulkAddModal}
+          onClose={() => setShowBulkAddModal(false)}
           onBookAdded={() => {
             refetchAllBooks();
           }}
