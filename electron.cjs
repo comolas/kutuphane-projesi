@@ -86,7 +86,10 @@ app.whenReady().then(() => {
     autoUpdater.autoDownload = false;
 
     // --- Replaced original check with Firebase check ---
-    checkForUpdatesFromFirebase();
+    // Wait for the window to finish loading before checking for updates
+    mainWindow.webContents.on('did-finish-load', () => {
+      checkForUpdatesFromFirebase();
+    });
 
     // Event listeners for autoUpdater (still used for download/install)
     autoUpdater.on('update-available', (info) => {
