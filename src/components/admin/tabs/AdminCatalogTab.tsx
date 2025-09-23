@@ -27,7 +27,8 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   const [catalogStatusFilter, setCatalogStatusFilter] = useState<'all' | 'available' | 'borrowed' | 'lost'>('all');
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState('all');
-  const [showAddBookModal, setShowAddBookModal] = useState(false);
+  const [showManualAddModal, setShowManualAddModal] = useState(false);
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false);
   const [showLendBookModal, setShowLendBookModal] = useState(false);
   const [selectedBookToLend, setSelectedBookToLend] = useState<Book | null>(null);
   const [showEditBookModal, setShowEditBookModal] = useState(false);
@@ -35,8 +36,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
-  const [showManualAddModal, setShowManualAddModal] = useState(false);
-  const [showBulkAddModal, setShowBulkAddModal] = useState(false);
+  const [showAddBookModal, setShowAddBookModal] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1);
