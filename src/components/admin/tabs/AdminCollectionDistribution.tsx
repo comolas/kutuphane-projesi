@@ -105,7 +105,9 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
     <>
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-          <PieChart className="w-6 h-6 mr-2 text-indigo-600" />
+          <PieChart className="w-6 h-6 mr-2 text-indigo-600"
+  )
+} />
           Eser Dağılım Analizi
         </h2>
         <p className="text-gray-600">
