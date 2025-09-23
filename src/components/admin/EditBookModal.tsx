@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { Book } from '../../types';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeScanType } from 'html5-qrcode';
 
 interface EditBookModalProps {
   isOpen: boolean;
@@ -60,21 +60,47 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
       scanner.stop().catch(err => console.error("Failed to stop scanner", err));
     };
 
-    const onScanFailure = (error: string) => { console.error('Scan failed:', error); };
+    const onScanFailure = (error: string) => {
+      // QR kod bulunamadığında sürekli hata mesajı vermemesi için sessiz geç
+      // Sadece kritik hataları logla
+      if (!error.includes('NotFoundException') && !error.includes('No MultiFormat Readers')) {
+        console.error('Scan failed:', error);
+      }
+    };
 
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    const config = { 
+      fps: 10, 
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0,
+      disableFlip: false,
+      supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+    };
 
     let cleanup = () => {};
 
     Html5Qrcode.getCameras().then(cameras => {
         if (cameras && cameras.length) {
-            scanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-              .catch(err => console.error("Unable to start scanning", err));
+            // Önce arka kamerayı dene, yoksa ön kamerayı kullan
+            const cameraId = cameras.find(camera => 
+              camera.label.toLowerCase().includes('back') || 
+              camera.label.toLowerCase().includes('rear')
+            )?.id || cameras[0].id;
+            
+            scanner.start(cameraId, config, onScanSuccess, onScanFailure)
+              .catch(err => {
+                console.error("Unable to start scanning", err);
+                setApiMessage('Kamera erişimi sağlanamadı. Lütfen kamera izinlerini kontrol edin.');
+                setIsScanning(false);
+              });
             cleanup = () => {
                 scanner.stop().catch(err => console.error("Failed to stop scanner on cleanup", err));
             };
         }
-    }).catch(err => console.error("Error getting cameras", err));
+    }).catch(err => {
+      console.error("Error getting cameras", err);
+      setApiMessage('Kamera bulunamadı. Lütfen cihazınızda kamera olduğundan emin olun.');
+      setIsScanning(false);
+    });
 
     return cleanup;
   }, [isScanning, fetchBookData]);
@@ -113,10 +139,33 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
         </div>
         {isScanning && (
           <div className="p-6">
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">QR Kod Tarama İpuçları:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• QR kodu kamera görüş alanının ortasına yerleştirin</li>
+                <li>• Yeterli ışık olduğundan emin olun</li>
+                <li>• Kamerayı QR koddan 10-30 cm uzakta tutun</li>
+                <li>• QR kod net ve buruşuk olmadığından emin olun</li>
+              </ul>
+            </div>
             <div id="reader" style={{ width: '100%' }}></div>
-            <button onClick={() => setIsScanning(false)} className="mt-4 w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              Taramayı İptal Et
-            </button>
+            <div className="mt-4 flex space-x-2">
+              <button 
+                onClick={() => setIsScanning(false)} 
+                className="flex-1 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Taramayı İptal Et
+              </button>
+              <button 
+                onClick={() => {
+                  setIsScanning(false);
+                  setTimeout(() => setIsScanning(true), 100);
+                }} 
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Yeniden Başlat
+              </button>
+            </div>
           </div>
         )}
         <form onSubmit={handleSubmit} className={`p-6 grid grid-cols-1 md:grid-cols-2 gap-4 ${isScanning ? 'hidden' : ''}`}>
