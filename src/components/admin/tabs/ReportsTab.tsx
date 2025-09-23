@@ -141,12 +141,12 @@ const ReportsTab: React.FC = () => {
         
         let amount = 0;
         allBorrowedData.forEach(borrow => {
-          if (borrow.fineStatus === 'paid' && borrow.returnDate) {
+          if (borrow.fineStatus === 'paid' && borrow.paymentDate) {
             let returnDate: Date;
-            if (typeof borrow.returnDate.toDate === 'function') {
-              returnDate = borrow.returnDate.toDate();
+            if (typeof borrow.paymentDate.toDate === 'function') {
+              returnDate = borrow.paymentDate.toDate();
             } else {
-              returnDate = new Date(borrow.returnDate);
+              returnDate = new Date(borrow.paymentDate);
             }
 
             if (!isNaN(returnDate.getTime())) {
