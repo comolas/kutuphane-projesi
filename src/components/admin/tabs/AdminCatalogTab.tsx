@@ -27,7 +27,8 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   const [catalogStatusFilter, setCatalogStatusFilter] = useState<'all' | 'available' | 'borrowed' | 'lost'>('all');
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState('all');
-  const [showAddBookModal, setShowAddBookModal] = useState(false);
+  const [showManualAddModal, setShowManualAddModal] = useState(false);
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false);
   const [showLendBookModal, setShowLendBookModal] = useState(false);
   const [selectedBookToLend, setSelectedBookToLend] = useState<Book | null>(null);
   const [showEditBookModal, setShowEditBookModal] = useState(false);
@@ -466,13 +467,22 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       {showEditBookModal && selectedBookToEdit && (
         <EditBookModal
           isOpen={showEditBookModal}
-          onClose={() => {
-            setShowEditBookModal(false);
-            setSelectedBookToEdit(null);
-          }}
-          book={selectedBookToEdit}
-          onSave={handleSaveBook}
-        />
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setShowManualAddModal(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Yeni Kitap Ekle
+          </button>
+          <button
+            onClick={() => setShowBulkAddModal(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Toplu Kitap Ekle
+          </button>
+        </div>
       )}
     </div>
   );
