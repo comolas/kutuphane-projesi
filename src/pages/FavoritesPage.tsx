@@ -17,7 +17,7 @@ interface FavoriteBook extends BookType {
 const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getBookStatus, borrowBook, isBorrowed } = useBooks();
+  const { getBookStatus, borrowBook, isBorrowed, borrowMessages } = useBooks();
   const [favoriteBooks, setFavoriteBooks] = useState<FavoriteBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +107,7 @@ const FavoritesPage: React.FC = () => {
     try {
       setError(null);
       await borrowBook(book);
-      setSuccessMessage('Kitap başarıyla ödünç alındı!');
+      setSuccessMessage('Ödünç alma talebiniz gönderildi! Admin onayından sonra kitap size ödünç verilecektir.');
     } catch (err: any) {
       console.error('Error borrowing book:', err);
       setError(err.message || 'Kitap ödünç alınırken bir hata oluştu.');
@@ -270,7 +270,11 @@ const FavoritesPage: React.FC = () => {
               {paginatedBooks.map(book => {
                 const bookStatus = getBookStatus(book.id);
                 const userBorrowed = isBorrowed(book.id);
-                const isPending = userBorrowed && book.borrowStatus === 'pending';
+                const hasPendingRequest = borrowMessages.some(m => 
+                  m.bookId === book.id && 
+                  m.userId === user?.uid && 
+                  m.status === 'pending'
+                );
 
                 return (
                   <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
@@ -296,7 +300,7 @@ const FavoritesPage: React.FC = () => {
                       <div className="flex-grow mt-3 flex flex-col justify-end">
                         <div className="flex justify-between items-center mb-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            isPending
+                            hasPendingRequest
                               ? 'bg-yellow-100 text-yellow-800'
                               : bookStatus === 'lost'
                               ? 'bg-red-100 text-red-800'
@@ -304,7 +308,7 @@ const FavoritesPage: React.FC = () => {
                               ? 'bg-orange-100 text-orange-800'
                               : 'bg-green-100 text-green-800'
                           }`}>
-                            {isPending 
+                            {hasPendingRequest 
                               ? 'Onay Bekliyor' 
                               : bookStatus === 'lost' 
                               ? 'Kayıp' 
@@ -316,7 +320,7 @@ const FavoritesPage: React.FC = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                         </div>
-                        {bookStatus === 'available' && !isPending && (
+                        {bookStatus === 'available' && !hasPendingRequest && (
                           <button
                             onClick={() => handleBorrowRequest(book)}
                             className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"

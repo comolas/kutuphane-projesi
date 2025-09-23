@@ -418,12 +418,22 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [allBorrowedBooks]);
 
   const isBorrowed = useCallback((bookId: string) => {
+    // Check if user has a pending request for this book
+    const hasPendingRequest = borrowMessages.some(m => 
+      m.bookId === bookId && 
+      m.userId === user?.uid && 
+      m.status === 'pending'
+    );
+    
+    if (hasPendingRequest) return true;
+    
+    // Check if user has an approved borrow for this book
     return borrowedBooks.some(book => 
       book.id === bookId && 
       book.returnStatus === 'borrowed' &&
       book.borrowStatus === 'approved'
     );
-  }, [borrowedBooks]);
+  }, [borrowedBooks, borrowMessages, user]);
 
   const borrowBook = useCallback(async (book: Book) => {
     if (!user || !userData) return;
@@ -436,53 +446,48 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Bu kitap zaten başka bir kullanıcı tarafından ödünç alınmış.');
     }
 
-    try {
-      const borrowedAt = new Date();
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 14);
+    // Check if user already has a pending request for this book
+    const existingRequest = borrowMessages.find(m => 
+      m.bookId === book.id && 
+      m.userId === user.uid && 
+      m.status === 'pending'
+    );
+    
+    if (existingRequest) {
+      throw new Error('Bu kitap için zaten bekleyen bir talebiniz var.');
+    }
 
-      const borrowedBookRef = doc(db, 'borrowedBooks', `${user.uid}_${book.id}`);
-      await setDoc(borrowedBookRef, {
+    try {
+      // Create a borrow request instead of directly borrowing
+      await addDoc(collection(db, 'borrowMessages'), {
         userId: user.uid,
         bookId: book.id,
-        book: book,
-        borrowedAt: serverTimestamp(),
-        dueDate,
-        extended: false,
-        returnStatus: 'borrowed',
-        borrowStatus: 'approved',
-        fineStatus: 'pending'
-      });
-      
-      const statusRef = doc(db, 'bookStatuses', book.id);
-      await setDoc(statusRef, {
-        status: 'borrowed',
-        updatedAt: serverTimestamp(),
-        updatedBy: user?.uid
-      });
-
-      setBookStatuses(prev => ({
-        ...prev,
-        [book.id]: 'borrowed'
-      }));
-
-      const newBorrowedBook: BorrowedBook = {
-        ...book,
-        borrowedAt,
-        dueDate,
-        extended: false,
-        borrowedBy: user.uid,
-        borrowStatus: 'approved',
-        returnStatus: 'borrowed',
-         userData: {
+        createdAt: serverTimestamp(),
+        status: 'pending',
+        userData: {
           displayName: userData.displayName,
           studentClass: userData.studentClass,
           studentNumber: userData.studentNumber
-        }
-      };
+        },
+        bookData: book
+      });
 
-      setBorrowedBooks(prev => [...prev, newBorrowedBook]);
-      setAllBorrowedBooks(prev => [...prev, newBorrowedBook]);
+      // Refresh borrow messages to show the new request
+      const messagesRef = collection(db, 'borrowMessages');
+      const q = query(messagesRef, where('status', '==', 'pending'));
+      const querySnapshot = await getDocs(q);
+      
+      const messages: BorrowMessage[] = [];
+      querySnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        messages.push({
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt.toDate()
+        } as BorrowMessage);
+      });
+      
+      setBorrowMessages(messages);
 
     } catch (error) {
       console.error('Error borrowing book:', error);
