@@ -671,8 +671,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : book
         );
 
-      setBorrowedBooks(updateBooks);
-      setAllBorrowedBooks(updateBooks);
+      setBorrowedBooks(prev => updateBooks(prev));
+      setAllBorrowedBooks(prev => updateBooks(prev));
     } catch (error) {
       console.error('Ceza ödemesi işlenirken hata oluştu:', error);
       throw error;

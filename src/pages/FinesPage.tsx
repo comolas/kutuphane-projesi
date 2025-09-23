@@ -6,7 +6,7 @@ import { useBooks } from '../contexts/BookContext';
 
 const FinesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { borrowedBooks } = useBooks();
+  const { borrowedBooks, allBorrowedBooks } = useBooks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'unpaid' | 'paid'>('unpaid');
 
@@ -21,7 +21,11 @@ const FinesPage: React.FC = () => {
   };
 
   const { unpaidFines, paidFines } = useMemo(() => {
-    const allFines = borrowedBooks
+    // Use allBorrowedBooks to get the most up-to-date data including admin updates
+    const userBooks = allBorrowedBooks.filter(book => book.borrowedBy === borrowedBooks[0]?.borrowedBy);
+    const allFines = userBooks.length > 0 ? userBooks : borrowedBooks;
+    
+    const finesWithCalculation = allFines
       .map(book => ({
         ...book,
         daysOverdue: Math.max(0, Math.ceil((new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24))),
@@ -29,11 +33,11 @@ const FinesPage: React.FC = () => {
       }))
       .filter(book => book.fine > 0);
 
-    const unpaid = allFines.filter(book => book.fineStatus !== 'paid');
-    const paid = allFines.filter(book => book.fineStatus === 'paid');
+    const unpaid = finesWithCalculation.filter(book => book.fineStatus !== 'paid');
+    const paid = finesWithCalculation.filter(book => book.fineStatus === 'paid');
     
     return { unpaidFines: unpaid, paidFines: paid };
-  }, [borrowedBooks]);
+  }, [borrowedBooks, allBorrowedBooks]);
 
   const totalUnpaidFine = unpaidFines.reduce((sum, book) => sum + book.fine, 0);
 
