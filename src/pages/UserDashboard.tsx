@@ -176,7 +176,7 @@ const UserDashboard: React.FC = () => {
     try {
       await borrowBook(book);
       await fetchGoals();
-      alert(`${book.title} başarıyla ödünç alındı!`);
+      alert(`${book.title} için ödünç alma talebiniz gönderildi! Admin onayından sonra kitap size ödünç verilecektir.`);
     } catch (error: any) {
       alert(`Hata: ${error.message}`);
       console.error(error);
