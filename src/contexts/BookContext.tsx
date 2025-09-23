@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { collection, doc, setDoc, getDocs, query, where, serverTimestamp, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, where, serverTimestamp, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from './AuthContext';
 import { useGoals } from './GoalsContext';
@@ -725,6 +725,19 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         returnDate: serverTimestamp()
       });
 
+      // Update book status to available when returned
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'available',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      // Update local book statuses
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'available'
+      }));
       await updateGoalProgress(1);
 
       const returnMessagesRef = collection(db, 'returnMessages');
@@ -789,6 +802,19 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         returnDate: serverTimestamp(),
       });
 
+      // Update book status to available when returned by admin
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'available',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      // Update local book statuses
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'available'
+      }));
       setAllBorrowedBooks(prev => prev.map(book =>
         (book.id === bookId && book.borrowedBy === userId)
           ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
@@ -812,10 +838,27 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
           returnStatus: 'returned',
           returnDate: serverTimestamp(),
         });
+
+        // Update book status to available
+        const statusRef = doc(db, 'bookStatuses', book.bookId);
+        batch.set(statusRef, {
+          status: 'available',
+          updatedAt: serverTimestamp(),
+          updatedBy: user?.uid
+        });
       }
 
       await batch.commit();
 
+      // Update local book statuses for all returned books
+      const statusUpdates: Record<string, 'available'> = {};
+      books.forEach(book => {
+        statusUpdates[book.bookId] = 'available';
+      });
+      setBookStatuses(prev => ({
+        ...prev,
+        ...statusUpdates
+      }));
       setAllBorrowedBooks(prev => prev.map(book =>
         returnedBookIds.has(`${book.borrowedBy}_${book.id}`)
           ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
