@@ -314,6 +314,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Settings collection rules
+    match /settings/{settingId} {
+      // Allow any authenticated user to read settings
+      allow read: if isAuthenticated();
+      
+      // Only admins can write to this collection
+      allow write: if isAdmin();
+    }
+
     // Allow admin to read all collections for reporting
     match /{document=**} {
       allow read: if isAdmin();

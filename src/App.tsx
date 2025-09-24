@@ -8,7 +8,8 @@ import { AssistantProvider } from './contexts/AssistantContext';
 import { GoalsProvider } from './contexts/GoalsContext';
 import { AuthorProvider } from './contexts/AuthorContext';
 import { MagazineProvider } from './contexts/MagazineContext';
-import { ThemeProvider, useTheme } from './contexts/ThemeContext'; // Import ThemeProvider
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import { ReviewProvider } from './contexts/ReviewContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -29,16 +30,15 @@ import AuthorDetailsPage from './pages/AuthorDetailsPage';
 import ProgressPage from './pages/ProgressPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth(); // useAuth is now available because it's inside AuthProvider
+  const { user, loading } = useAuth();
   
   if (loading) {
-    return <div>Yükleniyor...</div>; // Or a proper spinner component
+    return <div>Yükleniyor...</div>;
   }
   
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-// A new component to access theme context
 const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -83,11 +83,13 @@ function App() {
                 <TaskProvider>
                   <AssistantProvider>
                     <ThemeProvider>
-                      <ReviewProvider>
-                        <MagazineProvider>
-                          <AppContent />
-                        </MagazineProvider>
-                      </ReviewProvider>
+                      <SettingsProvider>
+                        <ReviewProvider>
+                          <MagazineProvider>
+                            <AppContent />
+                          </MagazineProvider>
+                        </ReviewProvider>
+                      </SettingsProvider>
                     </ThemeProvider>
                   </AssistantProvider>
                 </TaskProvider>

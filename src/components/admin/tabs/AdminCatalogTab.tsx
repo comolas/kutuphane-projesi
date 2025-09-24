@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Book, Users } from '../../../types';
 import { useBooks } from '../../../contexts/BookContext';
-import { Search, Plus, BookOpen, Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Search, Plus, BookOpen, Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
 import LendBookModal from '../LendBookModal';
 import EditBookModal from '../EditBookModal';
 import BulkAddBookModal from '../BulkAddBookModal';
@@ -27,7 +27,8 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   const [catalogStatusFilter, setCatalogStatusFilter] = useState<'all' | 'available' | 'borrowed' | 'lost'>('all');
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState('all');
-  const [showAddBookModal, setShowAddBookModal] = useState(false);
+  const [showManualAddModal, setShowManualAddModal] = useState(false);
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false);
   const [showLendBookModal, setShowLendBookModal] = useState(false);
   const [selectedBookToLend, setSelectedBookToLend] = useState<Book | null>(null);
   const [showEditBookModal, setShowEditBookModal] = useState(false);
@@ -35,10 +36,68 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [showAddBookModal, setShowAddBookModal] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [apiMessage, setApiMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [catalogSearchQuery, catalogStatusFilter, catalogCategoryFilter]);
+  
+  useEffect(() => {
+    if (!isScanning) return;
+
+    const scanner = new Html5Qrcode('reader');
+
+    const onScanSuccess = (decodedText: string) => {
+      setIsScanning(false);
+      setNewBook(prev => ({ ...prev, isbn: decodedText }));
+      fetchBookDataFromISBN(decodedText);
+      scanner.stop().catch(err => console.error("Failed to stop scanner", err));
+    };
+
+    const onScanFailure = (error: string) => {
+      // QR kod bulunamadığında sürekli hata mesajı vermemesi için sessiz geç
+      if (!error.includes('NotFoundException') && !error.includes('No MultiFormat Readers')) {
+        console.error('Scan failed:', error);
+      }
+    };
+
+    const config = { 
+      fps: 10, 
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0,
+      disableFlip: false,
+      supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+    };
+
+    let cleanup = () => {};
+
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+            const cameraId = cameras.find(camera => 
+              camera.label.toLowerCase().includes('back') || 
+              camera.label.toLowerCase().includes('rear')
+            )?.id || cameras[0].id;
+            
+            scanner.start(cameraId, config, onScanSuccess, onScanFailure)
+              .catch(err => {
+                console.error("Unable to start scanning", err);
+                setApiMessage('Kamera erişimi sağlanamadı. Lütfen kamera izinlerini kontrol edin.');
+                setIsScanning(false);
+              });
+            cleanup = () => {
+                scanner.stop().catch(err => console.error("Failed to stop scanner on cleanup", err));
+            };
+        }
+    }).catch(err => {
+      console.error("Error getting cameras", err);
+      setApiMessage('Kamera bulunamadı. Lütfen cihazınızda kamera olduğundan emin olun.');
+      setIsScanning(false);
+    });
+
+    return cleanup;
+  }, [isScanning]);
 
   const handleSelectBook = (bookId: string, isSelected: boolean) => {
     setSelectedBookIds(prev =>
@@ -54,14 +113,15 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
     }
   };
   const [newBook, setNewBook] = useState({
-    author: '',
-    category: '',
-    coverImage: '',
-    location: '',
-    publisher: '',
-    status: 'available',
-    tags: '',
+    id: '',
     title: '',
+    author: '',
+    isbn: '',
+    category: '',
+    publisher: '',
+    location: '',
+    coverImage: '',
+    tags: '',
     backCover: '',
     pageCount: 0,
     dimensions: '',
@@ -95,31 +155,69 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
     setNewBook(prev => ({ ...prev, [name]: isNumber ? Number(value) : value }));
   };
 
+  const fetchBookDataFromISBN = async (isbn: string) => {
+    setApiMessage('Kitap verileri aranıyor...');
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+      const data = await response.json();
+      if (data.items && data.items.length > 0) {
+        const volumeInfo = data.items[0].volumeInfo;
+        
+        setNewBook(prev => ({
+          ...prev,
+          title: volumeInfo.title || prev.title,
+          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : prev.author,
+          publisher: volumeInfo.publisher || prev.publisher,
+          pageCount: volumeInfo.pageCount || prev.pageCount,
+          dimensions: volumeInfo.dimensions ? `${volumeInfo.dimensions.height} x ${volumeInfo.dimensions.width}` : prev.dimensions,
+          coverImage: volumeInfo.imageLinks?.thumbnail || prev.coverImage,
+          backCover: volumeInfo.description || prev.backCover
+        }));
+        setApiMessage('Kitap bilgileri başarıyla bulundu ve forma eklendi!');
+      } else {
+        setApiMessage('Bu ISBN ile eşleşen bir kitap bulunamadı.');
+      }
+    } catch (error) {
+      console.error("Error fetching book data:", error);
+      setApiMessage('Kitap bilgileri alınırken bir hata oluştu.');
+    }
+  };
+
   const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Zorunlu alanları kontrol et
+    if (!newBook.title || !newBook.author || !newBook.category || !newBook.coverImage) {
+      alert('Lütfen tüm zorunlu alanları doldurun: Başlık, Yazar, Kategori, Kapak Resmi');
+      return;
+    }
+    
     try {
       const booksCollectionRef = collection(db, "books");
       await addDoc(booksCollectionRef, {
         ...newBook,
         tags: newBook.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
+        status: 'available',
         addedDate: serverTimestamp(),
       });
       setShowAddBookModal(false);
       setNewBook({
-        author: '',
-        category: '',
-        coverImage: '',
-        location: '',
-        publisher: '',
-        status: 'available',
-        tags: '',
+        id: '',
         title: '',
+        author: '',
+        isbn: '',
+        category: '',
+        publisher: '',
+        location: '',
+        coverImage: '',
+        tags: '',
         backCover: '',
         pageCount: 0,
         dimensions: '',
         weight: '',
         binding: '',
       });
+      setApiMessage(null);
       const booksCollectionRefFresh = collection(db, "books");
       const querySnapshot = await getDocs(booksCollectionRefFresh);
       const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
@@ -230,13 +328,22 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
             <BookIcon className="w-6 h-6 mr-2 text-indigo-600" />
             Katalog Yönetimi
           </h2>
-          <button
-            onClick={() => setShowAddBookModal(true)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Yeni Kitap Ekle
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowAddBookModal(true)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Yeni Kitap Ekle
+            </button>
+            <button
+              onClick={() => setShowBulkAddModal(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Toplu Kitap Ekle
+            </button>
+          </div>
         </div>
       </div>
 
@@ -381,7 +488,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                       <button
                         onClick={() => handleMarkAsFound(book.id)}
                         className="px-2 py-1 rounded-lg text-xs font-medium bg-green-50 text-green-600 hover:bg-green-100 transition-colors flex items-center"
-                    >
+                      >
                         <UserCheck className="w-3 h-3 mr-1" />
                         Bulundu
                       </button>
@@ -428,9 +535,297 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       </div>
 
       {showAddBookModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Yeni Kitap Ekle</h3>
+              <button
+                onClick={() => {
+                  setShowAddBookModal(false);
+                  setIsScanning(false);
+                  setApiMessage(null);
+                }}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            {isScanning && (
+              <div className="p-6">
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">QR Kod Tarama İpuçları:</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• QR kodu kamera görüş alanının ortasına yerleştirin</li>
+                    <li>• Yeterli ışık olduğundan emin olun</li>
+                    <li>• Kamerayı QR koddan 10-30 cm uzakta tutun</li>
+                    <li>• QR kod net ve buruşuk olmadığından emin olun</li>
+                  </ul>
+                </div>
+                <div id="reader" style={{ width: '100%' }}></div>
+                <div className="mt-4 flex space-x-2">
+                  <button 
+                    type="button"
+                    onClick={() => setIsScanning(false)} 
+                    className="flex-1 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    Taramayı İptal Et
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setIsScanning(false);
+                      setTimeout(() => setIsScanning(true), 100);
+                    }} 
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    Yeniden Başlat
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <form onSubmit={handleAddBook} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {apiMessage && (
+                <div className="md:col-span-2 text-center p-3 rounded-lg bg-blue-100 text-blue-800 text-sm">
+                  {apiMessage}
+                </div>
+              )}
+              
+              <div>
+                <label htmlFor="id" className="block text-sm font-medium text-gray-700">Kitap ID</label>
+                <input
+                  type="text"
+                  id="id"
+                  name="id"
+                  value={newBook.id}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Örn: TR-HK-001"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                  Kitap Adı <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={newBook.title}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="author" className="block text-sm font-medium text-gray-700">
+                  Yazar <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="author"
+                  name="author"
+                  value={newBook.author}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label htmlFor="isbn" className="block text-sm font-medium text-gray-700">ISBN</label>
+                <div className="mt-1 flex rounded-md shadow-sm">
+                  <input
+                    type="text"
+                    id="isbn"
+                    name="isbn"
+                    value={newBook.isbn}
+                    onChange={handleNewBookChange}
+                    className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Manuel ISBN girişi"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsScanning(true)}
+                    className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                  >
+                    ISBN Tara
+                  </button>
+                </div>
+                {newBook.isbn && (
+                  <button
+                    type="button"
+                    onClick={() => fetchBookDataFromISBN(newBook.isbn)}
+                    className="mt-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md text-sm hover:bg-indigo-200 transition-colors"
+                  >
+                    Bu ISBN ile Kitap Bilgilerini Getir
+                  </button>
+                )}
+              </div>
+              
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                  Kategori <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="category"
+                  name="category"
+                  value={newBook.category}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Örn: TR-HK, D-RMN"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="publisher" className="block text-sm font-medium text-gray-700">Yayıncı</label>
+                <input
+                  type="text"
+                  id="publisher"
+                  name="publisher"
+                  value={newBook.publisher}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700">Konum</label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={newBook.location}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Örn: A-1-15"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700">Sayfa Sayısı</label>
+                <input
+                  type="number"
+                  id="pageCount"
+                  name="pageCount"
+                  value={newBook.pageCount}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">
+                  Kapak Resmi URL <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  id="coverImage"
+                  name="coverImage"
+                  value={newBook.coverImage}
+                  onChange={handleNewBookChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label htmlFor="backCover" className="block text-sm font-medium text-gray-700">Arka Kapak Açıklaması</label>
+                <textarea
+                  id="backCover"
+                  name="backCover"
+                  value={newBook.backCover}
+                  onChange={handleNewBookChange}
+                  rows={3}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="dimensions" className="block text-sm font-medium text-gray-700">Boyut</label>
+                <input
+                  type="text"
+                  id="dimensions"
+                  name="dimensions"
+                  value={newBook.dimensions}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: 20x13 cm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="weight" className="block text-sm font-medium text-gray-700">Ağırlık</label>
+                <input
+                  type="text"
+                  id="weight"
+                  name="weight"
+                  value={newBook.weight}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: 250g"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="binding" className="block text-sm font-medium text-gray-700">Cilt Türü</label>
+                <input
+                  type="text"
+                  id="binding"
+                  name="binding"
+                  value={newBook.binding}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: Karton Kapak"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Etiketler (virgülle ayırın)</label>
+                <input
+                  type="text"
+                  id="tags"
+                  name="tags"
+                  value={newBook.tags}
+                  onChange={handleNewBookChange}
+                  placeholder="örn: macera, gençlik, fantastik"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              
+              <div className="md:col-span-2 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddBookModal(false);
+                    setIsScanning(false);
+                    setApiMessage(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  Kitabı Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showBulkAddModal && (
         <BulkAddBookModal
-          isOpen={showAddBookModal}
-          onClose={() => setShowAddBookModal(false)}
+          isOpen={showBulkAddModal}
+          onClose={() => setShowBulkAddModal(false)}
           onBookAdded={() => {
             refetchAllBooks();
           }}

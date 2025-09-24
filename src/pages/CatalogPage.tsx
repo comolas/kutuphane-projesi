@@ -9,9 +9,10 @@ import { collection, getDocs, addDoc, deleteDoc, query, where, Timestamp } from 
 import { useAuth } from '../contexts/AuthContext';
 import ReviewModal from '../components/common/ReviewModal';
 
+// Add borrowMessages to the import from useBooks
 const CatalogPage: React.FC = () => {
   const navigate = useNavigate();
-  const { allBooks, borrowBook, isBorrowed, isBookBorrowed, getBookStatus } = useBooks();
+  const { allBooks, borrowBook, isBorrowed, isBookBorrowed, getBookStatus, borrowMessages } = useBooks();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [tagQuery, setTagQuery] = useState('');
@@ -365,7 +366,11 @@ const CatalogPage: React.FC = () => {
           {paginatedBooks.map(book => {
             const bookStatus = getBookStatus(book.id);
             const userBorrowed = isBorrowed(book.id);
-            const isPending = userBorrowed && book.borrowStatus === 'pending';
+            const hasPendingRequest = borrowMessages.some(m => 
+              m.bookId === book.id && 
+              m.userId === user?.uid && 
+              m.status === 'pending'
+            );
             return (
               <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden relative">
                 <button
@@ -394,7 +399,7 @@ const CatalogPage: React.FC = () => {
                   </div>
                   <div className="mt-3 flex justify-between items-center">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      isPending
+                      hasPendingRequest
                         ? 'bg-yellow-100 text-yellow-800'
                         : bookStatus === 'lost'
                         ? 'bg-red-100 text-red-800'
@@ -402,7 +407,7 @@ const CatalogPage: React.FC = () => {
                         ? 'bg-orange-100 text-orange-800'
                         : 'bg-green-100 text-green-800'
                     }`}>
-                      {isPending 
+                      {hasPendingRequest 
                         ? 'Onay Bekliyor' 
                         : bookStatus === 'lost' 
                         ? 'Kayıp' 
@@ -418,7 +423,7 @@ const CatalogPage: React.FC = () => {
                       <MessageSquare className="w-3 h-3 mr-1" />
                       Yorumlar
                     </button>
-                    {bookStatus === 'available' && !isPending && (
+                    {bookStatus === 'available' && !hasPendingRequest && (
                       <>
                         <button
                           onClick={() => handleInspectBook(book)}

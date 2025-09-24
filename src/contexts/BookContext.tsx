@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { collection, doc, setDoc, getDocs, query, where, serverTimestamp, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, where, serverTimestamp, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from './AuthContext';
 import { useGoals } from './GoalsContext';
@@ -17,10 +17,14 @@ interface BorrowedBook extends Book {
     studentNumber: string;
   };
   fineStatus?: 'pending' | 'paid';
-  fineAmount?: number;
+  fineAmount?: number; // This will be deprecated by snapshot
   paymentDate?: Date;
   returnStatus?: 'borrowed' | 'returned' | 'pending';
   borrowStatus?: 'pending' | 'approved' | 'rejected';
+  // Snapshot fields
+  fineAmountSnapshot?: number;
+  fineRateSnapshot?: number;
+  daysOverdueSnapshot?: number;
 }
 
 interface BorrowMessage {
@@ -50,7 +54,7 @@ interface BookContextType {
   isBorrowed: (bookId: string) => boolean;
   isBookBorrowed: (bookId: string) => boolean;
   canExtend: (bookId: string) => boolean;
-  markFineAsPaid: (bookId: string, userId: string) => Promise<void>;
+  markFineAsPaid: (bookId: string, userId: string, currentFineRate: number) => Promise<void>;
   hasPendingFine: (bookId: string) => boolean;
   requestReturn: (bookId: string) => Promise<void>;
   approveReturn: (bookId: string, userId: string) => Promise<void>;
@@ -166,8 +170,10 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
             returnStatus: data.returnStatus || 'borrowed',
             borrowStatus: data.borrowStatus || 'approved',
             fineStatus: data.fineStatus || 'pending',
-            fineAmount: data.fineAmount,
-            paymentDate: data.paymentDate?.toDate()
+            paymentDate: data.paymentDate?.toDate(),
+            fineAmountSnapshot: data.fineAmountSnapshot,
+            fineRateSnapshot: data.fineRateSnapshot,
+            daysOverdueSnapshot: data.daysOverdueSnapshot
           } as BorrowedBook);
         });
         
@@ -202,13 +208,15 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
             returnStatus: data.returnStatus || 'borrowed',
             borrowStatus: data.borrowStatus || 'approved',
             fineStatus: data.fineStatus || 'pending',
-            fineAmount: data.fineAmount,
             paymentDate: data.paymentDate?.toDate(),
             userData: userData ? {
               displayName: userData.displayName,
               studentClass: userData.studentClass,
               studentNumber: userData.studentNumber
-            } : undefined
+            } : undefined,
+            fineAmountSnapshot: data.fineAmountSnapshot,
+            fineRateSnapshot: data.fineRateSnapshot,
+            daysOverdueSnapshot: data.daysOverdueSnapshot
           } as BorrowedBook);
         }
         
@@ -263,17 +271,24 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const getBookStatus = useCallback((bookId: string): 'available' | 'borrowed' | 'lost' => {
-    const isBorrowedNow = allBorrowedBooks.some(book => 
+    // First check if the book is currently borrowed (not returned)
+    const activeBorrow = allBorrowedBooks.find(book => 
       book.id === bookId && 
       book.returnStatus === 'borrowed' &&
       book.borrowStatus === 'approved'
     );
 
-    if (isBorrowedNow) {
+    if (activeBorrow) {
       return 'borrowed';
     }
 
-    return bookStatuses[bookId] || 'available';
+    // Check if book is marked as lost in bookStatuses
+    if (bookStatuses[bookId] === 'lost') {
+      return 'lost';
+    }
+
+    // If not borrowed and not lost, it's available
+    return 'available';
   }, [allBorrowedBooks, bookStatuses]);
 
   const fetchRecommendedBooks = useCallback(async () => {
@@ -411,12 +426,22 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [allBorrowedBooks]);
 
   const isBorrowed = useCallback((bookId: string) => {
+    // Check if user has a pending request for this book
+    const hasPendingRequest = borrowMessages.some(m => 
+      m.bookId === bookId && 
+      m.userId === user?.uid && 
+      m.status === 'pending'
+    );
+    
+    if (hasPendingRequest) return true;
+    
+    // Check if user has an approved borrow for this book
     return borrowedBooks.some(book => 
       book.id === bookId && 
       book.returnStatus === 'borrowed' &&
       book.borrowStatus === 'approved'
     );
-  }, [borrowedBooks]);
+  }, [borrowedBooks, borrowMessages, user]);
 
   const borrowBook = useCallback(async (book: Book) => {
     if (!user || !userData) return;
@@ -429,53 +454,48 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Bu kitap zaten başka bir kullanıcı tarafından ödünç alınmış.');
     }
 
-    try {
-      const borrowedAt = new Date();
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 14);
+    // Check if user already has a pending request for this book
+    const existingRequest = borrowMessages.find(m => 
+      m.bookId === book.id && 
+      m.userId === user.uid && 
+      m.status === 'pending'
+    );
+    
+    if (existingRequest) {
+      throw new Error('Bu kitap için zaten bekleyen bir talebiniz var.');
+    }
 
-      const borrowedBookRef = doc(db, 'borrowedBooks', `${user.uid}_${book.id}`);
-      await setDoc(borrowedBookRef, {
+    try {
+      // Create a borrow request instead of directly borrowing
+      await addDoc(collection(db, 'borrowMessages'), {
         userId: user.uid,
         bookId: book.id,
-        book: book,
-        borrowedAt: serverTimestamp(),
-        dueDate,
-        extended: false,
-        returnStatus: 'borrowed',
-        borrowStatus: 'approved',
-        fineStatus: 'pending'
-      });
-      
-      const statusRef = doc(db, 'bookStatuses', book.id);
-      await setDoc(statusRef, {
-        status: 'borrowed',
-        updatedAt: serverTimestamp(),
-        updatedBy: user?.uid
-      });
-
-      setBookStatuses(prev => ({
-        ...prev,
-        [book.id]: 'borrowed'
-      }));
-
-      const newBorrowedBook: BorrowedBook = {
-        ...book,
-        borrowedAt,
-        dueDate,
-        extended: false,
-        borrowedBy: user.uid,
-        borrowStatus: 'approved',
-        returnStatus: 'borrowed',
-         userData: {
+        createdAt: serverTimestamp(),
+        status: 'pending',
+        userData: {
           displayName: userData.displayName,
           studentClass: userData.studentClass,
           studentNumber: userData.studentNumber
-        }
-      };
+        },
+        bookData: book
+      });
 
-      setBorrowedBooks(prev => [...prev, newBorrowedBook]);
-      setAllBorrowedBooks(prev => [...prev, newBorrowedBook]);
+      // Refresh borrow messages to show the new request
+      const messagesRef = collection(db, 'borrowMessages');
+      const q = query(messagesRef, where('status', '==', 'pending'));
+      const querySnapshot = await getDocs(q);
+      
+      const messages: BorrowMessage[] = [];
+      querySnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        messages.push({
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt.toDate()
+        } as BorrowMessage);
+      });
+      
+      setBorrowMessages(messages);
 
     } catch (error) {
       console.error('Error borrowing book:', error);
@@ -628,7 +648,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, borrowedBooks]);
 
-  const markFineAsPaid = useCallback(async (bookId: string, userId: string) => {
+  const markFineAsPaid = useCallback(async (bookId: string, userId: string, currentFineRate: number) => {
     try {
       const bookToUpdate = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
       if (!bookToUpdate) {
@@ -637,30 +657,35 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const today = new Date();
       const diffTime = today.getTime() - bookToUpdate.dueDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const fineAmount = diffDays > 0 ? diffDays * 5 : 0;
+      const daysOverdue = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      const fineAmount = daysOverdue * currentFineRate;
 
       const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
       await updateDoc(borrowedBookRef, {
         fineStatus: 'paid',
         paymentDate: serverTimestamp(),
-        fineAmount: fineAmount
+        fineAmountSnapshot: fineAmount,
+        fineRateSnapshot: currentFineRate,
+        daysOverdueSnapshot: daysOverdue
       });
+
+      const snapshotData = {
+        fineStatus: 'paid',
+        paymentDate: new Date(),
+        fineAmountSnapshot: fineAmount,
+        fineRateSnapshot: currentFineRate,
+        daysOverdueSnapshot: daysOverdue
+      };
 
       const updateBooks = (books: BorrowedBook[]) =>
         books.map(book =>
           book.id === bookId && book.borrowedBy === userId
-            ? {
-                ...book,
-                fineStatus: 'paid',
-                paymentDate: new Date(),
-                fineAmount: fineAmount
-              }
+            ? { ...book, ...snapshotData }
             : book
         );
 
-      setBorrowedBooks(updateBooks);
-      setAllBorrowedBooks(updateBooks);
+      setBorrowedBooks(prev => updateBooks(prev));
+      setAllBorrowedBooks(prev => updateBooks(prev));
     } catch (error) {
       console.error('Ceza ödemesi işlenirken hata oluştu:', error);
       throw error;
@@ -719,14 +744,31 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const approveReturn = useCallback(async (bookId: string, userId: string) => {
     try {
+      // Update the borrowed book record
       const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
       await updateDoc(borrowedBookRef, {
         returnStatus: 'returned',
         returnDate: serverTimestamp()
       });
 
+      // Update book status to available in bookStatuses collection
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'available',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      // Update local book statuses immediately
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'available'
+      }));
+
+      // Update goal progress
       await updateGoalProgress(1);
 
+      // Remove the return message
       const returnMessagesRef = collection(db, 'returnMessages');
       const q = query(
         returnMessagesRef,
@@ -743,16 +785,20 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
+      // Update local borrowed books state
       setBorrowedBooks(prev => prev.map(book => 
         book.id === bookId && book.borrowedBy === userId
-          ? { ...book, returnStatus: 'returned' }
+          ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
           : book
       ));
+      
       setAllBorrowedBooks(prev => prev.map(book => 
         book.id === bookId && book.borrowedBy === userId
-          ? { ...book, returnStatus: 'returned' }
+          ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
           : book
       ));
+
+      console.log(`Book ${bookId} returned by user ${userId} - status updated to available`);
     } catch (error) {
       console.error('Error approving return:', error);
       throw error;
@@ -783,50 +829,89 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const adminReturnBook = useCallback(async (bookId: string, userId: string) => {
     try {
+      // Update the borrowed book record
       const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
       await updateDoc(borrowedBookRef, {
         returnStatus: 'returned',
         returnDate: serverTimestamp(),
       });
 
+      // Update book status to available in bookStatuses collection
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'available',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      // Update local book statuses immediately
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'available'
+      }));
+
+      // Update local state
       setAllBorrowedBooks(prev => prev.map(book =>
         (book.id === bookId && book.borrowedBy === userId)
           ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
           : book
       ));
 
+      console.log(`Book ${bookId} returned by admin for user ${userId} - status updated to available`);
     } catch (error) {
       console.error('Error returning book (admin):', error);
       throw error;
     }
-  }, []);
+  }, [user]);
 
   const adminBatchReturnBooks = useCallback(async (books: { bookId: string, userId: string }[]) => {
     try {
       const batch = writeBatch(db);
-      const returnedBookIds = new Set(books.map(b => `${b.userId}_${b.bookId}`));
 
       for (const book of books) {
+        // Update borrowed book record
         const borrowedBookRef = doc(db, 'borrowedBooks', `${book.userId}_${book.bookId}`);
         batch.update(borrowedBookRef, {
           returnStatus: 'returned',
           returnDate: serverTimestamp(),
         });
+
+        // Update book status to available in bookStatuses collection
+        const statusRef = doc(db, 'bookStatuses', book.bookId);
+        batch.set(statusRef, {
+          status: 'available',
+          updatedAt: serverTimestamp(),
+          updatedBy: user?.uid
+        });
       }
 
       await batch.commit();
 
+      // Update local book statuses immediately
+      const statusUpdates: Record<string, 'available'> = {};
+      books.forEach(book => {
+        statusUpdates[book.bookId] = 'available';
+      });
+      
+      setBookStatuses(prev => ({
+        ...prev,
+        ...statusUpdates
+      }));
+
+      // Update local borrowed books state
+      const returnedBookKeys = new Set(books.map(b => `${b.userId}_${b.bookId}`));
       setAllBorrowedBooks(prev => prev.map(book =>
-        returnedBookIds.has(`${book.borrowedBy}_${book.id}`)
+        returnedBookKeys.has(`${book.borrowedBy}_${book.id}`)
           ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
           : book
       ));
 
+      console.log(`Batch returned ${books.length} books - all statuses updated to available`);
     } catch (error) {
       console.error('Error batch returning books (admin):', error);
       throw error;
     }
-  }, []);
+  }, [user]);
 
   return (
     <BookContext.Provider value={{
@@ -862,5 +947,3 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </BookContext.Provider>
   );
 };
-
-  

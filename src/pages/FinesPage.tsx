@@ -1,43 +1,61 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History, ListFilter } from 'lucide-react';
+import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History } from 'lucide-react';
 import { useBooks } from '../contexts/BookContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 const FinesPage: React.FC = () => {
   const navigate = useNavigate();
   const { borrowedBooks } = useBooks();
+  const { finePerDay, loading: settingsLoading } = useSettings();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'unpaid' | 'paid'>('unpaid');
 
-  const calculateFine = (book: any): number => {
+  const calculateFine = useMemo(() => (book: any): number => {
     if (book.fineStatus === 'paid') {
-      return book.fineAmount || 0;
+      return book.fineAmountSnapshot || 0;
     }
     const today = new Date();
     const diffTime = today.getTime() - new Date(book.dueDate).getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays * 5 : 0;
-  };
+    return diffDays > 0 ? diffDays * finePerDay : 0;
+  }, [finePerDay]);
 
   const { unpaidFines, paidFines } = useMemo(() => {
+    if (settingsLoading) return { unpaidFines: [], paidFines: [] };
+
     const allFines = borrowedBooks
-      .map(book => ({
-        ...book,
-        daysOverdue: Math.max(0, Math.ceil((new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24))),
-        fine: calculateFine(book)
-      }))
-      .filter(book => book.fine > 0);
+      .map(book => {
+        const isFinalized = book.fineRateSnapshot !== undefined;
+        
+        const daysOverdue = isFinalized
+          ? book.daysOverdueSnapshot
+          : Math.max(0, Math.ceil(((book.returnDate ? new Date(book.returnDate).getTime() : new Date().getTime()) - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)));
+        
+        const fine = isFinalized ? book.fineAmountSnapshot : calculateFine(book);
+
+        return {
+          ...book,
+          daysOverdue,
+          fine
+        }
+      })
+      .filter(book => (book.fine || 0) > 0 || book.fineStatus === 'paid');
 
     const unpaid = allFines.filter(book => book.fineStatus !== 'paid');
     const paid = allFines.filter(book => book.fineStatus === 'paid');
     
     return { unpaidFines: unpaid, paidFines: paid };
-  }, [borrowedBooks]);
+  }, [borrowedBooks, settingsLoading, finePerDay, calculateFine]);
 
-  const totalUnpaidFine = unpaidFines.reduce((sum, book) => sum + book.fine, 0);
+  const totalUnpaidFine = unpaidFines.reduce((sum, book) => sum + (book.fine || 0), 0);
 
   const currentList = activeTab === 'unpaid' ? unpaidFines : paidFines;
+
+  if (settingsLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Ayarlar yükleniyor...</div>
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -125,7 +143,13 @@ const FinesPage: React.FC = () => {
 
         <div className="space-y-4">
           {currentList.length > 0 ? (
-            currentList.map(book => (
+            currentList.map(book => {
+              const isFinalized = book.fineRateSnapshot !== undefined;
+              const daysOverdue = book.daysOverdue;
+              const fineAmount = book.fine;
+              const fineRate = isFinalized ? book.fineRateSnapshot : finePerDay;
+
+              return (
               <div key={`fine-${book.id}-${book.borrowedBy}`} className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-start space-x-4">
@@ -147,12 +171,12 @@ const FinesPage: React.FC = () => {
                           </span>
                         </div>
                         
-                        {book.daysOverdue > 0 && (
+                        {daysOverdue > 0 && (
                           <div className="flex items-center text-sm">
                             <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
                             <span className="text-red-600">Gecikme:</span>
                             <span className="ml-2 font-medium text-red-600">
-                              {book.daysOverdue} gün
+                              {daysOverdue} gün
                             </span>
                           </div>
                         )}
@@ -161,11 +185,11 @@ const FinesPage: React.FC = () => {
                     
                     <div className="text-right">
                       <div className={`text-2xl font-bold ${book.fineStatus === 'paid' ? 'text-green-600' : 'text-red-500'}`}>
-                        {book.fine} TL
+                        {fineAmount} TL
                       </div>
-                      {book.fineStatus !== 'paid' && book.daysOverdue > 0 && (
+                      {book.fineStatus !== 'paid' && daysOverdue > 0 && (
                         <p className="text-xs text-gray-500 mt-1">
-                          ({book.daysOverdue} gün x 5 TL)
+                          ({daysOverdue} gün x {fineRate} TL)
                         </p>
                       )}
                       {book.fineStatus === 'paid' ? (
@@ -186,7 +210,8 @@ const FinesPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ))
+              )
+            })
             ) : (
             <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center">
                 <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
