@@ -14,6 +14,7 @@ interface BorrowedBook {
   borrowedBy: string;
   returnStatus: 'borrowed' | 'returned' | 'pending';
   fineStatus?: 'pending' | 'paid';
+  fineAmount?: number;
   paymentDate?: Date;
   userData?: {
     displayName: string;
