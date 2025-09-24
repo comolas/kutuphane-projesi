@@ -731,12 +731,40 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const approveReturn = useCallback(async (bookId: string, userId: string) => {
     try {
-      // Update the borrowed book record
-      const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
-      await updateDoc(borrowedBookRef, {
-        returnStatus: 'returned',
-        returnDate: serverTimestamp()
-      });
+      // Check if there's an unpaid fine for this book
+      const bookToReturn = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+      if (bookToReturn) {
+        const today = new Date();
+        const diffTime = today.getTime() - bookToReturn.dueDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const currentFine = diffDays > 0 ? diffDays * 5 : 0;
+        
+        // If there's an unpaid fine, automatically mark it as paid when returning
+        if (currentFine > 0 && bookToReturn.fineStatus !== 'paid') {
+          const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+          await updateDoc(borrowedBookRef, {
+            returnStatus: 'returned',
+            returnDate: serverTimestamp(),
+            fineStatus: 'paid',
+            fineAmount: currentFine,
+            paymentDate: serverTimestamp()
+          });
+        } else {
+          // No fine or already paid, just mark as returned
+          const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+          await updateDoc(borrowedBookRef, {
+            returnStatus: 'returned',
+            returnDate: serverTimestamp()
+          });
+        }
+      } else {
+        // Fallback: just mark as returned
+        const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+        await updateDoc(borrowedBookRef, {
+          returnStatus: 'returned',
+          returnDate: serverTimestamp()
+        });
+      }
 
       // Update book status to available in bookStatuses collection
       const statusRef = doc(db, 'bookStatuses', bookId);

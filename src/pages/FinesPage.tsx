@@ -1,239 +1,994 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History, ListFilter } from 'lucide-react';
-import { useBooks } from '../contexts/BookContext';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { collection, doc, setDoc, getDocs, query, where, serverTimestamp, updateDoc, addDoc, writeBatch } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { useAuth } from './AuthContext';
+import { useGoals } from './GoalsContext';
+import { Book } from '../types';
 
-const FinesPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { borrowedBooks, allBorrowedBooks } = useBooks();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'unpaid' | 'paid'>('unpaid');
-
-  const calculateFine = (book: any): number => {
-    if (book.fineStatus === 'paid') {
-      return book.fineAmount || 0;
-    }
-    const today = new Date();
-    const diffTime = today.getTime() - new Date(book.dueDate).getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays * 5 : 0;
+interface BorrowedBook extends Book {
+  borrowedAt: Date;
+  dueDate: Date;
+  returnedAt?: Date;
+  extended: boolean;
+  borrowedBy: string;
+  userData?: {
+    displayName: string;
+    studentClass: string;
+    studentNumber: string;
   };
+  fineStatus?: 'pending' | 'paid';
+  fineAmount?: number;
+  paymentDate?: Date;
+  returnStatus?: 'borrowed' | 'returned' | 'pending';
+  borrowStatus?: 'pending' | 'approved' | 'rejected';
+}
 
-  const { unpaidFines, paidFines } = useMemo(() => {
-    // Use allBorrowedBooks to get the most up-to-date data including admin updates
-    const userBooks = allBorrowedBooks.filter(book => book.borrowedBy === borrowedBooks[0]?.borrowedBy);
-    const allFines = userBooks.length > 0 ? userBooks : borrowedBooks;
+interface BorrowMessage {
+  id: string;
+  bookId: string;
+  userId: string;
+  createdAt: Date;
+  status: 'pending' | 'approved' | 'rejected';
+  userData: {
+    displayName: string;
+    studentClass: string;
+    studentNumber: string;
+  };
+  bookData: Book;
+}
+
+interface BookContextType {
+  borrowedBooks: BorrowedBook[];
+  allBorrowedBooks: BorrowedBook[];
+  borrowMessages: BorrowMessage[];
+  allBooks: Book[];
+  recommendedBooks: Book[];
+  bookStatuses: Record<string, 'available' | 'borrowed' | 'lost'>;
+  borrowBook: (book: Book) => Promise<void>;
+  returnBook: (bookId: string) => Promise<void>;
+  extendBook: (bookId: string) => Promise<void>;
+  isBorrowed: (bookId: string) => boolean;
+  isBookBorrowed: (bookId: string) => boolean;
+  canExtend: (bookId: string) => boolean;
+  markFineAsPaid: (bookId: string, userId: string) => Promise<void>;
+  hasPendingFine: (bookId: string) => boolean;
+  requestReturn: (bookId: string) => Promise<void>;
+  approveReturn: (bookId: string, userId: string) => Promise<void>;
+  approveBorrow: (bookId: string, userId: string) => Promise<void>;
+  rejectBorrow: (bookId: string, userId: string) => Promise<void>;
+  markBookAsLost: (bookId: string) => Promise<void>;
+  markBookAsFound: (bookId: string) => Promise<void>;
+  getBookStatus: (bookId: string) => 'available' | 'borrowed' | 'lost';
+  lendBookToUser: (bookId: string, userId: string) => Promise<void>;
+  fetchRecommendedBooks: () => Promise<void>;
+  refetchAllBooks: () => Promise<void>;
+  saveBook: (book: Book) => Promise<void>;
+  adminReturnBook: (bookId: string, userId: string) => Promise<void>;
+  adminBatchReturnBooks: (books: { bookId: string, userId: string }[]) => Promise<void>;
+}
+
+const BookContext = createContext<BookContextType | undefined>(undefined);
+
+export const useBooks = () => {
+  const context = useContext(BookContext);
+  if (!context) {
+    throw new Error('useBooks must be used within a BookProvider');
+  }
+  return context;
+};
+
+export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [borrowedBooks, setBorrowedBooks] = useState<BorrowedBook[]>([]);
+  const [allBorrowedBooks, setAllBorrowedBooks] = useState<BorrowedBook[]>([]);
+  const [borrowMessages, setBorrowMessages] = useState<BorrowMessage[]>([]);
+  const [allBooks, setAllBooks] = useState<Book[]>([]);
+  const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
+  const [bookStatuses, setBookStatuses] = useState<Record<string, 'available' | 'borrowed' | 'lost'>>({});
+  const { user, userData } = useAuth();
+  const { updateGoalProgress } = useGoals();
+
+  useEffect(() => {
+    if (!user) {
+      setBorrowedBooks([]);
+      setAllBorrowedBooks([]);
+      setBorrowMessages([]);
+      setAllBooks([]);
+      setBookStatuses({});
+      return;
+    }
+
+    const fetchAllBooks = async () => {
+        try {
+          const booksCollectionRef = collection(db, "books");
+          const reviewsCollectionRef = collection(db, "reviews");
+          const approvedReviewsQuery = query(reviewsCollectionRef, where("status", "==", "approved"));
+
+          const [booksSnapshot, reviewsSnapshot] = await Promise.all([
+            getDocs(booksCollectionRef),
+            user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] })
+          ]);
+
+          const reviewsData = reviewsSnapshot.docs.map(doc => doc.data());
+
+          const booksData = booksSnapshot.docs.map(doc => {
+            const book = { ...doc.data(), id: doc.id } as Book;
+            const bookReviews = reviewsData.filter(review => review.bookId === book.id && review.status === 'approved');
+            const reviewCount = bookReviews.length;
+            const averageRating = reviewCount > 0
+              ? bookReviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
+              : 0;
+
+            return {
+              ...book,
+              averageRating: parseFloat(averageRating.toFixed(1)), // Format to one decimal place
+              reviewCount
+            };
+          }) as Book[];
+          setAllBooks(booksData);
+        } catch (error) {
+          console.error("Error fetching all books:", error);
+        }
+      };
+
+    const fetchBookStatuses = async () => {
+      try {
+        const statusesRef = collection(db, 'bookStatuses');
+        const querySnapshot = await getDocs(statusesRef);
+        
+        const statuses: Record<string, 'available' | 'borrowed' | 'lost'> = {};
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          statuses[doc.id] = data.status;
+        });
+        
+        setBookStatuses(statuses);
+      } catch (error) {
+        console.error('Error fetching book statuses:', error);
+      }
+    };
+
+    const fetchBorrowedBooks = async () => {
+      try {
+        const borrowedBooksRef = collection(db, 'borrowedBooks');
+        const q = query(borrowedBooksRef, where('userId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+        
+        const books: BorrowedBook[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          books.push({
+            ...data.book,
+            borrowedAt: data.borrowedAt ? data.borrowedAt.toDate() : new Date(),
+            dueDate: data.dueDate ? data.dueDate.toDate() : new Date(),
+            returnedAt: data.returnDate ? data.returnDate.toDate() : undefined,
+            extended: data.extended || false,
+            borrowedBy: data.userId,
+            returnStatus: data.returnStatus || 'borrowed',
+            borrowStatus: data.borrowStatus || 'approved',
+            fineStatus: data.fineStatus || 'pending',
+            fineAmount: data.fineAmount,
+            paymentDate: data.paymentDate?.toDate()
+          } as BorrowedBook);
+        });
+        
+        setBorrowedBooks(books);
+      } catch (error) {
+        console.error('Error fetching borrowed books:', error);
+      }
+    };
+
+    const fetchAllBorrowedBooks = async () => {
+      try {
+        const borrowedBooksRef = collection(db, 'borrowedBooks');
+        const querySnapshot = await getDocs(borrowedBooksRef);
+        
+        const books: BorrowedBook[] = [];
+        for (const doc of querySnapshot.docs) {
+          const data = doc.data();
+          const userDoc = await getDocs(query(
+            collection(db, 'users'),
+            where('uid', '==', data.userId)
+          ));
+          
+          const userData = userDoc.docs[0]?.data();
+          
+          books.push({
+            ...data.book,
+            borrowedAt: data.borrowedAt ? data.borrowedAt.toDate() : new Date(),
+            dueDate: data.dueDate ? data.dueDate.toDate() : new Date(),
+            returnedAt: data.returnDate ? data.returnDate.toDate() : undefined,
+            extended: data.extended || false,
+            borrowedBy: data.userId,
+            returnStatus: data.returnStatus || 'borrowed',
+            borrowStatus: data.borrowStatus || 'approved',
+            fineStatus: data.fineStatus || 'pending',
+            fineAmount: data.fineAmount,
+            paymentDate: data.paymentDate?.toDate(),
+            userData: userData ? {
+              displayName: userData.displayName,
+              studentClass: userData.studentClass,
+              studentNumber: userData.studentNumber
+            } : undefined
+          } as BorrowedBook);
+        }
+        
+        setAllBorrowedBooks(books);
+      } catch (error) {
+        console.error('Error fetching all borrowed books:', error);
+      }
+    };
+
+    const fetchBorrowMessages = async () => {
+      try {
+        const messagesRef = collection(db, 'borrowMessages');
+        const q = query(messagesRef, where('status', '==', 'pending'));
+        const querySnapshot = await getDocs(q);
+        
+        const messages: BorrowMessage[] = [];
+        querySnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          messages.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt.toDate()
+          } as BorrowMessage);
+        });
+        
+        setBorrowMessages(messages);
+      } catch (error) {
+        console.error('Error fetching borrow messages:', error);
+      }
+    };
+
+    fetchAllBooks();
+    fetchBookStatuses();
+    fetchBorrowedBooks();
+    fetchBorrowMessages();
+
+    if (userData?.role === 'admin') {
+        fetchAllBorrowedBooks();
+    }
+
+  }, [user, userData]);
+
+  const refetchAllBooks = useCallback(async () => {
+    try {
+      const booksCollectionRef = collection(db, "books");
+      const querySnapshot = await getDocs(booksCollectionRef);
+      const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
+      setAllBooks(booksData);
+    } catch (error) {
+      console.error("Error refetching all books:", error);
+    }
+  }, []);
+
+  const getBookStatus = useCallback((bookId: string): 'available' | 'borrowed' | 'lost' => {
+    // First check if the book is currently borrowed (not returned)
+    const activeBorrow = allBorrowedBooks.find(book => 
+      book.id === bookId && 
+      book.returnStatus === 'borrowed' &&
+      book.borrowStatus === 'approved'
+    );
+
+    if (activeBorrow) {
+      return 'borrowed';
+    }
+
+    // Check if book is marked as lost in bookStatuses
+    if (bookStatuses[bookId] === 'lost') {
+      return 'lost';
+    }
+
+    // If not borrowed and not lost, it's available
+    return 'available';
+  }, [allBorrowedBooks, bookStatuses]);
+
+  const fetchRecommendedBooks = useCallback(async () => {
+    if (!user) return;
+
+    const borrowedCategories = borrowedBooks.map(book => book.category);
+    const borrowedAuthors = borrowedBooks.map(book => book.author);
+
+    const unreadBooks = allBooks.filter(book => !borrowedBooks.some(borrowed => borrowed.id === book.id));
+
+    let recommendations = unreadBooks.filter(book => 
+      borrowedCategories.includes(book.category) || borrowedAuthors.includes(book.author)
+    );
+
+    if (recommendations.length === 0) {
+        const popularBooks = allBorrowedBooks
+            .map(b => b.id)
+            .reduce((acc, id) => {
+                acc[id] = (acc[id] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+        
+        const sortedPopularBooks = Object.keys(popularBooks).sort((a, b) => popularBooks[b] - popularBooks[a]);
+        const top5 = sortedPopularBooks.slice(0, 5);
+        recommendations = allBooks.filter(b => top5.includes(b.id));
+    }
+
+    setRecommendedBooks(recommendations.slice(0, 5));
+  }, [user, borrowedBooks, allBooks]);
+
+  const lendBookToUser = useCallback(async (bookId: string, userId: string) => {
+    try {
+      if (getBookStatus(bookId) === 'lost') {
+        throw new Error('Bu kitap kayıp durumda ve ödünç verilemez.');
+      }
+
+      const bookToLend = allBooks.find(b => b.id === bookId);
+      if (!bookToLend) {
+        throw new Error('Book not found');
+      }
+
+      const borrowedAt = new Date();
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 14);
+
+      const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+      await setDoc(borrowedBookRef, {
+        userId,
+        bookId,
+        book: bookToLend,
+        borrowedAt: serverTimestamp(),
+        dueDate,
+        extended: false,
+        returnStatus: 'borrowed',
+        borrowStatus: 'approved',
+        fineStatus: 'pending'
+      });
+
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'borrowed',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'borrowed'
+      }));
+
+    } catch (error) {
+      console.error('Error lending book:', error);
+      throw error;
+    }
+  }, [user, allBooks, getBookStatus]);
+
+  const markBookAsLost = useCallback(async (bookId: string) => {
+    try {
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'lost',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      const bookRef = doc(db, 'books', bookId);
+      await updateDoc(bookRef, {
+        status: 'lost'
+      });
+
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'lost'
+      }));
+
+      setAllBooks(prev => prev.map(b => b.id === bookId ? { ...b, status: 'lost' } : b));
+    } catch (error) {
+      console.error('Error marking book as lost:', error);
+      throw error;
+    }
+  }, [user]);
+
+  const markBookAsFound = useCallback(async (bookId: string) => {
+    try {
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'available',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      const bookRef = doc(db, 'books', bookId);
+      await updateDoc(bookRef, {
+        status: 'available'
+      });
+
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'available'
+      }));
+
+      setAllBooks(prev => prev.map(b => b.id === bookId ? { ...b, status: 'available' } : b));
+    } catch (error) {
+      console.error('Error marking book as found:', error);
+      throw error;
+    }
+  }, [user]);
+
+  const isBookBorrowed = useCallback((bookId: string) => {
+    return allBorrowedBooks.some(book => 
+      book.id === bookId && 
+      book.returnStatus === 'borrowed' &&
+      book.borrowStatus === 'approved'
+    );
+  }, [allBorrowedBooks]);
+
+  const isBorrowed = useCallback((bookId: string) => {
+    // Check if user has a pending request for this book
+    const hasPendingRequest = borrowMessages.some(m => 
+      m.bookId === bookId && 
+      m.userId === user?.uid && 
+      m.status === 'pending'
+    );
     
-    const finesWithCalculation = allFines
-      .map(book => ({
-        ...book,
-        daysOverdue: Math.max(0, Math.ceil((new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24))),
-        fine: calculateFine(book)
-      }))
-      .filter(book => book.fine > 0);
-
-    const unpaid = finesWithCalculation.filter(book => book.fineStatus !== 'paid');
-    const paid = finesWithCalculation.filter(book => book.fineStatus === 'paid');
+    if (hasPendingRequest) return true;
     
-    return { unpaidFines: unpaid, paidFines: paid };
-  }, [borrowedBooks, allBorrowedBooks]);
+    // Check if user has an approved borrow for this book
+    return borrowedBooks.some(book => 
+      book.id === bookId && 
+      book.returnStatus === 'borrowed' &&
+      book.borrowStatus === 'approved'
+    );
+  }, [borrowedBooks, borrowMessages, user]);
 
-  const totalUnpaidFine = unpaidFines.reduce((sum, book) => sum + book.fine, 0);
+  const borrowBook = useCallback(async (book: Book) => {
+    if (!user || !userData) return;
 
-  const currentList = activeTab === 'unpaid' ? unpaidFines : paidFines;
+    if (getBookStatus(book.id) === 'lost') {
+      throw new Error('Bu kitap şu anda kayıp durumda ve ödünç alınamaz.');
+    }
+    
+    if (isBookBorrowed(book.id)) {
+      throw new Error('Bu kitap zaten başka bir kullanıcı tarafından ödünç alınmış.');
+    }
+
+    // Check if user already has a pending request for this book
+    const existingRequest = borrowMessages.find(m => 
+      m.bookId === book.id && 
+      m.userId === user.uid && 
+      m.status === 'pending'
+    );
+    
+    if (existingRequest) {
+      throw new Error('Bu kitap için zaten bekleyen bir talebiniz var.');
+    }
+
+    try {
+      // Create a borrow request instead of directly borrowing
+      await addDoc(collection(db, 'borrowMessages'), {
+        userId: user.uid,
+        bookId: book.id,
+        createdAt: serverTimestamp(),
+        status: 'pending',
+        userData: {
+          displayName: userData.displayName,
+          studentClass: userData.studentClass,
+          studentNumber: userData.studentNumber
+        },
+        bookData: book
+      });
+
+      // Refresh borrow messages to show the new request
+      const messagesRef = collection(db, 'borrowMessages');
+      const q = query(messagesRef, where('status', '==', 'pending'));
+      const querySnapshot = await getDocs(q);
+      
+      const messages: BorrowMessage[] = [];
+      querySnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        messages.push({
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt.toDate()
+        } as BorrowMessage);
+      });
+      
+      setBorrowMessages(messages);
+
+    } catch (error) {
+      console.error('Error borrowing book:', error);
+      throw error;
+    }
+  }, [user, userData, getBookStatus, isBookBorrowed]);
+
+  const approveBorrow = useCallback(async (bookId: string, userId: string) => {
+    try {
+      if (getBookStatus(bookId) === 'lost') {
+        throw new Error('Bu kitap kayıp durumda ve ödünç verilemez.');
+      }
+
+      const borrowMessage = borrowMessages.find(m => m.bookId === bookId && m.userId === userId);
+      if (!borrowMessage) {
+        throw new Error('Borrow request not found');
+      }
+
+      const borrowedAt = new Date();
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 14);
+
+      const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+      await setDoc(borrowedBookRef, {
+        userId,
+        bookId,
+        book: borrowMessage.bookData,
+        borrowedAt: serverTimestamp(),
+        dueDate,
+        extended: false,
+        returnStatus: 'borrowed',
+        borrowStatus: 'approved',
+        fineStatus: 'pending'
+      });
+
+      await updateDoc(doc(db, 'borrowMessages', borrowMessage.id), {
+        status: 'approved'
+      });
+
+      setBorrowMessages(prev => prev.filter(m => m.id !== borrowMessage.id));
+      
+      const newBorrowedBook: BorrowedBook = {
+        ...borrowMessage.bookData,
+        borrowedAt,
+        dueDate,
+        extended: false,
+        borrowedBy: userId,
+        returnStatus: 'borrowed',
+        borrowStatus: 'approved'
+      };
+
+      setAllBorrowedBooks(prev => [...prev, newBorrowedBook]);
+      if (userId === user?.uid) {
+        setBorrowedBooks(prev => [...prev, newBorrowedBook]);
+      }
+
+    } catch (error) {
+      console.error('Error approving borrow:', error);
+      throw error;
+    }
+  }, [user, borrowMessages, getBookStatus]);
+
+  const rejectBorrow = useCallback(async (bookId: string, userId: string) => {
+    try {
+      const messageDoc = borrowMessages.find(m => m.bookId === bookId && m.userId === userId);
+      if (messageDoc) {
+        await updateDoc(doc(db, 'borrowMessages', messageDoc.id), {
+          status: 'rejected'
+        });
+      }
+
+      setBorrowMessages(prev => prev.filter(m => !(m.bookId === bookId && m.userId === userId)));
+      setBorrowedBooks(prev => prev.filter(b => !(b.id === bookId && b.borrowStatus === 'pending')));
+      setAllBorrowedBooks(prev => prev.filter(b => !(b.id === bookId && b.borrowStatus === 'pending')));
+    } catch (error) {
+      console.error('Error rejecting borrow:', error);
+      throw error;
+    }
+  }, [borrowMessages]);
+
+  const hasPendingFine = useCallback((bookId: string) => {
+    const book = borrowedBooks.find(b => b.id === bookId);
+    if (!book) return false;
+
+    const daysOverdue = Math.ceil(
+      (new Date().getTime() - book.dueDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    return daysOverdue > 0 && book.fineStatus !== 'paid';
+  }, [borrowedBooks]);
+
+  const returnBook = useCallback(async (bookId: string) => {
+    if (!user) return;
+
+    try {
+      const book = borrowedBooks.find(b => b.id === bookId);
+      if (book && hasPendingFine(bookId)) {
+        throw new Error('Kitabı iade etmeden önce cezayı ödemeniz gerekmektedir.');
+      }
+
+      setBorrowedBooks(prev => prev.map(book => 
+        book.id === bookId ? { ...book, returnStatus: 'returned' } : book
+      ));
+      setAllBorrowedBooks(prev => prev.map(book => 
+        book.id === bookId && book.borrowedBy === user.uid 
+          ? { ...book, returnStatus: 'returned' } 
+          : book
+      ));
+    } catch (error) {
+      console.error('Error returning book:', error);
+      throw error;
+    }
+  }, [user, borrowedBooks, hasPendingFine]);
+
+  const extendBook = useCallback(async (bookId: string) => {
+    if (!user) return;
+
+    try {
+      const book = borrowedBooks.find(b => b.id === bookId);
+      if (!book || book.extended || book.returnStatus !== 'borrowed') {
+        throw new Error('Book cannot be extended');
+      }
+
+      const newDueDate = new Date(book.dueDate);
+      newDueDate.setDate(newDueDate.getDate() + 7);
+
+      const borrowedBookRef = doc(db, 'borrowedBooks', `${user.uid}_${bookId}`);
+      await updateDoc(borrowedBookRef, {
+        dueDate: newDueDate,
+        extended: true
+      });
+
+      const updatedBook = { ...book, dueDate: newDueDate, extended: true };
+
+      setBorrowedBooks(prev => prev.map(b => 
+        b.id === bookId ? updatedBook : b
+      ));
+      setAllBorrowedBooks(prev => prev.map(b => 
+        b.id === bookId && b.borrowedBy === user.uid ? updatedBook : b
+      ));
+    } catch (error) {
+      console.error('Error extending book:', error);
+      throw error;
+    }
+  }, [user, borrowedBooks]);
+
+  const markFineAsPaid = useCallback(async (bookId: string, userId: string) => {
+    try {
+      const bookToUpdate = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+      if (!bookToUpdate) {
+        throw new Error("Ödünç alınmış kitap kaydı bulunamadı.");
+      }
+
+      const today = new Date();
+      const diffTime = today.getTime() - bookToUpdate.dueDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const fineAmount = diffDays > 0 ? diffDays * 5 : 0;
+
+      const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+      await updateDoc(borrowedBookRef, {
+        fineStatus: 'paid',
+        paymentDate: serverTimestamp(),
+        fineAmount: fineAmount
+      });
+
+      const updateBooks = (books: BorrowedBook[]) =>
+        books.map(book =>
+          book.id === bookId && book.borrowedBy === userId
+            ? {
+                ...book,
+                fineStatus: 'paid',
+                paymentDate: new Date(),
+                fineAmount: fineAmount
+              }
+            : book
+        );
+
+      setBorrowedBooks(prev => updateBooks(prev));
+      setAllBorrowedBooks(prev => updateBooks(prev));
+    } catch (error) {
+      console.error('Ceza ödemesi işlenirken hata oluştu:', error);
+      throw error;
+    }
+  }, [allBorrowedBooks]);
+
+  const canExtend = useCallback((bookId: string) => {
+    const book = borrowedBooks.find(b => b.id === bookId);
+    return book ? !book.extended && book.returnStatus === 'borrowed' && book.borrowStatus === 'approved' : false;
+  }, [borrowedBooks]);
+
+  const requestReturn = useCallback(async (bookId: string) => {
+    if (!user || !userData) return;
+
+    try {
+      if (hasPendingFine(bookId)) {
+        throw new Error('Kitabı iade etmeden önce cezayı ödemeniz gerekmektedir.');
+      }
+
+      const book = borrowedBooks.find(b => b.id === bookId);
+      if (!book) throw new Error('Kitap bulunamadı.');
+
+      await addDoc(collection(db, 'returnMessages'), {
+        bookId,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        status: 'pending',
+        userData: {
+          displayName: userData.displayName,
+          studentClass: userData.studentClass,
+          studentNumber: userData.studentNumber
+        },
+        bookData: {
+          title: book.title,
+          borrowedAt: book.borrowedAt,
+          dueDate: book.dueDate
+        }
+      });
+
+      const borrowedBookRef = doc(db, 'borrowedBooks', `${user.uid}_${bookId}`);
+      await updateDoc(borrowedBookRef, {
+        returnStatus: 'pending'
+      });
+
+      setBorrowedBooks(prev => prev.map(b => 
+        b.id === bookId ? { ...b, returnStatus: 'pending' } : b
+      ));
+      setAllBorrowedBooks(prev => prev.map(b => 
+        b.id === bookId && b.borrowedBy === user.uid ? { ...b, returnStatus: 'pending' } : b
+      ));
+    } catch (error) {
+      console.error('Error requesting return:', error);
+      throw error;
+    }
+  }, [user, userData, borrowedBooks, hasPendingFine]);
+
+  const approveReturn = useCallback(async (bookId: string, userId: string) => {
+    try {
+      // Check if there's an unpaid fine for this book
+      const bookToReturn = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+      if (bookToReturn) {
+        const today = new Date();
+        const diffTime = today.getTime() - bookToReturn.dueDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const currentFine = diffDays > 0 ? diffDays * 5 : 0;
+        
+        // If there's an unpaid fine, automatically mark it as paid when returning
+        if (currentFine > 0 && bookToReturn.fineStatus !== 'paid') {
+          const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+          await updateDoc(borrowedBookRef, {
+            returnStatus: 'returned',
+            returnDate: serverTimestamp(),
+            fineStatus: 'paid',
+            fineAmount: currentFine,
+            paymentDate: serverTimestamp()
+          });
+        } else {
+          // No fine or already paid, just mark as returned
+          const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+          await updateDoc(borrowedBookRef, {
+            returnStatus: 'returned',
+            returnDate: serverTimestamp()
+          });
+        }
+      } else {
+        // Fallback: just mark as returned
+        const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+        await updateDoc(borrowedBookRef, {
+          returnStatus: 'returned',
+          returnDate: serverTimestamp()
+        });
+      }
+      // Check if there's an unpaid fine for this book
+      const bookToReturn = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+      if (bookToReturn) {
+        const today = new Date();
+        const diffTime = today.getTime() - bookToReturn.dueDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const currentFine = diffDays > 0 ? diffDays * 5 : 0;
+        
+        // If there's an unpaid fine, automatically mark it as paid when returning
+        if (currentFine > 0 && bookToReturn.fineStatus !== 'paid') {
+          const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+          await updateDoc(borrowedBookRef, {
+            returnStatus: 'returned',
+            returnDate: serverTimestamp(),
+            fineStatus: 'paid',
+            fineAmount: currentFine,
+            paymentDate: serverTimestamp()
+          });
+        } else {
+          // No fine or already paid, just mark as returned
+          const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+          await updateDoc(borrowedBookRef, {
+            returnStatus: 'returned',
+            returnDate: serverTimestamp()
+          });
+        }
+      } else {
+        // Fallback: just mark as returned
+        const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+        await updateDoc(borrowedBookRef, {
+          returnStatus: 'returned',
+          returnDate: serverTimestamp()
+        });
+      }
+
+      // Update book status to available in bookStatuses collection
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'available',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      // Update local book statuses immediately
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'available'
+      }));
+
+      // Update goal progress
+      await updateGoalProgress(1);
+
+      // Remove the return message
+      const returnMessagesRef = collection(db, 'returnMessages');
+      const q = query(
+        returnMessagesRef,
+        where('bookId', '==', bookId),
+        where('userId', '==', userId),
+        where('status', '==', 'pending')
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const messageDoc = querySnapshot.docs[0];
+        await updateDoc(doc(returnMessagesRef, messageDoc.id), {
+          status: 'approved'
+        });
+      }
+
+      // Update local borrowed books state
+      setBorrowedBooks(prev => prev.map(book => 
+        book.id === bookId && book.borrowedBy === userId
+          ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
+          : book
+      ));
+      
+      setAllBorrowedBooks(prev => prev.map(book => 
+        book.id === bookId && book.borrowedBy === userId
+          ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
+          : book
+      ));
+
+      console.log(`Book ${bookId} returned by user ${userId} - status updated to available`);
+    } catch (error) {
+      console.error('Error approving return:', error);
+      throw error;
+    }
+  }, [updateGoalProgress]);
+
+  const saveBook = useCallback(async (book: Book) => {
+    try {
+      const { id, ...bookData } = book;
+      if (id) {
+        const bookRef = doc(db, 'books', id);
+        await updateDoc(bookRef, bookData);
+      } else {
+        const booksCollectionRef = collection(db, 'books');
+        const docRef = await addDoc(booksCollectionRef, {
+          ...bookData,
+          addedDate: serverTimestamp()
+        });
+        // Update local state with the new book including the new ID
+        setAllBooks(prev => [...prev, { ...book, id: docRef.id }]);
+      }
+      await refetchAllBooks();
+    } catch (error) {
+      console.error('Error saving book:', error);
+      throw error;
+    }
+  }, [refetchAllBooks]);
+
+  const adminReturnBook = useCallback(async (bookId: string, userId: string) => {
+    try {
+      // Update the borrowed book record
+      const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
+      await updateDoc(borrowedBookRef, {
+        returnStatus: 'returned',
+        returnDate: serverTimestamp(),
+      });
+
+      // Update book status to available in bookStatuses collection
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'available',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      // Update local book statuses immediately
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'available'
+      }));
+
+      // Update local state
+      setAllBorrowedBooks(prev => prev.map(book =>
+        (book.id === bookId && book.borrowedBy === userId)
+          ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
+          : book
+      ));
+
+      console.log(`Book ${bookId} returned by admin for user ${userId} - status updated to available`);
+    } catch (error) {
+      console.error('Error returning book (admin):', error);
+      throw error;
+    }
+  }, [user]);
+
+  const adminBatchReturnBooks = useCallback(async (books: { bookId: string, userId: string }[]) => {
+    try {
+      const batch = writeBatch(db);
+
+      for (const book of books) {
+        // Update borrowed book record
+        const borrowedBookRef = doc(db, 'borrowedBooks', `${book.userId}_${book.bookId}`);
+        batch.update(borrowedBookRef, {
+          returnStatus: 'returned',
+          returnDate: serverTimestamp(),
+        });
+
+        // Update book status to available in bookStatuses collection
+        const statusRef = doc(db, 'bookStatuses', book.bookId);
+        batch.set(statusRef, {
+          status: 'available',
+          updatedAt: serverTimestamp(),
+          updatedBy: user?.uid
+        });
+      }
+
+      await batch.commit();
+
+      // Update local book statuses immediately
+      const statusUpdates: Record<string, 'available'> = {};
+      books.forEach(book => {
+        statusUpdates[book.bookId] = 'available';
+      });
+      
+      setBookStatuses(prev => ({
+        ...prev,
+        ...statusUpdates
+      }));
+
+      // Update local borrowed books state
+      const returnedBookKeys = new Set(books.map(b => `${b.userId}_${b.bookId}`));
+      setAllBorrowedBooks(prev => prev.map(book =>
+        returnedBookKeys.has(`${book.borrowedBy}_${book.id}`)
+          ? { ...book, returnStatus: 'returned', returnedAt: new Date() }
+          : book
+      ));
+
+      console.log(`Batch returned ${books.length} books - all statuses updated to available`);
+    } catch (error) {
+      console.error('Error batch returning books (admin):', error);
+      throw error;
+    }
+  }, [user]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-4">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center text-gray-600 hover:text-gray-900"
-          >
-            <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
-          </button>
-        </div>
-
-        <div className="flex justify-center">
-          <DotLottieReact
-            src="https://lottie.host/83387e5c-21ba-4d28-a4c2-620848f0a45b/RaxDPFOuNR.json"
-            loop
-            autoplay
-            style={{ width: '300px', height: '300px' }}
-          />
-        </div>
-
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Cezalarım</h1>
-          <p className="mt-2 text-gray-600">
-            Gecikmiş kitaplarınız ve ceza tutarlarınızı buradan takip edebilirsiniz.
-          </p>
-        </div>
-
-        {activeTab === 'unpaid' && (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <DollarSign className="w-8 h-8 text-red-500 mr-3" />
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Toplam Borcunuz</h2>
-                  <p className="text-sm text-gray-500">Ödenmemiş tüm cezalar</p>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-red-500">
-                {totalUnpaidFine} TL
-              </div>
-            </div>
-            {totalUnpaidFine > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center text-sm"
-                >
-                  <Info className="w-4 h-4 mr-2" />
-                  Nasıl Öderim?
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <button
-              onClick={() => setActiveTab('unpaid')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                activeTab === 'unpaid'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <AlertCircle className="w-5 h-5 mr-2" />
-              Ödenmemiş Cezalar
-            </button>
-            <button
-              onClick={() => setActiveTab('paid')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                activeTab === 'paid'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <History className="w-5 h-5 mr-2" />
-              Ödeme Geçmişi
-            </button>
-          </nav>
-        </div>
-
-        <div className="space-y-4">
-          {currentList.length > 0 ? (
-            currentList.map(book => (
-              <div key={`fine-${book.id}-${book.borrowedBy}`} className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <img 
-                      src={book.coverImage} 
-                      alt={book.title} 
-                      className="w-24 h-32 object-cover rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">{book.title}</h3>
-                      <p className="text-gray-600">{book.author}</p>
-                      
-                      <div className="mt-4 space-y-2">
-                        <div className="flex items-center text-sm">
-                          <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                          <span className="text-gray-600">Son Teslim Tarihi:</span>
-                          <span className="ml-2 font-medium">
-                            {new Date(book.dueDate).toLocaleDateString()}
-                          </span>
-                        </div>
-                        
-                        {book.daysOverdue > 0 && (
-                          <div className="flex items-center text-sm">
-                            <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
-                            <span className="text-red-600">Gecikme:</span>
-                            <span className="ml-2 font-medium text-red-600">
-                              {book.daysOverdue} gün
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className={`text-2xl font-bold ${book.fineStatus === 'paid' ? 'text-green-600' : 'text-red-500'}`}>
-                        {book.fine} TL
-                      </div>
-                      {book.fineStatus !== 'paid' && book.daysOverdue > 0 && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          ({book.daysOverdue} gün x 5 TL)
-                        </p>
-                      )}
-                      {book.fineStatus === 'paid' ? (
-                        <div className="mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium inline-block">
-                          Ödendi
-                          {book.paymentDate && (
-                            <div className="text-xs text-green-600 mt-1">
-                              {new Date(book.paymentDate).toLocaleDateString()}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 mt-2">
-                          Ödeme bekleniyor
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-            ) : (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center">
-                <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                  {activeTab === 'unpaid' ? 'Harika! Ödenmemiş cezanız yok.' : 'Geçmişe ait ödenmiş bir cezanız bulunmuyor.'}
-                </h3>
-                <p className="text-gray-600">{activeTab === 'unpaid' ? 'Kitaplarınızı zamanında getirdiğiniz için teşekkür ederiz.' : 'Tüm kayıtlarınız burada görünecektir.'}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Payment Info Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                <Info className="w-6 h-6 mr-2 text-indigo-600" />
-                Ceza Ödeme Bilgisi
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <p className="text-gray-700">
-                Tüm para cezaları, kütüphane bankosuna nakit olarak veya kart ile ödenebilir. Lütfen ödeme yaparken öğrenci kimliğinizi yanınızda bulundurunuz.
-              </p>
-            </div>
-            <div className="p-4 bg-gray-50 text-right">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                Anladım
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    <BookContext.Provider value={{
+      borrowedBooks,
+      allBorrowedBooks,
+      borrowMessages,
+      allBooks,
+      bookStatuses,
+      recommendedBooks,
+      borrowBook,
+      returnBook,
+      extendBook,
+      isBorrowed,
+      isBookBorrowed,
+      canExtend,
+      markFineAsPaid,
+      hasPendingFine,
+      requestReturn,
+      approveReturn,
+      approveBorrow,
+      rejectBorrow,
+      markBookAsLost,
+      markBookAsFound,
+      getBookStatus,
+      lendBookToUser,
+      fetchRecommendedBooks,
+      refetchAllBooks,
+      saveBook,
+      adminReturnBook,
+      adminBatchReturnBooks
+    }}>
+      {children}
+    </BookContext.Provider>
   );
 };
 
-export default FinesPage;
+  
