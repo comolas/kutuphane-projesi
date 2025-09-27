@@ -3,7 +3,7 @@
   "author": "Arif Kabakçı",
   "description": "Kütüphane Yönetim Sistemi Masaüstü Uygulaması",
   "private": true,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "type": "module",
   "homepage": "./",
   "main": "electron.cjs",
