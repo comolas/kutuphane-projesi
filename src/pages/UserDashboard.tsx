@@ -13,11 +13,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGoals } from '../contexts/GoalsContext';
 import { useAuthors } from '../contexts/AuthorContext';
 import { useEvents } from '../contexts/EventContext';
-import { Book as BookType } from '../types';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { getDailyQuote } from '../utils/quotes';
-import { Event, Survey, Announcement, Request as RequestType, Book } from '../types';
+import { Event, Survey, Announcement, Request as RequestType, Book as BookType } from '../types';
 import { Navigate } from 'react-router-dom';
 
 const UserDashboard: React.FC = () => {
