@@ -84,6 +84,7 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateGoalProgress = useCallback(async (bookCount: number) => {
     if (!user) return;
 
+    try {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
@@ -109,6 +110,9 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (yearlyGoalData.progress + bookCount >= yearlyGoalData.goal) {
         setShowConfetti(true);
       }
+    }
+    } catch (error) {
+      console.error('Error updating goal progress:', error);
     }
   }, [user]);
 

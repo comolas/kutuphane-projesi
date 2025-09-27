@@ -25,6 +25,7 @@ const ReadingGoalsModal: React.FC<ReadingGoalsModalProps> = ({ isOpen, onClose, 
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
 
+    try {
     const monthlyGoalData = {
       type: 'monthly' as const,
       year,
@@ -45,6 +46,10 @@ const ReadingGoalsModal: React.FC<ReadingGoalsModalProps> = ({ isOpen, onClose, 
     
     onGoalSaved();
     onClose();
+    } catch (error) {
+      console.error('Error saving goals:', error);
+      alert('Hedefler kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+    }
   };
 
   if (!isOpen) return null;
