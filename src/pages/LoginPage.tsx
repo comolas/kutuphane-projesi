@@ -21,7 +21,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const [animatedTitle, setAnimatedTitle] = React.useState('');
-  const fullTitle = ' Hoş Geldiniz';
+  const fullTitle = ' Kütüphanemize Hoş Geldiniz';
 
   React.useEffect(() => {
     let i = 0;
