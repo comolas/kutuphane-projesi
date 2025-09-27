@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
           : 'bg-transparent py-4'
       }`}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-12">
         <div className="flex items-center justify-center">
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">

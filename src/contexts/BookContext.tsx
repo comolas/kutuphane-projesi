@@ -102,161 +102,180 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const fetchAllBooks = async () => {
-        try {
-          const booksCollectionRef = collection(db, "books");
-          const reviewsCollectionRef = collection(db, "reviews");
-          const approvedReviewsQuery = query(reviewsCollectionRef, where("status", "==", "approved"));
+      try {
+        const booksCollectionRef = collection(db, "books");
+        const reviewsCollectionRef = collection(db, "reviews");
+        const approvedReviewsQuery = query(reviewsCollectionRef, where("status", "==", "approved"));
 
-          const [booksSnapshot, reviewsSnapshot] = await Promise.all([
-            getDocs(booksCollectionRef),
-            user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] })
-          ]);
+        const [booksSnapshot, reviewsSnapshot] = await Promise.all([
+          getDocs(booksCollectionRef),
+          user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] }),
+        ]);
 
-          const reviewsData = reviewsSnapshot.docs.map(doc => doc.data());
+        const reviewsData = reviewsSnapshot.docs.map((doc) => doc.data());
 
-          const booksData = booksSnapshot.docs.map(doc => {
-            const book = { ...doc.data(), id: doc.id } as Book;
-            const bookReviews = reviewsData.filter(review => review.bookId === book.id && review.status === 'approved');
-            const reviewCount = bookReviews.length;
-            const averageRating = reviewCount > 0
+        const booksData = booksSnapshot.docs.map((doc) => {
+          const book = { ...doc.data(), id: doc.id } as Book;
+          const bookReviews = reviewsData.filter(
+            (review) => review.bookId === book.id && review.status === "approved"
+          );
+          const reviewCount = bookReviews.length;
+          const averageRating =
+            reviewCount > 0
               ? bookReviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
               : 0;
 
-            return {
-              ...book,
-              averageRating: parseFloat(averageRating.toFixed(1)), // Format to one decimal place
-              reviewCount
-            };
-          }) as Book[];
-          setAllBooks(booksData);
-        } catch (error) {
-          console.error("Error fetching all books:", error);
-        }
-      };
+          return {
+            ...book,
+            averageRating: parseFloat(averageRating.toFixed(1)),
+            reviewCount,
+          };
+        }) as Book[];
+        setAllBooks(booksData);
+        return booksData;
+      } catch (error) {
+        console.error("Error fetching all books:", error);
+        return [];
+      }
+    };
 
     const fetchBookStatuses = async () => {
       try {
-        const statusesRef = collection(db, 'bookStatuses');
+        const statusesRef = collection(db, "bookStatuses");
         const querySnapshot = await getDocs(statusesRef);
-        
-        const statuses: Record<string, 'available' | 'borrowed' | 'lost'> = {};
+
+        const statuses: Record<string, "available" | "borrowed" | "lost"> = {};
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           statuses[doc.id] = data.status;
         });
-        
+
         setBookStatuses(statuses);
       } catch (error) {
-        console.error('Error fetching book statuses:', error);
+        console.error("Error fetching book statuses:", error);
       }
     };
 
-    const fetchBorrowedBooks = async () => {
+    const fetchBorrowedBooks = async (allBooksData: Book[]) => {
+      if (!user) return;
       try {
-        const borrowedBooksRef = collection(db, 'borrowedBooks');
-        const q = query(borrowedBooksRef, where('userId', '==', user.uid));
+        const borrowedBooksRef = collection(db, "borrowedBooks");
+        const q = query(borrowedBooksRef, where("userId", "==", user.uid));
         const querySnapshot = await getDocs(q);
-        
-        const books: BorrowedBook[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          books.push({
-            ...data.book,
-            borrowedAt: data.borrowedAt ? data.borrowedAt.toDate() : new Date(),
-            dueDate: data.dueDate ? data.dueDate.toDate() : new Date(),
-            returnedAt: data.returnDate ? data.returnDate.toDate() : undefined,
-            extended: data.extended || false,
-            borrowedBy: data.userId,
-            returnStatus: data.returnStatus || 'borrowed',
-            borrowStatus: data.borrowStatus || 'approved',
-            fineStatus: data.fineStatus || 'pending',
-            paymentDate: data.paymentDate?.toDate(),
-            fineAmountSnapshot: data.fineAmountSnapshot,
-            fineRateSnapshot: data.fineRateSnapshot,
-            daysOverdueSnapshot: data.daysOverdueSnapshot
-          } as BorrowedBook);
+
+        const books: BorrowedBook[] = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            const bookDetails = allBooksData.find(book => book.id === (data.bookId || data.book?.id));
+
+            const borrowData = {
+                borrowedAt: data.borrowedAt?.toDate() || new Date(),
+                dueDate: data.dueDate?.toDate() || new Date(),
+                returnedAt: data.returnDate?.toDate(),
+                extended: data.extended || false,
+                borrowedBy: data.userId,
+                returnStatus: data.returnStatus || 'borrowed',
+                borrowStatus: data.borrowStatus || 'approved',
+                fineStatus: data.fineStatus || 'pending',
+                paymentDate: data.paymentDate?.toDate(),
+                fineAmountSnapshot: data.fineAmountSnapshot,
+                fineRateSnapshot: data.fineRateSnapshot,
+                daysOverdueSnapshot: data.daysOverdueSnapshot,
+            };
+
+            const bookSource = bookDetails || data.book || {};
+
+            return { ...bookSource, ...borrowData } as BorrowedBook;
         });
-        
+
         setBorrowedBooks(books);
       } catch (error) {
-        console.error('Error fetching borrowed books:', error);
+        console.error("Error fetching borrowed books:", error);
       }
     };
 
-    const fetchAllBorrowedBooks = async () => {
-      try {
-        const borrowedBooksRef = collection(db, 'borrowedBooks');
-        const querySnapshot = await getDocs(borrowedBooksRef);
-        
-        const books: BorrowedBook[] = [];
-        for (const doc of querySnapshot.docs) {
-          const data = doc.data();
-          const userDoc = await getDocs(query(
-            collection(db, 'users'),
-            where('uid', '==', data.userId)
-          ));
-          
-          const userData = userDoc.docs[0]?.data();
-          
-          books.push({
-            ...data.book,
-            borrowedAt: data.borrowedAt ? data.borrowedAt.toDate() : new Date(),
-            dueDate: data.dueDate ? data.dueDate.toDate() : new Date(),
-            returnedAt: data.returnDate ? data.returnDate.toDate() : undefined,
-            extended: data.extended || false,
-            borrowedBy: data.userId,
-            returnStatus: data.returnStatus || 'borrowed',
-            borrowStatus: data.borrowStatus || 'approved',
-            fineStatus: data.fineStatus || 'pending',
-            paymentDate: data.paymentDate?.toDate(),
-            userData: userData ? {
-              displayName: userData.displayName,
-              studentClass: userData.studentClass,
-              studentNumber: userData.studentNumber
-            } : undefined,
-            fineAmountSnapshot: data.fineAmountSnapshot,
-            fineRateSnapshot: data.fineRateSnapshot,
-            daysOverdueSnapshot: data.daysOverdueSnapshot
-          } as BorrowedBook);
+    const fetchAllBorrowedBooks = async (allBooksData: Book[]) => {
+        if (!userData || userData.role !== 'admin') return;
+        try {
+          const borrowedBooksRef = collection(db, "borrowedBooks");
+          const querySnapshot = await getDocs(borrowedBooksRef);
+    
+          const userPromises = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return getDocs(query(collection(db, 'users'), where('uid', '==', data.userId)));
+          });
+    
+          const userSnapshots = await Promise.all(userPromises);
+          const usersData = userSnapshots.map(snap => snap.docs[0]?.data());
+    
+          const books: BorrowedBook[] = querySnapshot.docs.map((doc, index) => {
+            const data = doc.data();
+            const bookDetails = allBooksData.find(book => book.id === (data.bookId || data.book?.id));
+            const bookUserData = usersData[index];
+
+            const borrowData = {
+                borrowedAt: data.borrowedAt?.toDate() || new Date(),
+                dueDate: data.dueDate?.toDate() || new Date(),
+                returnedAt: data.returnDate?.toDate(),
+                extended: data.extended || false,
+                borrowedBy: data.userId,
+                returnStatus: data.returnStatus || 'borrowed',
+                borrowStatus: data.borrowStatus || 'approved',
+                fineStatus: data.fineStatus || 'pending',
+                paymentDate: data.paymentDate?.toDate(),
+                userData: bookUserData ? {
+                    displayName: bookUserData.displayName,
+                    studentClass: bookUserData.studentClass,
+                    studentNumber: bookUserData.studentNumber
+                } : undefined,
+                fineAmountSnapshot: data.fineAmountSnapshot,
+                fineRateSnapshot: data.fineRateSnapshot,
+                daysOverdueSnapshot: data.daysOverdueSnapshot,
+            };
+
+            const bookSource = bookDetails || data.book || {};
+
+            return { ...bookSource, ...borrowData } as BorrowedBook;
+          });
+    
+          setAllBorrowedBooks(books);
+        } catch (error) {
+          console.error("Error fetching all borrowed books:", error);
         }
-        
-        setAllBorrowedBooks(books);
-      } catch (error) {
-        console.error('Error fetching all borrowed books:', error);
-      }
-    };
+      };
 
     const fetchBorrowMessages = async () => {
       try {
-        const messagesRef = collection(db, 'borrowMessages');
-        const q = query(messagesRef, where('status', '==', 'pending'));
+        const messagesRef = collection(db, "borrowMessages");
+        const q = query(messagesRef, where("status", "==", "pending"));
         const querySnapshot = await getDocs(q);
-        
+
         const messages: BorrowMessage[] = [];
-        querySnapshot.docs.forEach(doc => {
+        querySnapshot.docs.forEach((doc) => {
           const data = doc.data();
           messages.push({
             id: doc.id,
             ...data,
-            createdAt: data.createdAt.toDate()
+            createdAt: data.createdAt.toDate(),
           } as BorrowMessage);
         });
-        
+
         setBorrowMessages(messages);
       } catch (error) {
-        console.error('Error fetching borrow messages:', error);
+        console.error("Error fetching borrow messages:", error);
       }
     };
 
-    fetchAllBooks();
-    fetchBookStatuses();
-    fetchBorrowedBooks();
-    fetchBorrowMessages();
+    const executeFetches = async () => {
+      const allBooksData = await fetchAllBooks();
+      fetchBookStatuses();
+      fetchBorrowMessages();
+      fetchBorrowedBooks(allBooksData);
+      if (userData?.role === "admin") {
+        fetchAllBorrowedBooks(allBooksData);
+      }
+    };
 
-    if (userData?.role === 'admin') {
-        fetchAllBorrowedBooks();
-    }
-
+    executeFetches();
   }, [user, userData]);
 
   const refetchAllBooks = useCallback(async () => {
@@ -844,6 +863,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatedBy: user?.uid
       });
 
+      // Update goal progress
+      await updateGoalProgress(1, userId);
+
       // Update local book statuses immediately
       setBookStatuses(prev => ({
         ...prev,
@@ -862,7 +884,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error returning book (admin):', error);
       throw error;
     }
-  }, [user]);
+  }, [user, updateGoalProgress]);
 
   const adminBatchReturnBooks = useCallback(async (books: { bookId: string, userId: string }[]) => {
     try {

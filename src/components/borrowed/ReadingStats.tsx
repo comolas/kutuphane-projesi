@@ -50,7 +50,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
     }
 
     const totalBooksRead = returnedBooks.length;
-    const totalPagesRead = returnedBooks.reduce((sum, book) => sum + (book.pageCount || 0), 0);
+    const totalPagesRead = returnedBooks.reduce((sum, book) => sum + (Number(book.pageCount) || 0), 0);
 
     const now = new Date();
     const booksThisMonth = returnedBooks.filter(b => {
@@ -238,7 +238,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
                       className="text-indigo-600 hover:text-indigo-900 flex items-center"
                     >
                       <Edit className="w-4 h-4 mr-1" />
-                      İncele ve Puanla
+                      Yorumla ve Puanla
                     </button>
                   </td>
                 </tr>

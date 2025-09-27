@@ -369,7 +369,7 @@ const BorrowedBooksPage: React.FC = () => {
 
                     return (
                       <div key={`${book.id}-${book.borrowedAt}`} className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
-                        <img src={book.coverImage} alt={book.title} className="w-full h-48 object-cover" />
+                        <img src={book.coverImage} alt={book.title} className="w-full h-96 object-cover" />
                         <div className="p-4 flex flex-col flex-grow">
                           <h3 className="font-semibold text-gray-900">{book.title}</h3>
                           <p className="text-sm text-gray-600">{book.author}</p>
