@@ -11,13 +11,14 @@ interface OnboardingStep {
 
 interface OnboardingTourProps {
   isOpen: boolean;
-  onClose: () => void;
-  onComplete: () => void;
+  onClose: (dontShowAgain: boolean) => void; // Modified to accept dontShowAgain boolean
+  onComplete: (dontShowAgain: boolean) => void; // Modified to accept dontShowAgain boolean
 }
 
 const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false); // New state for the checkbox
 
   const steps: OnboardingStep[] = [
     {
@@ -97,12 +98,12 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComp
   };
 
   const handleComplete = () => {
-    onComplete();
-    onClose();
+    onComplete(dontShowAgain); // Pass dontShowAgain state
+    onClose(dontShowAgain); // Pass dontShowAgain state
   };
 
   const handleSkip = () => {
-    onClose();
+    onClose(dontShowAgain); // Pass dontShowAgain state
   };
 
   if (!isOpen) return null;
@@ -189,8 +190,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComp
               <button
                 key={index}
                 onClick={() => setCurrentStep(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentStep
+                className={`w-2 h-2 rounded-full transition-colors ${ index === currentStep
                     ? 'bg-indigo-600'
                     : index < currentStep
                     ? 'bg-indigo-300'
@@ -219,14 +219,18 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComp
           )}
         </div>
 
-        {/* Skip Button */}
-        <div className="absolute top-4 left-4">
-          <button
-            onClick={handleSkip}
-            className="text-white/60 hover:text-white/80 text-sm transition-colors"
-          >
-            Atla
-          </button>
+        {/* "Don't Show Again" checkbox */}
+        <div className="p-4 bg-gray-100 flex items-center justify-center">
+          <input
+            type="checkbox"
+            id="dontShowAgain"
+            checked={dontShowAgain}
+            onChange={(e) => setDontShowAgain(e.target.checked)}
+            className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
+          />
+          <label htmlFor="dontShowAgain" className="ml-2 text-sm text-gray-700">
+            Bu turu bir daha gösterme
+          </label>
         </div>
       </div>
     </div>

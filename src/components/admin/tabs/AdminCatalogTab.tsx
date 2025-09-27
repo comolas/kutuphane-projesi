@@ -27,6 +27,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   const [catalogStatusFilter, setCatalogStatusFilter] = useState<'all' | 'available' | 'borrowed' | 'lost'>('all');
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState('all');
+  const [catalogTagQuery, setCatalogTagQuery] = useState('');
   const [showManualAddModal, setShowManualAddModal] = useState(false);
   const [showBulkAddModal, setShowBulkAddModal] = useState(false);
   const [showLendBookModal, setShowLendBookModal] = useState(false);
@@ -42,7 +43,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [catalogSearchQuery, catalogStatusFilter, catalogCategoryFilter]);
+  }, [catalogSearchQuery, catalogStatusFilter, catalogCategoryFilter, catalogTagQuery]);
   
   useEffect(() => {
     if (!isScanning) return;
@@ -304,6 +305,12 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       (book.author || '').toLowerCase().includes(catalogSearchQuery.toLowerCase()) ||
       (book.id || '').toLowerCase().includes(catalogSearchQuery.toLowerCase());
 
+    const matchesTags = 
+      catalogTagQuery === '' || 
+      (Array.isArray(book.tags) && book.tags.some(tag => 
+        tag.toLowerCase().includes(catalogTagQuery.toLowerCase())
+      ));
+
     const bookStatus = getBookStatus(book.id);
     const matchesStatus =
       catalogStatusFilter === 'all' || bookStatus === catalogStatusFilter;
@@ -311,7 +318,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
     const matchesCategory =
       catalogCategoryFilter === 'all' || book.category === catalogCategoryFilter;
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesTags && matchesStatus && matchesCategory;
   });
 
   // Pagination logic
@@ -348,13 +355,23 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       </div>
 
       <div className="p-6">
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative md:col-span-1">
             <input
               type="text"
               placeholder="Kitap adı, yazar veya ID..."
               value={catalogSearchQuery}
               onChange={(e) => setCatalogSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+          </div>
+          <div className="relative md:col-span-1">
+            <input
+              type="text"
+              placeholder="Etiket ara..."
+              value={catalogTagQuery}
+              onChange={(e) => setCatalogTagQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
             <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />

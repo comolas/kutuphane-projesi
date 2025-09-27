@@ -3,6 +3,7 @@ import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc } from 'firebase
 import { db } from '../../../firebase/config';
 import { Plus, Search, Edit, Trash2, BookText } from 'lucide-react';
 import QuoteModal from '../QuoteModal';
+import BulkAddQuoteModal from '../BulkAddQuoteModal'; // Import the new modal
 
 interface Quote {
   id: string;
@@ -18,6 +19,7 @@ const QuoteManagementTab: React.FC = () => {
   const [authorFilter, setAuthorFilter] = useState('all');
   const [bookFilter, setBookFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false); // New state for bulk add modal
   const [quoteToEdit, setQuoteToEdit] = useState<Quote | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,13 +115,22 @@ const QuoteManagementTab: React.FC = () => {
             <BookText className="w-6 h-6 mr-2 text-indigo-600" />
             Alıntı Yönetimi
           </h2>
-          <button 
-            onClick={() => handleOpenModal(null)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Yeni Alıntı Ekle
-          </button>
+          <div className="flex space-x-3"> {/* Added a div to group buttons */}
+            <button 
+              onClick={() => handleOpenModal(null)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Yeni Alıntı Ekle
+            </button>
+            <button 
+              onClick={() => setShowBulkAddModal(true)} // New button to open bulk add modal
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Toplu Alıntı Ekle
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -206,6 +217,13 @@ const QuoteManagementTab: React.FC = () => {
         onClose={handleCloseModal}
         onSave={handleSaveQuote}
         quoteToEdit={quoteToEdit}
+      />
+
+      {/* Bulk Add Quote Modal */}
+      <BulkAddQuoteModal
+        isOpen={showBulkAddModal}
+        onClose={() => setShowBulkAddModal(false)}
+        onQuotesAdded={fetchQuotes} // Refetch quotes after bulk add
       />
     </div>
   );

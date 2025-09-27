@@ -28,6 +28,7 @@ import FavoritesPage from './pages/FavoritesPage';
 import AuthorsPage from './pages/AuthorsPage';
 import AuthorDetailsPage from './pages/AuthorDetailsPage';
 import ProgressPage from './pages/ProgressPage';
+import UserBorrowsDetailPage from './pages/admin/UserBorrowsDetailPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -64,6 +65,7 @@ const AppContent = () => {
           <Route path="/yazarlar" element={<PrivateRoute><AuthorsPage /></PrivateRoute>} />
           <Route path="/author/:id" element={<PrivateRoute><AuthorDetailsPage /></PrivateRoute>} />
           <Route path="/progress" element={<PrivateRoute><ProgressPage /></PrivateRoute>} />
+          <Route path="/admin/borrowed-by/:userId" element={<PrivateRoute><UserBorrowsDetailPage /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>
