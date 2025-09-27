@@ -14,6 +14,7 @@ interface UserData {
   role: 'user' | 'admin';
   createdAt: Date;
   lastLogin: Date;
+  photoURL?: string;
 }
 
 const UsersTab: React.FC = () => {
@@ -75,6 +76,7 @@ const UsersTab: React.FC = () => {
         studentClass: updatedUser.studentClass,
         studentNumber: updatedUser.studentNumber,
         role: updatedUser.role,
+        photoURL: updatedUser.photoURL || '',
       });
 
       setUsers(prev => prev.map(user => user.uid === updatedUser.uid ? updatedUser : user));

@@ -42,21 +42,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(user);
       
       if (user) {
-        // Check if user is admin
-        const isAdminUser = user.email === 'datakolejikutuphane@gmail.com';
-        setIsAdmin(isAdminUser);
-
         // Get or create user document
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
         
+        let currentUserData: UserData;
+
         if (!userDoc.exists()) {
           // Create new user document with default values for studentClass and studentNumber
           const newUserData: UserData = {
             uid: user.uid,
             email: user.email!,
             displayName: user.displayName ?? '',
-            role: isAdminUser ? 'admin' : 'user',
+            role: 'user', // Default to user role
             createdAt: new Date(),
             lastLogin: new Date(),
             studentClass: '', // Default empty string
@@ -64,23 +62,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           
           await setDoc(userRef, newUserData);
-          setUserData(newUserData);
+          currentUserData = newUserData;
         } else {
           // Update last login and get existing data
           const existingData = userDoc.data() as UserData;
-          await setDoc(userRef, { 
+          const updatedData = {
             ...existingData, 
             lastLogin: new Date(),
-            role: isAdminUser ? 'admin' : existingData.role, // Ensure admin role is set
-            studentClass: existingData.studentClass || '', // Ensure studentClass exists
-            studentNumber: existingData.studentNumber || '', // Ensure studentNumber exists
-          }, { merge: true });
-          setUserData({
-            ...existingData,
+            // Do not hardcode role here; it should be managed in Firestore
             studentClass: existingData.studentClass || '',
             studentNumber: existingData.studentNumber || '',
-          } as UserData);
+          };
+          await setDoc(userRef, updatedData, { merge: true });
+          currentUserData = updatedData;
         }
+        setUserData(currentUserData);
+        setIsAdmin(currentUserData.role === 'admin'); // Determine admin status from Firestore role
       } else {
         setUserData(null);
         setIsAdmin(false);
