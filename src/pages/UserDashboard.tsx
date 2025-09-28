@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
-import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle } from 'lucide-react';
+import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRight as ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle } from 'lucide-react';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
 import ItemDetailsModal from '../components/common/ItemDetailsModal';
 import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
@@ -16,7 +16,7 @@ import { useEvents } from '../contexts/EventContext';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { getDailyQuote } from '../utils/quotes';
-import { Event, Survey, Announcement, Request as RequestType } from '../types';
+import { Event, Survey, Announcement, Request as RequestType, Book as BookType } from '../types';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ const UserDashboard: React.FC = () => {
   const [dailyQuote, setDailyQuote] = useState<{text: string, author: string, book: string} | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentRecSlide, setCurrentRecSlide] = useState(0);
-  const [newBooks, setNewBooks] = useState<BookType[][]>([]);
+  const [newBooks, setNewBooks] = useState<Book[][]>([]);
   
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -515,7 +515,7 @@ const UserDashboard: React.FC = () => {
                   Düzenle
                 </button>
               </div>
-              <div className="bg-indigo-50 rounded-xl shadow-lg p-6 space-y-6 flex-grow h-full border border-indigo-200">
+              <div className="bg-indigo-50 rounded-xl shadow-lg p-6 space-y-6 flex-grow border border-indigo-200">
                 {monthlyGoal ? (
                   <div>
                     <div className="flex justify-between items-center mb-2">
@@ -527,9 +527,14 @@ const UserDashboard: React.FC = () => {
                     <div className="w-full bg-gray-200 rounded-full h-4">
                       <div
                         className="bg-indigo-600 h-4 rounded-full"
-                        style={{ width: `${(monthlyGoal.progress / monthlyGoal.goal) * 100}%` }}
+                        style={{ width: `${Math.min((monthlyGoal.progress / monthlyGoal.goal) * 100, 100)}%` }}
                       ></div>
                     </div>
+                    {monthlyGoal.progress >= monthlyGoal.goal && (
+                      <div className="mt-2 text-sm text-green-600 font-medium">
+                        🎉 Tebrikler! Bu ayın hedefini tamamladınız!
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center text-gray-500">
@@ -547,9 +552,14 @@ const UserDashboard: React.FC = () => {
                     <div className="w-full bg-gray-200 rounded-full h-4">
                       <div
                         className="bg-indigo-600 h-4 rounded-full"
-                        style={{ width: `${(yearlyGoal.progress / yearlyGoal.goal) * 100}%` }}
+                        style={{ width: `${Math.min((yearlyGoal.progress / yearlyGoal.goal) * 100, 100)}%` }}
                       ></div>
                     </div>
+                    {yearlyGoal.progress >= yearlyGoal.goal && (
+                      <div className="mt-2 text-sm text-green-600 font-medium">
+                        🎉 Harika! Bu yılın hedefini tamamladınız!
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center text-gray-500">
@@ -623,7 +633,7 @@ const UserDashboard: React.FC = () => {
                                   <p className="text-sm text-gray-600">{book.author}</p>
                                   <div className="mt-3 flex items-center justify-between">
                                     <button
-                                      onClick={() => handleBorrowBook(book)}
+                                      onClick={() => handleBorrowBook(book as BookType)}
                                       className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium hover:bg-indigo-200 transition-colors"
                                     >
                                       Ödünç Al
@@ -812,7 +822,7 @@ const UserDashboard: React.FC = () => {
                                         {book.addedDate && new Date((book.addedDate as any).seconds * 1000).toLocaleDateString()}
                                       </div>
                                       <button
-                                        onClick={() => handleBorrowBook(book)}
+                                        onClick={() => handleBorrowBook(book as BookType)}
                                         className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium hover:bg-indigo-200 transition-colors"
                                       >
                                         Ödünç Al
