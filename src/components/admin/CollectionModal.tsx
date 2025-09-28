@@ -3,6 +3,7 @@ import { X, Search, PlusCircle, Trash2 } from 'lucide-react';
 import { db } from '../../firebase/config';
 import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { Book } from '../../../types'; // Assuming you have a Book type
+import { getProxiedImageUrl } from '../../utils/imageUtils';
 
 // This should be moved to types/index.ts later
 export interface StoryCollectionBook {
@@ -171,7 +172,7 @@ const CollectionModal: React.FC<CollectionModalProps> = ({ onClose, onSave, coll
                   <ul className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
                     {searchResults.map(book => (
                       <li key={book.id} onClick={() => handleAddBook(book)} className="p-3 hover:bg-indigo-50 cursor-pointer flex items-center">
-                        <img src={book.coverImage} alt={book.title} className="w-10 h-14 object-cover mr-3"/>
+                        <img src={getProxiedImageUrl(book.coverImage)} alt={book.title} className="w-10 h-14 object-cover mr-3"/>
                         <div>
                             <p className="font-semibold">{book.title}</p>
                             <p className="text-sm text-gray-500">{book.author}</p>
@@ -192,7 +193,7 @@ const CollectionModal: React.FC<CollectionModalProps> = ({ onClose, onSave, coll
                     <div className="flex items-start justify-between">
                         <div className="flex items-start">
                             <span className="text-indigo-600 font-bold mr-3">{index + 1}.</span>
-                            <img src={book.coverImage} alt={book.title} className="w-12 h-16 object-cover mr-4 rounded-sm"/>
+                            <img src={getProxiedImageUrl(book.coverImage)} alt={book.title} className="w-12 h-16 object-cover mr-4 rounded-sm"/>
                             <div>
                                 <p className="font-semibold text-gray-800">{book.title}</p>
                                 <p className="text-xs text-gray-500">{book.author}</p>

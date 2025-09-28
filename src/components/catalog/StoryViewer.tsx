@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { StoryCollection } from '../../types';
 import { useBooks } from '../../contexts/BookContext';
 import BookDetailsModal from '../common/BookDetailsModal';
@@ -82,6 +82,20 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ collection, onClose }) => {
             <div className="mt-4 text-center">
                 <h3 className="text-2xl font-bold text-white">{currentBook.title}</h3>
                 <p className="text-md text-gray-300">{currentBook.author}</p>
+                <div className="flex items-center justify-center mt-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-5 h-5 ${
+                        (currentBook.averageRating || 0) >= star ? 'text-yellow-400' : 'text-gray-400'
+                      }`}
+                      fill="currentColor"
+                    />
+                  ))}
+                  <span className="ml-2 text-sm text-white">
+                    ({currentBook.reviewCount || 0} yorum)
+                  </span>
+                </div>
             </div>
         </div>
 
