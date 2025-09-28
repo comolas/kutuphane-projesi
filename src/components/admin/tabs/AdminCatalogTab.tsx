@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Book, Users } from '../../../types';
 import { useBooks } from '../../../contexts/BookContext';
 import { Html5Qrcode, Html5QrcodeScanType } from "html5-qrcode";
-import { Search, Plus, BookOpen, Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
+import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
 import LendBookModal from '../LendBookModal';
 import EditBookModal from '../EditBookModal';
 import BulkAddBookModal from '../BulkAddBookModal';
