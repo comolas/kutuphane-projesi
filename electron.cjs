@@ -61,6 +61,7 @@ async function checkForUpdatesFromFirebase() {
         console.log('Firebase: Update available.');
         // Pass info object similar to electron-updater's
         mainWindow.webContents.send('update_available', { version: latestVersion });
+        autoUpdater.checkForUpdates(); // Trigger electron-updater to find and download the update
       } else {
         console.log('Firebase: Update not available.');
         mainWindow.webContents.send('update_not_available');
