@@ -8,6 +8,7 @@ import { db } from '../firebase/config';
 import { collection, getDocs, addDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewModal from '../components/common/ReviewModal';
+import StoryTray from '../components/catalog/StoryTray';
 
 // Add borrowMessages to the import from useBooks
 const CatalogPage: React.FC = () => {
@@ -205,6 +206,8 @@ const CatalogPage: React.FC = () => {
             Kütüphanemizdeki tüm kitapları keşfedin ve arayın.
           </p>
         </div>
+
+        <StoryTray />
 
         {successMessage && (
           <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg flex items-center">

@@ -87,3 +87,17 @@ export interface Magazine {
   reviewCount?: number;
   tags?: string[];
 }
+
+export interface StoryCollectionBook {
+  bookId: string;
+  blurb: string;
+}
+
+export interface StoryCollection {
+  id?: string;
+  title: string;
+  coverImage: string;
+  order: number;
+  isActive: boolean;
+  books: StoryCollectionBook[];
+}

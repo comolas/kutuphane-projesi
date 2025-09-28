@@ -12,12 +12,13 @@ import QuoteManagementTab from '../components/admin/tabs/QuoteManagementTab';
 import AuthorManagementTab from '../components/admin/tabs/AuthorManagementTab'; // Import edildi
 import ReviewManagementTab from '../components/admin/tabs/ReviewManagementTab';
 import AdminMagazinesTab from '../components/admin/tabs/AdminMagazinesTab';
+import CollectionManagementTab from '../components/admin/tabs/CollectionManagementTab'; // Yeni eklendi
 import UpdateButton from '../components/common/UpdateButton'; // Added import
 import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
 import { Navigate } from 'react-router-dom';
-import { Book, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen } from 'lucide-react';
+import { Book, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers } from 'lucide-react'; // Layers eklendi
 import { auth, db } from '../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -36,7 +37,7 @@ const AdminDashboard: React.FC = () => {
   const { isAdmin } = useAuth();
   const { refetchAllBooks, getBookStatus } = useBooks();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management'>('borrowed-books');
+  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management'>('borrowed-books');
   const [users, setUsers] = useState<UserData[]>([]);
   const [catalogBooks, setCatalogBooks] = useState<Book[]>([]);
 
@@ -219,6 +220,16 @@ const AdminDashboard: React.FC = () => {
                   <UserCog className="w-5 h-5" />
                   <span>Ayın Yazarı Yönetimi</span>
                 </button>
+
+                <button
+                  onClick={() => { setActiveTab('collection-management'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
+                    activeTab === 'collection-management' ? 'bg-indigo-800' : ''
+                  }`}
+                >
+                  <Layers className="w-5 h-5" />
+                  <span>Koleksiyon Yönetimi</span>
+                </button>
               </div>
             </div>
 
@@ -335,6 +346,8 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'review-management' && <ReviewManagementTab />}
 
         {activeTab === 'magazine-management' && <AdminMagazinesTab />}
+
+        {activeTab === 'collection-management' && <CollectionManagementTab />}
 
       </div>
     </div>

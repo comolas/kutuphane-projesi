@@ -11,6 +11,7 @@ import { MagazineProvider } from './contexts/MagazineContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ReviewProvider } from './contexts/ReviewContext';
+import { CollectionProvider } from './contexts/CollectionContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
@@ -88,7 +89,9 @@ function App() {
                       <SettingsProvider>
                         <ReviewProvider>
                           <MagazineProvider>
-                            <AppContent />
+                            <CollectionProvider>
+                              <AppContent />
+                            </CollectionProvider>
                           </MagazineProvider>
                         </ReviewProvider>
                       </SettingsProvider>
