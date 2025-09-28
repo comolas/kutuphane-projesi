@@ -160,28 +160,104 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const fetchBookDataFromISBN = async (isbn: string) => {
     setApiMessage('Kitap verileri aranıyor...');
     try {
-      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+      // Try multiple API endpoints for better reliability
+      const apiUrls = [
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`,
+        `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`,
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`
+      ];
+      
+      let bookData = null;
+      let lastError = null;
+      
+      // Try Google Books API first
+      try {
+        const response = await fetch(apiUrls[0], {
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
       const data = await response.json();
+        
       if (data.items && data.items.length > 0) {
         const volumeInfo = data.items[0].volumeInfo;
         
+        bookData = {
+          title: volumeInfo.title || '',
+          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : '',
+          publisher: volumeInfo.publisher || '',
+          pageCount: volumeInfo.pageCount || 0,
+          dimensions: volumeInfo.dimensions ? `${volumeInfo.dimensions.height} x ${volumeInfo.dimensions.width}` : '',
+          coverImage: volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || '',
+          backCover: volumeInfo.description || ''
+        };
+      }
+      } catch (error) {
+        lastError = error;
+        console.warn('Google Books API failed, trying OpenLibrary...', error);
+        
+        // Try OpenLibrary API as fallback
+        try {
+          const response = await fetch(apiUrls[1]);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          const bookKey = `ISBN:${isbn}`;
+          
+          if (data[bookKey]) {
+            const bookInfo = data[bookKey];
+            bookData = {
+              title: bookInfo.title || '',
+              author: bookInfo.authors ? bookInfo.authors.map((a: any) => a.name).join(', ') : '',
+              publisher: bookInfo.publishers ? bookInfo.publishers[0].name : '',
+              pageCount: bookInfo.number_of_pages || 0,
+              coverImage: bookInfo.cover ? bookInfo.cover.medium || bookInfo.cover.small : '',
+              backCover: bookInfo.notes || ''
+            };
+          }
+        } catch (openLibError) {
+          console.warn('OpenLibrary API also failed:', openLibError);
+          lastError = openLibError;
+        }
+      }
+      
+      if (bookData) {
         setNewBook(prev => ({
           ...prev,
-          title: volumeInfo.title || prev.title,
-          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : prev.author,
-          publisher: volumeInfo.publisher || prev.publisher,
-          pageCount: volumeInfo.pageCount || prev.pageCount,
-          dimensions: volumeInfo.dimensions ? `${volumeInfo.dimensions.height} x ${volumeInfo.dimensions.width}` : prev.dimensions,
-          coverImage: volumeInfo.imageLinks?.thumbnail || prev.coverImage,
-          backCover: volumeInfo.description || prev.backCover
+          title: bookData.title || prev.title,
+          author: bookData.author || prev.author,
+          publisher: bookData.publisher || prev.publisher,
+          pageCount: bookData.pageCount || prev.pageCount,
+          dimensions: bookData.dimensions || prev.dimensions,
+          coverImage: bookData.coverImage || prev.coverImage,
+          backCover: bookData.backCover || prev.backCover
         }));
         setApiMessage('Kitap bilgileri başarıyla bulundu ve forma eklendi!');
       } else {
-        setApiMessage('Bu ISBN ile eşleşen bir kitap bulunamadı.');
+        setApiMessage('Bu ISBN ile eşleşen bir kitap bulunamadı. Lütfen bilgileri manuel olarak girin.');
       }
     } catch (error) {
       console.error("Error fetching book data:", error);
-      setApiMessage('Kitap bilgileri alınırken bir hata oluştu.');
+      let errorMessage = 'Kitap bilgileri alınırken bir hata oluştu.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = 'İnternet bağlantısı sorunu. Lütfen bağlantınızı kontrol edin.';
+        } else if (error.message.includes('403') || error.message.includes('429')) {
+          errorMessage = 'API limiti aşıldı. Lütfen birkaç dakika sonra tekrar deneyin.';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Bu ISBN ile kitap bulunamadı. Manuel olarak bilgileri girebilirsiniz.';
+        }
+      }
+      
+      setApiMessage(errorMessage);
     }
   };
 
