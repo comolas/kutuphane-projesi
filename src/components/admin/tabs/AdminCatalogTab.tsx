@@ -447,7 +447,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   checked={selectedBookIds.includes(book.id)}
                   onChange={(e) => handleSelectBook(book.id, e.target.checked)}
                 />
-                <img src={book.coverImage} alt={book.title} className="w-full h-85 object-cover" />
+                <img src={`https://us-central1-data-49543.cloudfunctions.net/imageProxy?url=${encodeURIComponent(book.coverImage)}`} alt={book.title} className="w-full h-85 object-cover" />
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900">{book.title}</h3>
                   <p className="text-sm text-gray-600">{book.author}</p>

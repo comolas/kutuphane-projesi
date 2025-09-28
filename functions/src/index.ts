@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
+import request = require("request");
 
 admin.initializeApp();
 
@@ -123,4 +124,24 @@ export const updateMonthlyLeaderboard = onSchedule("every 1 hours", async () => 
   } catch (error) {
     logger.error("Error updating monthly leaderboard:", error);
   }
+});
+
+export const imageProxy = onRequest({ cors: true }, (req, res) => {
+  const imageUrl = req.query.url as string;
+
+  if (!imageUrl) {
+    res.status(400).send("No image URL specified.");
+    return;
+  }
+
+  logger.info(`Proxying image: ${imageUrl}`);
+
+  const options = {
+    url: imageUrl,
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+    }
+  };
+
+  req.pipe(request(options)).pipe(res);
 });
