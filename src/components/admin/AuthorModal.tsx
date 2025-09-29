@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-
-interface Author {
-  id?: string;
-  name: string;
-  biography: string;
-  image: string;
-  tags: string[];
-  featured?: boolean;
-}
+import { Author } from '../../types';
 
 interface AuthorModalProps {
   isOpen: boolean;
@@ -18,14 +10,14 @@ interface AuthorModalProps {
 }
 
 const AuthorModal: React.FC<AuthorModalProps> = ({ isOpen, onClose, onSave, authorToEdit }) => {
-  const [author, setAuthor] = useState<Author>({ name: '', biography: '', image: '', tags: [] });
+  const [author, setAuthor] = useState<Author>({ id: '', name: '', biography: '', image: '', tags: [], featured: false, birthDate: '', deathDate: '' });
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (authorToEdit) {
       setAuthor(authorToEdit);
     } else {
-      setAuthor({ name: '', biography: '', image: '', tags: [] });
+      setAuthor({ id: '', name: '', biography: '', image: '', tags: [], featured: false, birthDate: '', deathDate: '' });
     }
     setError('');
   }, [authorToEdit, isOpen]);
@@ -84,6 +76,30 @@ const AuthorModal: React.FC<AuthorModalProps> = ({ isOpen, onClose, onSave, auth
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">Doğum Tarihi</label>
+              <input
+                type="date"
+                id="birthDate"
+                name="birthDate"
+                value={author.birthDate || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label htmlFor="deathDate" className="block text-sm font-medium text-gray-700 mb-1">Ölüm Tarihi</label>
+              <input
+                type="date"
+                id="deathDate"
+                name="deathDate"
+                value={author.deathDate || ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="biography" className="block text-sm font-medium text-gray-700 mb-1">Biyografi</label>

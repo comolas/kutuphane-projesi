@@ -29,6 +29,8 @@ export interface Author {
   tags: string[];
   featured: boolean;
   monthlyFeaturedDate?: Date;
+  birthDate?: string;
+  deathDate?: string;
 }
 
 export interface Event {
