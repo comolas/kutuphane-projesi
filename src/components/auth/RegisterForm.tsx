@@ -8,6 +8,20 @@ interface RegisterFormProps {
   onLoginClick: () => void;
 }
 
+const siniflar = [
+  "9-A", "9-B", "9-C", "9-D", "9-E", "9-F", "9-G", "9-I",
+  "10-A", "10-B", "10-C", "10-D", "10-E", "10-F", "10-G", "10-H", "10-I", "10-J",
+  "11-A", "11-B", "11-D", "11-E", "11-F", "11-G", "11-AB", "11-AC", "11-AD", "11-AE", "11-AF",
+  "12-A", "12-B", "12-C", "12-D", "12-E", "12-F", "12-G", "12-H",
+  "Öğretmen"
+];
+
+const branslar = [
+  "Almanca", "Beden Eğitim", "Biyoloji", "Coğrafya", "Din Kültürü", "Elektrik",
+  "Felsefe", "Fizik", "Kimya", "Makine", "Matematik", "İngilizce", "Tarih",
+  "Türk Dili ve Edebiyatı", "Uçak Bakım"
+];
+
 const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit,
   onLoginClick,
@@ -34,7 +48,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     if (!firstName.trim()) newErrors.firstName = 'Ad gereklidir';
     if (!lastName.trim()) newErrors.lastName = 'Soyad gereklidir';
     if (!studentClass.trim()) newErrors.studentClass = 'Sınıf gereklidir';
-    if (!studentNumber.trim()) newErrors.studentNumber = 'Öğrenci no gereklidir';
+    if (!studentNumber.trim()) {
+      if (studentClass === 'Öğretmen') {
+        newErrors.studentNumber = 'Branş gereklidir';
+      } else {
+        newErrors.studentNumber = 'Öğrenci no gereklidir';
+      }
+    }
     
     if (!email) {
       newErrors.email = 'E-posta adresi gereklidir';
@@ -102,23 +122,42 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormInput
             label="Sınıf"
-            type="text"
+            as="select"
             value={studentClass}
-            onChange={(e) => setStudentClass(e.target.value)}
+            onChange={(e) => {
+              setStudentClass(e.target.value);
+              setStudentNumber(''); // Reset student number/branch on class change
+            }}
             error={errors.studentClass}
-            placeholder="Örn: 9-A"
             icon="book"
-          />
+          >
+            <option value="">Sınıfınızı Seçin</option>
+            {siniflar.map(s => <option key={s} value={s}>{s}</option>)}
+          </FormInput>
           
-          <FormInput
-            label="Öğrenci No"
-            type="text"
-            value={studentNumber}
-            onChange={(e) => setStudentNumber(e.target.value)}
-            error={errors.studentNumber}
-            placeholder="Örn: 1234"
-            icon="id-card"
-          />
+          {studentClass === 'Öğretmen' ? (
+            <FormInput
+              label="Branş"
+              as="select"
+              value={studentNumber}
+              onChange={(e) => setStudentNumber(e.target.value)}
+              error={errors.studentNumber}
+              icon="id-card"
+            >
+              <option value="">Branşınızı Seçin</option>
+              {branslar.map(b => <option key={b} value={b}>{b}</option>)}
+            </FormInput>
+          ) : (
+            <FormInput
+              label="Öğrenci No"
+              type="text"
+              value={studentNumber}
+              onChange={(e) => setStudentNumber(e.target.value)}
+              error={errors.studentNumber}
+              placeholder="Örn: 1234"
+              icon="id-card"
+            />
+          )}
         </div>
         
         <FormInput

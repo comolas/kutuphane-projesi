@@ -4,14 +4,7 @@ import { db } from '../../../firebase/config';
 import { Plus, Search, Edit, Trash2, Star, Upload } from 'lucide-react';
 import AuthorModal from '../AuthorModal';
 import BulkAddAuthorModal from '../BulkAddAuthorModal';
-
-interface Author {
-  id: string;
-  name: string;
-  biography: string;
-  image: string;
-  featured?: boolean;
-}
+import { Author } from '../../../types';
 
 const AuthorManagementTab: React.FC = () => {
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -163,13 +156,15 @@ const AuthorManagementTab: React.FC = () => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Görsel</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Yazar</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doğum Tarihi</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ölüm Tarihi</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biyografi</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={4} className="text-center py-8">Yükleniyor...</td></tr>
+              <tr><td colSpan={6} className="text-center py-8">Yükleniyor...</td></tr>
             ) : (paginatedAuthors.map(author => (
               <tr key={author.id} className={`${author.featured ? 'bg-yellow-50' : ''}`}>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -179,6 +174,8 @@ const AuthorManagementTab: React.FC = () => {
                   {author.featured && <Star className="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0" />}
                   {author.name}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{author.birthDate}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{author.deathDate}</td>
                 <td className="px-6 py-4">
                   <p className="text-sm text-gray-700 line-clamp-2">{author.biography}</p>
                 </td>
