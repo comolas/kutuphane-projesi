@@ -4,6 +4,7 @@ import AuthorCard from '../components/common/AuthorCard';
 import { Author } from '../types';
 import { Search, Tag, Filter, X } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import AuthorCalendar from '../components/common/AuthorCalendar';
 
 const AuthorsPage: React.FC = () => {
   const { authors, fetchAllAuthors } = useAuthors();
@@ -61,6 +62,13 @@ const AuthorsPage: React.FC = () => {
           <p className="mt-2 text-lg text-gray-600">
             Kütüphanemize değer katan yazarları keşfedin.
           </p>
+        </div>
+
+        {/* Author Calendar Section */}
+        <div className="my-12 p-6 bg-white rounded-xl shadow-lg">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Yazar Takvimi</h2>
+            <p className="text-gray-600 mb-6">Takvim üzerinden yazarlarımızın doğum ve vefat yıl dönümlerini takip edin. Yeşil renk doğum günlerini, kırmızı renk vefat günlerini gösterir. Önemli yıl dönümleri sarı ile vurgulanmıştır.</p>
+            <AuthorCalendar />
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-8">
