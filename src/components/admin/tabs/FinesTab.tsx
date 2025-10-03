@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useBooks } from '../../../contexts/BookContext';
 import { useSettings } from '../../../contexts/SettingsContext';
+import { useBudget } from '../../../contexts/BudgetContext';
 import SetFineModal from '../SetFineModal';
 import { DollarSign, Search, Filter, SortAsc, SortDesc, Users, Settings } from 'lucide-react';
 
@@ -29,6 +30,7 @@ interface BorrowedBook {
 const FinesTab: React.FC = () => {
   const { allBorrowedBooks, markFineAsPaid } = useBooks();
   const { finePerDay, setFinePerDay, loading: settingsLoading } = useSettings();
+  const { addTransaction } = useBudget();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [finesSearchQuery, setFinesSearchQuery] = useState('');
   const [showFinesFilters, setShowFinesFilters] = useState(false);
@@ -48,7 +50,18 @@ const FinesTab: React.FC = () => {
   const handlePaymentReceived = async (bookId: string, userId: string) => {
     if (window.confirm("Bu cezanın ödendiğini onaylamak istediğinizden emin misiniz?")) {
       try {
-        await markFineAsPaid(bookId, userId, finePerDay);
+        const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
+        if (paidAmount) {
+          const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+          addTransaction({
+            date: new Date(),
+            description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
+            amount: paidAmount,
+            type: 'income',
+            category: 'Ödeme',
+            relatedFineId: `${bookId}-${userId}`
+          });
+        }
       } catch (error) {
         console.error('Error processing payment:', error);
         alert("Ödeme işlenirken bir hata oluştu.");
@@ -132,9 +145,20 @@ const FinesTab: React.FC = () => {
     if (window.confirm(`${selectedFines.length} adet cezayı ödenmiş olarak işaretlemek istediğinizden emin misiniz?`)) {
       setIsBulkPaying(true);
       try {
-        const promises = selectedFines.map(key => {
+        const promises = selectedFines.map(async (key) => {
           const [bookId, userId] = key.split('-');
-          return markFineAsPaid(bookId, userId, finePerDay);
+          const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
+          if (paidAmount) {
+            const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+            await addTransaction({
+              date: new Date(),
+              description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
+              amount: paidAmount,
+              type: 'income',
+              category: 'Ödeme',
+              relatedFineId: key
+            });
+          }
         });
         await Promise.all(promises);
         alert(`${selectedFines.length} ceza başarıyla ödendi olarak işaretlendi.`);

@@ -12,6 +12,9 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ReviewProvider } from './contexts/ReviewContext';
 import { CollectionProvider } from './contexts/CollectionContext';
+import { BudgetProvider } from './contexts/BudgetContext';
+import { GameProvider } from './contexts/GameContext';
+import { GameReservationProvider } from './contexts/GameReservationContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
@@ -30,6 +33,10 @@ import AuthorsPage from './pages/AuthorsPage';
 import AuthorDetailsPage from './pages/AuthorDetailsPage';
 import ProgressPage from './pages/ProgressPage';
 import UserBorrowsDetailPage from './pages/admin/UserBorrowsDetailPage';
+import GamesPage from './pages/GamesPage';
+import GameReservationPage from './pages/GameReservationPage';
+import MyGameReservationsPage from './pages/MyGameReservationsPage';
+import MyAppointments from './pages/MyAppointments';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -67,6 +74,10 @@ const AppContent = () => {
           <Route path="/author/:id" element={<PrivateRoute><AuthorDetailsPage /></PrivateRoute>} />
           <Route path="/progress" element={<PrivateRoute><ProgressPage /></PrivateRoute>} />
           <Route path="/admin/borrowed-by/:userId" element={<PrivateRoute><UserBorrowsDetailPage /></PrivateRoute>} />
+          <Route path="/games" element={<PrivateRoute><GamesPage /></PrivateRoute>} />
+          <Route path="/games/:id" element={<PrivateRoute><GameReservationPage /></PrivateRoute>} />
+          <Route path="/my-game-reservations" element={<PrivateRoute><MyGameReservationsPage /></PrivateRoute>} />
+          <Route path="/my-appointments" element={<PrivateRoute><MyAppointments /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>
@@ -90,7 +101,13 @@ function App() {
                         <ReviewProvider>
                           <MagazineProvider>
                             <CollectionProvider>
-                              <AppContent />
+                              <BudgetProvider>
+                                <GameProvider>
+                                  <GameReservationProvider>
+                                    <AppContent />
+                                  </GameReservationProvider>
+                                </GameProvider>
+                              </BudgetProvider>
                             </CollectionProvider>
                           </MagazineProvider>
                         </ReviewProvider>
