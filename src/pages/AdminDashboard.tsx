@@ -13,12 +13,15 @@ import AuthorManagementTab from '../components/admin/tabs/AuthorManagementTab'; 
 import ReviewManagementTab from '../components/admin/tabs/ReviewManagementTab';
 import AdminMagazinesTab from '../components/admin/tabs/AdminMagazinesTab';
 import CollectionManagementTab from '../components/admin/tabs/CollectionManagementTab'; // Yeni eklendi
+import BudgetTab from '../components/admin/tabs/BudgetTab';
+import GameManagementTab from '../components/admin/tabs/GameManagementTab';
+import AdminGameReservationsTab from '../components/admin/tabs/AdminGameReservationsTab';
 import UpdateButton from '../components/common/UpdateButton'; // Added import
 import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
 import { Navigate } from 'react-router-dom';
-import { Book, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers } from 'lucide-react'; // Layers eklendi
+import { Book, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2 } from 'lucide-react'; // Layers eklendi
 import { auth, db } from '../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -37,7 +40,7 @@ const AdminDashboard: React.FC = () => {
   const { isAdmin } = useAuth();
   const { refetchAllBooks, getBookStatus } = useBooks();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management'>('borrowed-books');
+  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations'>('borrowed-books');
   const [users, setUsers] = useState<UserData[]>([]);
   const [catalogBooks, setCatalogBooks] = useState<Book[]>([]);
 
@@ -230,6 +233,24 @@ const AdminDashboard: React.FC = () => {
                   <Layers className="w-5 h-5" />
                   <span>Koleksiyon Yönetimi</span>
                 </button>
+                <button
+                  onClick={() => { setActiveTab('game-management'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
+                    activeTab === 'game-management' ? 'bg-indigo-800' : ''
+                  }`}
+                >
+                  <Gamepad2 className="w-5 h-5" />
+                  <span>Oyun Yönetimi</span>
+                </button>
+                 <button
+                  onClick={() => { setActiveTab('game-reservations'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
+                    activeTab === 'game-reservations' ? 'bg-indigo-800' : ''
+                  }`}
+                >
+                  <Gamepad2 className="w-5 h-5" />
+                  <span>Oyun Randevu Yönetimi</span>
+                </button>
               </div>
             </div>
 
@@ -254,6 +275,15 @@ const AdminDashboard: React.FC = () => {
                 >
                   <PieChart className="w-5 h-5" />
                   <span>Eser Dağılımı</span>
+                </button>
+                <button
+                  onClick={() => { setActiveTab('budget'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
+                    activeTab === 'budget' ? 'bg-indigo-800' : ''
+                  }`}
+                >
+                  <TrendingUp className="w-5 h-5" />
+                  <span>Bütçe</span>
                 </button>
               </div>
             </div>
@@ -348,6 +378,12 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'magazine-management' && <AdminMagazinesTab />}
 
         {activeTab === 'collection-management' && <CollectionManagementTab />}
+
+        {activeTab === 'budget' && <BudgetTab />}
+
+        {activeTab === 'game-management' && <GameManagementTab />}
+
+        {activeTab === 'game-reservations' && <AdminGameReservationsTab />}
 
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useBooks } from '../../../contexts/BookContext';
+import { useBudget } from '../../../contexts/BudgetContext'; // Import useBudget
 import { BarChart, Download, Users, BookOpen, Book, AlertTriangle, DollarSign, PiggyBank } from 'lucide-react';
 import { Bar, Pie } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
@@ -11,13 +12,14 @@ import ClassDetailsModal from '../ClassDetailsModal';
 
 const ReportsTab: React.FC = () => {
   const { allBorrowedBooks } = useBooks();
+  const { summary } = useBudget(); // Use budget context
   const [reportData, setReportData] = useState({
     totalUsers: 0,
     totalBooks: 0,
     borrowedBooks: 0,
     overdueBooks: 0,
     totalFines: 0,
-    totalPaidFines: 0,
+    // totalPaidFines is now removed as it comes from summary.totalBudget
     monthlyBorrows: [],
     userRegistrationTrend: [],
     monthlyFinesTrend: [],
@@ -53,6 +55,8 @@ const ReportsTab: React.FC = () => {
       const booksData = booksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as BookType[];
       const allBorrowedData = borrowedBooksSnapshot.docs.map(doc => doc.data());
 
+      // This calculation is now done in BudgetContext. We use summary.totalBudget instead for the main display.
+      // However, the local calculation is still needed for the finesDistribution chart.
       const totalPaidFines = allBorrowedData
         .filter(book => book.fineStatus === 'paid' && book.fineAmount)
         .reduce((sum, book) => sum + (book.fineAmount || 0), 0);
@@ -277,7 +281,6 @@ const ReportsTab: React.FC = () => {
         borrowedBooks: borrowedBooksCount,
         overdueBooks: overdueCount,
         totalFines: totalFinesAmount,
-        totalPaidFines,
         monthlyBorrows,
         userRegistrationTrend: monthlyRegistrations,
         monthlyFinesTrend: monthlyFines,
@@ -418,7 +421,7 @@ const ReportsTab: React.FC = () => {
             <PiggyBank className="w-8 h-8 text-pink-500 mr-3" />
             <div>
               <p className="text-sm font-medium text-gray-600">Kumbara</p>
-              <p className="text-2xl font-bold text-gray-900">{reportData.totalPaidFines} ₺</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.totalBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
             </div>
           </div>
         </div>

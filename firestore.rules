@@ -323,6 +323,34 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Games collection rules
+    match /games/{gameId} {
+      // Allow any authenticated user to read games
+      allow read: if isAuthenticated();
+      
+      // Only admins can create, update, or delete games
+      allow write: if isAdmin();
+    }
+
+    // Game Reservations collection rules
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+
+      // Authenticated users can create their own reservation.
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+
+      // Users can cancel their own reservation. Admins can cancel any.
+      allow update: if isAuthenticated() && ( (isOwner(resource.data.userId) && request.resource.data.status == 'cancelled-by-user') || isAdmin() );
+
+      // Admins can delete reservations.
+      allow delete: if isAdmin();
+    }
+
+    // Transactions collection rules
+    match /transactions/{transactionId} {
+      // Only admins can read or write transactions
+      allow read, write: if isAdmin();
+    }
+
     // Settings collection rules
     match /settings/{settingId} {
       // Allow any authenticated user to read settings

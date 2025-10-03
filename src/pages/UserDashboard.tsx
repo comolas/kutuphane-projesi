@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
-import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRight as ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle } from 'lucide-react';
+import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRight as ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2 } from 'lucide-react';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
 import ItemDetailsModal from '../components/common/ItemDetailsModal';
 import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
@@ -306,6 +306,14 @@ const UserDashboard: React.FC = () => {
             <Link to="/my-events" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
               <Calendar className="w-5 h-5" />
               <span>Etkinliklerim</span>
+            </Link>
+            <Link to="/my-appointments" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+              <Calendar className="w-5 h-5" />
+              <span>Randevularım</span>
+            </Link>
+            <Link to="/games" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+              <Gamepad2 className="w-5 h-5" />
+              <span>Oyunlar</span>
             </Link>
             
             <Link to="/requests" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">

@@ -103,3 +103,23 @@ export interface StoryCollection {
   isActive: boolean;
   books: StoryCollectionBook[];
 }
+
+export type TransactionType = 'income' | 'expense';
+
+export interface Transaction {
+  id: string;
+  date: any; // Firestore Timestamp
+  description: string;
+  amount: number;
+  type: TransactionType;
+  category: string;
+  relatedFineId?: string; // To link with a specific fine
+}
+
+export interface BudgetSummary {
+  totalIncome: number;
+  totalExpense: number;
+  netBalance: number;
+  totalBudget: number;
+  remainingBudget: number;
+}
