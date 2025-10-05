@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile pictures: Users can read any, but only write to their own.
+    match /users/{userId}/profile.jpg {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Book covers: Anyone can read, but only admins can write.
+    match /bookCovers/{bookId} {
+      allow read;
+      allow write: if get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Magazine covers: Anyone can read, but only admins can write.
+    match /magazineCovers/{magazineId} {
+      allow read;
+      allow write: if get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Other files are locked down by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
