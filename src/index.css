@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Modal arka planı için geçiş efekti */
+  .modal-overlay {
+    @apply transition-opacity duration-300 ease-in-out;
+  }
+
+  /* Modal panelinin kendisi için geçiş efekti (büyüme ve belirme) */
+  .modal-panel {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
