@@ -150,7 +150,7 @@ const GameReservationPage: React.FC = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4 sm:p-6 lg:p-8">
       <div className="flex items-center gap-4 mb-6">
         <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
           <ArrowLeft className="w-6 h-6 text-gray-800 dark:text-white" />
@@ -162,7 +162,7 @@ const GameReservationPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+        <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20">
           <Calendar
             localizer={localizer}
             events={[]}
@@ -178,24 +178,23 @@ const GameReservationPage: React.FC = () => {
             }}
             selectable
             dayPropGetter={dayPropGetter}
+            views={['month']}
+            culture="tr"
             messages={{
               today: 'Bugün',
               previous: 'Önceki',
               next: 'Sonraki',
               month: 'Ay',
-              week: 'Hafta',
-              day: 'Gün',
-              agenda: 'Ajanda',
               date: 'Tarih',
               time: 'Saat',
               event: 'Etkinlik',
             }}
           />
         </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Uygun Saatler ({selectedDate.toLocaleDateString('tr-TR')})</h2>
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Uygun Saatler ({selectedDate.toLocaleDateString('tr-TR')})</h2>
           {loadingSlots ? (
-            <p>Uygun saatler yükleniyor...</p>
+            <p className="text-gray-600 font-medium">Uygun saatler yükleniyor...</p>
           ) : (
             <div className="flex flex-col space-y-2">
               {availableSlots.length > 0 ? (
@@ -203,17 +202,17 @@ const GameReservationPage: React.FC = () => {
                   <div 
                     key={slot} 
                     onClick={() => setSelectedSlot(slot)}
-                    className={`w-full text-left px-4 py-3 rounded-lg cursor-pointer transition-colors ${
+                    className={`w-full text-left px-4 py-3 rounded-xl cursor-pointer transition-all font-semibold ${
                       selectedSlot === slot 
-                        ? 'bg-indigo-600 text-white' 
-                        : 'bg-indigo-50 dark:bg-gray-700 hover:bg-indigo-100 dark:hover:bg-gray-600'
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' 
+                        : 'bg-white/60 backdrop-blur-xl border border-white/20 hover:bg-white/80 hover:shadow-md text-gray-700'
                     }`}
                   >
                     {slot}
                   </div>
                 ))
               ) : (
-                <p>Bu tarih için uygun saat bulunmamaktadır.</p>
+                <p className="text-gray-600 font-medium">Bu tarih için uygun saat bulunmamaktadır.</p>
               )}
             </div>
           )}
@@ -221,7 +220,7 @@ const GameReservationPage: React.FC = () => {
             <button 
               onClick={handleCreateReservation}
               disabled={!selectedSlot || loadingSlots}
-              className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
+              className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 transition-all"
             >
               Randevu Al
             </button>

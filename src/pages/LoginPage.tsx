@@ -242,9 +242,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50'}`}>
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
         {/* Form Section */}
-        <div className="flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12">
+        <div className="flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12 animate-fade-in">
           {error && (
-            <div className="w-full max-w-md mb-4 p-4 bg-red-100 text-red-700 rounded-lg text-sm">
+            <div className="w-full max-w-md mb-4 p-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm shadow-lg animate-fade-in">
               {error}
             </div>
           )}
@@ -261,14 +261,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
             />
           )}
           {isLoading && (
-            <div className="w-full max-w-md mt-4 p-4 bg-blue-100 text-blue-700 rounded-lg text-sm text-center">
+            <div className="w-full max-w-md mt-4 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg text-sm text-center shadow-lg animate-pulse">
               İşlem gerçekleştiriliyor, lütfen bekleyin...
             </div>
           )}
         </div>
         
         {/* Info Section - Hidden on mobile */}
-        <div className="hidden lg:flex flex-col justify-center p-12 xl:p-16 bg-indigo-900 text-white relative overflow-hidden">
+        <div className="hidden lg:flex flex-col justify-center p-12 xl:p-16 bg-indigo-900 text-white relative overflow-hidden animate-slide-in-right">
           <div className="relative z-10">
             <h2 className="text-2xl xl:text-3xl font-bold mb-6">{animatedTitle}<span className="animate-pulse">|</span></h2>
             <p className="text-indigo-200 mb-8 max-w-md text-sm xl:text-base">
@@ -283,8 +283,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
                 'Kişiselleştirilmiş öneriler alın',
                 'Okuma topluluklarına katılın'
               ].map((feature, index) => (
-                <div key={index} className="flex items-center text-sm xl:text-base">
-                  <ChevronRight className="text-indigo-300 mr-2 flex-shrink-0" size={20} />
+                <div key={index} className="flex items-center text-sm xl:text-base bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/20 hover:scale-105 transition-all duration-300 animate-stagger" style={{ animationDelay: `${index * 150}ms` }}>
+                  <ChevronRight className="text-white mr-2 flex-shrink-0" size={20} />
                   <span>{feature}</span>
                 </div>
               ))}
@@ -296,11 +296,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
       </div>
       {/* Forgot Password Modal */}
       {showForgotPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className={`bg-white rounded-xl shadow-lg max-w-md w-full p-6 ${isDarkMode ? 'bg-gray-800 text-white' : ''}`}>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Şifremi Sıfırla</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl max-w-md w-full p-6 border border-white/20 animate-fade-in">
+            <h3 className="text-lg font-medium bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Şifremi Sıfırla</h3>
             {error && (
-              <div className="w-full mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+              <div className="w-full mb-4 p-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm shadow-lg">
                 {error}
               </div>
             )}
@@ -309,7 +309,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
               placeholder="E-posta adresiniz"
               value={resetEmail}
               onChange={(e) => setResetEmail(e.target.value)}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-300 focus:scale-105"
               disabled={isLoading}
             />
             <div className="mt-4 flex justify-end space-x-3">
@@ -319,14 +319,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
                   setError('');
                   setResetEmail('');
                 }}
-                className={`px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : ''}`}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-105"
                 disabled={isLoading}
               >
                 İptal
               </button>
               <button
                 onClick={handlePasswordReset}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
               >
                 Sıfırlama Bağlantısı Gönder

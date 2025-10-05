@@ -28,14 +28,16 @@ interface ReadingStatsProps {
   onOpenRateModal: (book: Book) => void;
 }
 
-const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string | number; color: string }> = ({ icon, label, value, color }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm flex items-center">
-    <div className={`flex-shrink-0 ${color} rounded-full p-3`}>
-      {icon}
-    </div>
-    <div className="ml-4">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string | number; gradient: string }> = ({ icon, label, value, gradient }) => (
+  <div className={`${gradient} p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105`}>
+    <div className="flex items-center">
+      <div className="flex-shrink-0 bg-white/20 backdrop-blur-sm rounded-full p-3">
+        {icon}
+      </div>
+      <div className="ml-4">
+        <p className="text-sm font-medium text-white/90">{label}</p>
+        <p className="text-2xl font-bold text-white">{value}</p>
+      </div>
     </div>
   </div>
 );
@@ -193,58 +195,57 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
     <div className="mt-6 space-y-8">
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={<BookIcon className="w-6 h-6 text-blue-600" />} label="Toplam Okunan Kitap" value={stats.totalBooksRead} color="bg-blue-100" />
-        <StatCard icon={<BookOpen className="w-6 h-6 text-green-600" />} label="Toplam Okunan Sayfa" value={stats.totalPagesRead.toLocaleString()} color="bg-green-100" />
-        <StatCard icon={<Clock className="w-6 h-6 text-yellow-600" />} label="Ortalama Okuma Süresi" value={`${stats.avgReadingDays} gün`} color="bg-yellow-100" />
-        <StatCard icon={<Star className="w-6 h-6 text-purple-600" />} label="Favori Yazarınız" value={stats.favoriteAuthor} color="bg-purple-100" />
+        <StatCard icon={<BookIcon className="w-6 h-6 text-white" />} label="Toplam Okunan Kitap" value={stats.totalBooksRead} gradient="bg-gradient-to-br from-blue-500 to-blue-600" />
+        <StatCard icon={<BookOpen className="w-6 h-6 text-white" />} label="Toplam Okunan Sayfa" value={stats.totalPagesRead.toLocaleString()} gradient="bg-gradient-to-br from-green-500 to-emerald-600" />
+        <StatCard icon={<Clock className="w-6 h-6 text-white" />} label="Ortalama Okuma Süresi" value={`${stats.avgReadingDays} gün`} gradient="bg-gradient-to-br from-amber-500 to-orange-600" />
+        <StatCard icon={<Star className="w-6 h-6 text-white" />} label="Favori Yazarınız" value={stats.favoriteAuthor} gradient="bg-gradient-to-br from-purple-500 to-pink-600" />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aylık Okuma Performansı</h3>
+        <div className="lg:col-span-3 bg-white/80 backdrop-blur-xl border border-white/20 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Aylık Okuma Performansı</h3>
           <Bar data={barChartData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
         </div>
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Okunan Tür Dağılımı</h3>
+        <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl border border-white/20 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Okunan Tür Dağılımı</h3>
           <Pie data={pieChartData} options={{ responsive: true }} />
         </div>
       </div>
 
-      {/* Reading History List */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Okuma Geçmişi</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kitap Adı</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Yazar</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İade Tarihi</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eylemler</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentHistoryBooks.map(book => (
-                <tr key={`${book.id}-${book.borrowedAt}`}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{book.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{book.author}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{book.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{book.returnedAt ? new Date(book.returnedAt).toLocaleDateString() : '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={() => onOpenRateModal(book)}
-                      className="text-indigo-600 hover:text-indigo-900 flex items-center"
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Yorumla ve Puanla
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Reading History Cards */}
+      <div className="bg-white/80 backdrop-blur-xl border border-white/20 p-6 rounded-xl shadow-lg">
+        <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Okuma Geçmişi</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {currentHistoryBooks.map(book => (
+            <div key={`${book.id}-${book.borrowedAt}`} className="bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl p-4 hover:shadow-xl hover:scale-105 transition-all duration-300">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-16 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center">
+                  <BookIcon className="w-8 h-8 text-indigo-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-gray-900 truncate">{book.title}</h4>
+                  <p className="text-xs text-gray-600 mt-1">{book.author}</p>
+                  <div className="flex items-center mt-2 space-x-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                      {book.category}
+                    </span>
+                  </div>
+                  <div className="flex items-center mt-2 text-xs text-gray-500">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {book.returnedAt ? new Date(book.returnedAt).toLocaleDateString('tr-TR') : '-'}
+                  </div>
+                  <button 
+                    onClick={() => onOpenRateModal(book)}
+                    className="mt-3 w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs py-2 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center"
+                  >
+                    <Edit className="w-3 h-3 mr-1" />
+                    Yorumla ve Puanla
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
         {totalPages > 1 && (
           <div className="mt-6 flex justify-center">
@@ -252,7 +253,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-3 py-2 rounded-lg bg-white/60 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all duration-300"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Önceki
@@ -265,10 +266,10 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
                   <button
                     key={page}
                     onClick={() => handlePageChange(page as number)}
-                    className={`px-3 py-2 rounded-lg border transition-colors ${
+                    className={`px-3 py-2 rounded-lg transition-all duration-300 ${
                       currentPage === page
-                        ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                        : 'bg-white/60 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white'
                     }`}
                   >
                     {page}
@@ -278,7 +279,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-3 py-2 rounded-lg bg-white/60 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all duration-300"
               >
                 Sonraki
                 <ChevronRight className="w-4 h-4 ml-1" />

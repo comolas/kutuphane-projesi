@@ -56,6 +56,12 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               Yazarlarımız
             </Link>
             <Link
+              to="/blog"
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-900 dark:hover:text-white transition-colors duration-200"
+            >
+              Blog
+            </Link>
+            <Link
               to="/progress"
               className="text-gray-700 dark:text-gray-300 hover:text-indigo-900 dark:hover:text-white transition-colors duration-200"
             >

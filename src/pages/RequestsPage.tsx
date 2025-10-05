@@ -248,7 +248,7 @@ const RequestsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-4">
           <button
@@ -278,7 +278,7 @@ const RequestsPage: React.FC = () => {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
           >
             <Plus className="w-5 h-5 mr-2" />
             Yeni Talep
@@ -294,14 +294,14 @@ const RequestsPage: React.FC = () => {
                   placeholder="Talep başlığı veya içeriği ara..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
                 />
-                <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+                <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
               </div>
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center justify-center"
+              className="px-6 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 flex items-center justify-center transition-all shadow-lg font-medium"
             >
               <Filter className="w-5 h-5 mr-2" />
               Filtrele
@@ -309,7 +309,7 @@ const RequestsPage: React.FC = () => {
           </div>
 
           {showFilters && (
-            <div className="mt-4 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+            <div className="mt-4 bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-white/20">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -399,15 +399,17 @@ const RequestsPage: React.FC = () => {
 
         <div className="space-y-4">
           {filteredRequests.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center min-h-[200px]">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-8 text-center flex flex-col items-center justify-center min-h-[200px] border border-white/20">
               {requests.length === 0 ? (
                 <>
-                  <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mb-4">
+                    <MessageSquare className="w-10 h-10 text-white" />
+                  </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Henüz Talebiniz Yok</h3>
                   <p className="text-gray-600 mb-6">Kütüphanemizde görmek istediğiniz bir kitap veya başka bir talebiniz mi var? Bize bildirin!</p>
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
                   >
                     <Plus className="w-5 h-5 mr-2" />
                     Yeni Talep Oluştur
@@ -415,7 +417,9 @@ const RequestsPage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Search className="w-16 h-16 text-gray-300 mb-4" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center mb-4">
+                    <Search className="w-10 h-10 text-white" />
+                  </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Sonuç Bulunamadı</h3>
                   <p className="text-gray-600">Arama veya filtreleme kriterlerinize uygun bir talep bulunamadı.</p>
                 </>
@@ -423,26 +427,32 @@ const RequestsPage: React.FC = () => {
             </div>
           ) : (
             currentRequests.map((request) => (
-              <div key={request.id} className="bg-white rounded-xl shadow-sm p-6">
+              <div key={request.id} className="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-white/20">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{request.title}</h3>
                     <div className="mt-1 flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
                       <span>{request.createdAt.toLocaleDateString()}</span>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(request.priority)}`}>
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold shadow-md ${
+                        request.priority === 'high'
+                          ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white'
+                          : request.priority === 'medium'
+                          ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white'
+                          : 'bg-gradient-to-r from-green-400 to-emerald-500 text-white'
+                      }`}>
                         {getPriorityText(request.priority)} Öncelik
                       </span>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold shadow-md ${
                         request.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                           : request.status === 'in-progress'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+                          : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
                       }`}>
                         {getStatusText(request.status)}
                       </span>
                       {request.category && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md">
                           <Tag className="w-3 h-3 mr-1.5" />
                           {request.category}
                         </span>
@@ -452,7 +462,7 @@ const RequestsPage: React.FC = () => {
                   {request.status === 'pending' && (
                     <button 
                       onClick={() => handleDeleteRequest(request.id, request.title)}
-                      className="flex items-center text-sm text-gray-500 hover:text-red-600 transition-colors"
+                      className="flex items-center px-3 py-2 text-sm text-gray-500 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-600 hover:text-white rounded-xl transition-all shadow-sm hover:shadow-md font-medium"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
                       Geri Çek
@@ -463,11 +473,13 @@ const RequestsPage: React.FC = () => {
                 <div className="mt-4 text-gray-700">{request.content}</div>
                 
                 {request.response && (
-                  <div className="mt-4 bg-indigo-50 rounded-r-lg p-4 border-l-4 border-indigo-400">
+                  <div className="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-5 border-l-4 border-indigo-500 shadow-md">
                     <div className="flex items-start space-x-3">
-                      <MessageSquare className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-1" />
+                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-4 h-4 text-white" />
+                      </div>
                       <div>
-                        <div className="font-semibold text-gray-900">Kütüphane Yönetimi Yanıtı:</div>
+                        <div className="font-bold text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text">Kütüphane Yönetimi Yanıtı:</div>
                         <div className="mt-1 text-gray-700">{request.response}</div>
                         {request.responseDate && (
                           <div className="mt-2 text-xs text-gray-500">
@@ -490,7 +502,7 @@ const RequestsPage: React.FC = () => {
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Önceki
@@ -503,10 +515,10 @@ const RequestsPage: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => handlePageChange(page as number)}
-                      className={`px-3 py-2 rounded-lg border transition-colors ${
+                      className={`px-4 py-2.5 rounded-xl border transition-all shadow-lg font-medium ${
                         currentPage === page
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent'
+                          : 'bg-white/60 backdrop-blur-xl border-white/20 text-gray-700 hover:bg-white/80'
                       }`}
                     >
                       {page}
@@ -518,7 +530,7 @@ const RequestsPage: React.FC = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
               >
                 Sonraki
                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -530,8 +542,8 @@ const RequestsPage: React.FC = () => {
 
       {/* New Request Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full border border-white/20">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-900">Yeni Talep Oluştur</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">
@@ -597,13 +609,13 @@ const RequestsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="px-5 py-2.5 bg-white/50 border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all font-medium"
                 >
                   İptal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
                 >
                   Gönder
                 </button>
