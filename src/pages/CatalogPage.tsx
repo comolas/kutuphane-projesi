@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Calendar, Star, CheckCircle, Heart, AlertCircle, MessageSquare } from 'lucide-react';
+import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Star, Heart, MessageSquare } from 'lucide-react';
 import { Book } from '../types';
 import { useBooks } from '../contexts/BookContext';
 import { db } from '../firebase/config';
@@ -9,11 +9,12 @@ import { collection, getDocs, addDoc, deleteDoc, query, where, Timestamp } from 
 import { useAuth } from '../contexts/AuthContext';
 import ReviewModal from '../components/common/ReviewModal';
 import StoryTray from '../components/catalog/StoryTray';
+import Swal from 'sweetalert2';
 
 // Add borrowMessages to the import from useBooks
 const CatalogPage: React.FC = () => {
   const navigate = useNavigate();
-  const { allBooks, borrowBook, isBorrowed, isBookBorrowed, getBookStatus, borrowMessages } = useBooks();
+  const { allBooks, borrowBook, isBorrowed, getBookStatus, borrowMessages } = useBooks();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [tagQuery, setTagQuery] = useState('');
@@ -23,12 +24,11 @@ const CatalogPage: React.FC = () => {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showBookDetails, setShowBookDetails] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState('');
   const [userFavorites, setUserFavorites] = useState<string[]>([]); // State to store favorite book IDs
   const [currentPage, setCurrentPage] = useState(1);
   const booksPerPage = 12;
   const [sortOrder, setSortOrder] = useState<string>('default'); // New state for sorting
+  const [recommendedBooksForModal, setRecommendedBooksForModal] = useState<Book[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -49,33 +49,27 @@ const CatalogPage: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000); // Hide after 3 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
-
   // Get unique categories
   const categories = Array.from(new Set(allBooks.map(book => book.category)));
 
   const handleBorrowRequest = async (book: Book) => {
     try {
-      setErrorMessage(null); // Clear any previous error messages
       await borrowBook(book);
-      setSuccessMessage('Kitap başarıyla ödünç alındı!');
+      Swal.fire('Başarılı!', 'Kitap başarıyla ödünç alındı!', 'success');
     } catch (error: any) {
       console.error('Error borrowing book:', error);
-      setErrorMessage(error.message || 'Kitap ödünç alınırken bir hata oluştu.');
-      setSuccessMessage(''); // Clear success message if there was an error
+      Swal.fire('Hata!', error.message || 'Kitap ödünç alınırken bir hata oluştu.', 'error');
     }
   };
 
   const handleToggleFavorite = async (bookId: string) => {
     if (!user) {
-      alert('Favorilere eklemek için giriş yapmalısınız.'); // Or show a proper login prompt
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Favorilere eklemek için giriş yapmalısınız.',
+        confirmButtonText: 'Tamam'
+      });
       return;
     }
     try {
@@ -90,7 +84,7 @@ const CatalogPage: React.FC = () => {
           await deleteDoc(doc.ref);
         });
         setUserFavorites(prev => prev.filter(id => id !== bookId));
-        setSuccessMessage('Kitap favorilerinizden kaldırıldı.');
+        Swal.fire('Başarılı!', 'Kitap favorilerinizden kaldırıldı.', 'success');
       } else {
         // Add to favorites
         await addDoc(favoritesRef, {
@@ -99,12 +93,11 @@ const CatalogPage: React.FC = () => {
           favoritedAt: Timestamp.now()
         });
         setUserFavorites(prev => [...prev, bookId]);
-        setSuccessMessage('Kitap favorilerinize eklendi.');
+        Swal.fire('Başarılı!', 'Kitap favorilerinize eklendi.', 'success');
       }
-      setErrorMessage(null);
     } catch (error: any) {
       console.error('Error toggling favorite:', error);
-      setErrorMessage('Favori işlemi sırasında bir hata oluştu.');
+      Swal.fire('Hata!', 'Favori işlemi sırasında bir hata oluştu.', 'error');
     }
   };
 
@@ -138,6 +131,33 @@ const CatalogPage: React.FC = () => {
     setSortOrder('default');
     setCurrentPage(1);
   };
+
+  const getRecommendedBooksByTags = (currentBook: Book) => {
+    if (!currentBook.tags || currentBook.tags.length < 2) return [];
+
+    const currentBookTags = new Set(currentBook.tags.map(tag => typeof tag === 'string' ? tag.toLowerCase() : ''));
+
+    return allBooks.filter(book => {
+      if (book.id === currentBook.id || !book.tags || book.tags.length < 2) return false;
+
+      const otherBookTags = new Set(book.tags.map(tag => typeof tag === 'string' ? tag.toLowerCase() : ''));
+      let commonTagsCount = 0;
+      currentBookTags.forEach(tag => {
+        if (otherBookTags.has(tag)) {
+          commonTagsCount++;
+        }
+      });
+      return commonTagsCount >= 2;
+    });
+  };
+
+  useEffect(() => {
+    if (selectedBook) {
+      setRecommendedBooksForModal(getRecommendedBooksByTags(selectedBook));
+    } else {
+      setRecommendedBooksForModal([]);
+    }
+  }, [selectedBook, allBooks]);
 
   const filteredAndSortedBooks = allBooks.filter(book => {
     const matchesSearch = book.title.toLocaleLowerCase('tr-TR').includes(searchQuery.toLocaleLowerCase('tr-TR')) ||
@@ -196,12 +216,12 @@ const CatalogPage: React.FC = () => {
             src="https://lottie.host/06e92ec9-c24d-4b52-83b7-e767c90eceb7/Xhyy8gxnmO.json"
             loop
             autoplay
-            style={{ width: '300px', height: '300px' }}
+            className="w-48 h-48 md:w-72 md:h-72"
           />
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Kitap Kataloğu</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Kitap Kataloğu</h1>
           <p className="mt-2 text-gray-600">
             Kütüphanemizdeki tüm kitapları keşfedin ve arayın.
           </p>
@@ -209,21 +229,7 @@ const CatalogPage: React.FC = () => {
 
         <StoryTray />
 
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg flex items-center">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            {successMessage}
-          </div>
-        )}
 
-        {errorMessage && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-              <p className="text-red-700">{errorMessage}</p>
-            </div>
-          </div>
-        )}
 
         <div className="flex flex-col md:flex-row gap-6 mb-4">
           <div className="flex-1">
@@ -255,14 +261,14 @@ const CatalogPage: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 focus:ring-2 focus:ring-indigo-500"
+              className="flex flex-1 md:flex-initial justify-center items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 focus:ring-2 focus:ring-indigo-500"
             >
               <Filter className="w-5 h-5 mr-2" />
               <span>Filtrele</span>
             </button>
             <button
               onClick={handleClearFilters}
-              className="flex items-center px-4 py-2 border border-red-200 bg-red-50 rounded-lg text-red-600 hover:bg-red-100 focus:ring-2 focus:ring-red-400"
+              className="flex flex-1 md:flex-initial justify-center items-center px-4 py-2 border border-red-200 bg-red-50 rounded-lg text-red-600 hover:bg-red-100 focus:ring-2 focus:ring-red-400"
             >
               <X className="w-5 h-5 mr-2" />
               <span>Temizle</span>
@@ -368,7 +374,6 @@ const CatalogPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {paginatedBooks.map(book => {
             const bookStatus = getBookStatus(book.id);
-            const userBorrowed = isBorrowed(book.id);
             const hasPendingRequest = borrowMessages.some(m => 
               m.bookId === book.id && 
               m.userId === user?.uid && 
@@ -418,7 +423,7 @@ const CatalogPage: React.FC = () => {
                         ? 'Ödünç Verildi' 
                         : 'Müsait'}
                     </span>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col items-end space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
                     <button
                       onClick={() => handleInspectReviews(book)}
                       className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors flex items-center"
@@ -461,7 +466,7 @@ const CatalogPage: React.FC = () => {
         </div>
 
         {totalPages > 1 && (
-          <div className="mt-8 flex justify-between items-center">
+          <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-600">
               Sayfa {currentPage} / {totalPages}
             </p>
@@ -577,6 +582,46 @@ const CatalogPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* "Bu kitapları da okuyabilirsin" section */}
+                  {recommendedBooksForModal.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <BookOpen className="w-5 h-5 mr-2 text-indigo-600" />
+                        Bu Kitapları da Okuyabilirsin
+                      </h4>
+                      <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
+                        {recommendedBooksForModal.map(book => (
+                          <div key={book.id} className="flex-shrink-0 w-40 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+                            <img src={book.coverImage} alt={book.title} className="w-full h-48 object-cover" />
+                            <div className="p-3">
+                              <h5 className="font-medium text-gray-900 text-sm truncate">{book.title}</h5>
+                              <p className="text-xs text-gray-600 truncate">{book.author}</p>
+                              <div className="mt-2 flex flex-col space-y-1">
+                                <button
+                                  onClick={() => handleBorrowRequest(book as Book)}
+                                  className="w-full px-2 py-1 bg-indigo-100 text-indigo-700 rounded-md text-xs font-medium hover:bg-indigo-200 transition-colors"
+                                >
+                                  Ödünç Al
+                                </button>
+                                <button
+                                  onClick={() => handleToggleFavorite(book.id)}
+                                  className={`w-full px-2 py-1 rounded-md text-xs font-medium transition-colors flex items-center justify-center ${
+                                    userFavorites.includes(book.id)
+                                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  <Heart className={`w-3 h-3 mr-1 ${userFavorites.includes(book.id) ? 'fill-current' : ''}`} />
+                                  Favori
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Tags */}
                   {selectedBook.tags && selectedBook.tags.length > 0 && (

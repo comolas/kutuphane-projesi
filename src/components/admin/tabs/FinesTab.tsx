@@ -4,6 +4,7 @@ import { useSettings } from '../../../contexts/SettingsContext';
 import { useBudget } from '../../../contexts/BudgetContext';
 import SetFineModal from '../SetFineModal';
 import { DollarSign, Search, Filter, SortAsc, SortDesc, Users, Settings } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 interface BorrowedBook {
   id: string;
@@ -48,25 +49,35 @@ const FinesTab: React.FC = () => {
   }, [finesSearchQuery, finesStatusFilter, finesSortBy, finesSortOrder]);
 
   const handlePaymentReceived = async (bookId: string, userId: string) => {
-    if (window.confirm("Bu cezanın ödendiğini onaylamak istediğinizden emin misiniz?")) {
-      try {
-        const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
-        if (paidAmount) {
-          const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
-          addTransaction({
-            date: new Date(),
-            description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
-            amount: paidAmount,
-            type: 'income',
-            category: 'Ödeme',
-            relatedFineId: `${bookId}-${userId}`
-          });
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu cezanın ödendiğini onaylamak istediğinizden emin misiniz?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, onayla!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
+          if (paidAmount) {
+            const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+            addTransaction({
+              date: new Date(),
+              description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
+              amount: paidAmount,
+              type: 'income',
+              category: 'Ödeme',
+              relatedFineId: `${bookId}-${userId}`
+            });
+          }
+          Swal.fire('Başarılı!', 'Ödeme başarıyla işlendi.', 'success');
+        } catch (error) {
+          console.error('Error processing payment:', error);
+          Swal.fire('Hata!', "Ödeme işlenirken bir hata oluştu.", 'error');
         }
-      } catch (error) {
-        console.error('Error processing payment:', error);
-        alert("Ödeme işlenirken bir hata oluştu.");
       }
-    }
+    });
   };
 
   const calculateFine = useMemo(() => {
@@ -142,34 +153,43 @@ const FinesTab: React.FC = () => {
   const handleBulkPaymentReceived = async () => {
     if (selectedFines.length === 0) return;
 
-    if (window.confirm(`${selectedFines.length} adet cezayı ödenmiş olarak işaretlemek istediğinizden emin misiniz?`)) {
-      setIsBulkPaying(true);
-      try {
-        const promises = selectedFines.map(async (key) => {
-          const [bookId, userId] = key.split('-');
-          const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
-          if (paidAmount) {
-            const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
-            await addTransaction({
-              date: new Date(),
-              description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
-              amount: paidAmount,
-              type: 'income',
-              category: 'Ödeme',
-              relatedFineId: key
-            });
-          }
-        });
-        await Promise.all(promises);
-        alert(`${selectedFines.length} ceza başarıyla ödendi olarak işaretlendi.`);
-        setSelectedFines([]);
-      } catch (error) {
-        console.error("Error bulk paying fines:", error);
-        alert("Toplu ödeme sırasında bir hata oluştu.");
-      } finally {
-        setIsBulkPaying(false);
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: `${selectedFines.length} adet cezayı ödenmiş olarak işaretlemek istediğinizden emin misiniz?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, onayla!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setIsBulkPaying(true);
+        try {
+          const promises = selectedFines.map(async (key) => {
+            const [bookId, userId] = key.split('-');
+            const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
+            if (paidAmount) {
+              const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+              await addTransaction({
+                date: new Date(),
+                description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
+                amount: paidAmount,
+                type: 'income',
+                category: 'Ödeme',
+                relatedFineId: key
+              });
+            }
+          });
+          await Promise.all(promises);
+          Swal.fire('Başarılı!', `${selectedFines.length} ceza başarıyla ödendi olarak işaretlendi.`, 'success');
+          setSelectedFines([]);
+        } catch (error) {
+          console.error("Error bulk paying fines:", error);
+          Swal.fire('Hata!', "Toplu ödeme sırasında bir hata oluştu.", 'error');
+        } finally {
+          setIsBulkPaying(false);
+        }
       }
-    }
+    });
   };
 
   return (

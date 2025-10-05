@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 import tr from 'date-fns/locale/tr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { ArrowLeft } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const locales = {
   'tr': tr,
@@ -73,7 +74,7 @@ const GameReservationPage: React.FC = () => {
         })
         .catch(error => {
           console.error("Error fetching reservations: ", error);
-          alert("Randevuları getirirken bir hata oluştu. Lütfen konsolu kontrol edin.");
+          Swal.fire('Hata!', "Randevuları getirirken bir hata oluştu. Lütfen konsolu kontrol edin.", 'error');
         })
         .finally(() => {
           setLoadingSlots(false);
@@ -87,7 +88,7 @@ const GameReservationPage: React.FC = () => {
     // Check for active reservations
     const activeReservations = await getUserActiveReservations(user.uid);
     if (activeReservations.length > 0) {
-      alert('Zaten aktif bir oyun randevunuz bulunmaktadır.');
+      Swal.fire('Hata!', 'Zaten aktif bir oyun randevunuz bulunmaktadır.', 'error');
       return;
     }
 
@@ -95,9 +96,9 @@ const GameReservationPage: React.FC = () => {
     const lastReservation = await getUserLastReservationForGame(user.uid, game.id);
     if (lastReservation) {
       const twentyFourHoursAgo = new Date();
-      twentyFourHoursAgo.setHours(twentyFourFourHoursAgo.getHours() - 24);
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
       if (lastReservation.endTime.toDate() > twentyFourHoursAgo) {
-        alert(`Bu oyun için son 24 saat içinde zaten bir randevu almışsınız. Yeni randevu için ${lastReservation.endTime.toDate().toLocaleString('tr-TR')} tarihinden 24 saat sonrasını beklemelisiniz.`);
+        Swal.fire('Hata!', `Bu oyun için son 24 saat içinde zaten bir randevu almışsınız. Yeni randevu için ${lastReservation.endTime.toDate().toLocaleString('tr-TR')} tarihinden 24 saat sonrasını beklemelisiniz.`, 'error');
         return;
       }
     }
@@ -121,12 +122,12 @@ const GameReservationPage: React.FC = () => {
         status: 'confirmed',
         createdAt: Timestamp.now(),
       });
-      alert('Randevunuz başarıyla oluşturuldu!');
+      Swal.fire('Başarılı!', 'Randevunuz başarıyla oluşturuldu!', 'success');
       // Refresh slots by re-triggering the effect
       setSelectedDate(new Date(selectedDate)); 
     } catch (error) {
       console.error("Error creating reservation:", error);
-      alert('Randevu oluşturulurken bir hata oluştu.');
+      Swal.fire('Hata!', 'Randevu oluşturulurken bir hata oluştu.', 'error');
     }
   };
 
@@ -170,7 +171,7 @@ const GameReservationPage: React.FC = () => {
             style={{ height: 500 }}
             onSelectSlot={(slotInfo) => {
               if (slotInfo.start < startOfToday()) {
-                alert("Geçmiş bir tarih için randevu alamazsınız.");
+                Swal.fire('Hata!', "Geçmiş bir tarih için randevu alamazsınız.", 'error');
                 return;
               }
               setSelectedDate(slotInfo.start)

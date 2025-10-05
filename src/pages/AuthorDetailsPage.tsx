@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuthors } from '../contexts/AuthorContext';
 import { useBooks } from '../contexts/BookContext';
+import { useAlert } from '../contexts/AlertContext';
 import { Author, Book } from '../types';
 import { ChevronLeft, Tag, BookOpen, User, Info, Star, BookCheck } from 'lucide-react';
 
@@ -10,6 +11,7 @@ const AuthorDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { fetchAuthorById, getAuthorBooks } = useAuthors();
   const { borrowBook, getBookStatus, borrowedBooks } = useBooks();
+  const { showAlert } = useAlert();
   const [author, setAuthor] = useState<Author | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,10 +39,9 @@ const AuthorDetailsPage: React.FC = () => {
   const handleBorrow = async (book: Book) => {
     try {
       await borrowBook(book);
-      alert(`${book.title} için ödünç alma isteğiniz alındı.`);
-      // Optionally, refresh book status
+      showAlert('Başarılı', `${book.title} için ödünç alma isteğiniz alındı.`, 'success');
     } catch (error) {
-      alert(`Hata: ${error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.'}`);
+      showAlert('Hata', `Hata: ${error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.'}`, 'error');
     }
   };
 

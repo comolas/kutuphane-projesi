@@ -5,56 +5,7 @@ import { ChevronLeft, Plus, AlertCircle, MessageSquare, Search, Filter, X, SortA
 import { useAuth } from '../contexts/AuthContext';
 import { collection, addDoc, query, where, getDocs, Timestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-
-// Reusable Confirmation Modal Component
-const ConfirmationModal: React.FC<{ 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onConfirm: () => void; 
-  title: string; 
-  message: string; 
-}> = ({ isOpen, onClose, onConfirm, title, message }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
-        <div className="p-6">
-          <div className="flex items-start">
-            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-              <ShieldQuestion className="h-6 w-6 text-red-600" aria-hidden="true" />
-            </div>
-            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>
-              <div className="mt-2">
-                <p className="text-sm text-gray-500">{message}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-xl">
-          <button
-            type="button"
-            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-          >
-            Onayla
-          </button>
-          <button
-            type="button"
-            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-            onClick={onClose}
-          >
-            Vazgeç
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import Swal from 'sweetalert2';
 
 interface Request {
   id: string;
@@ -80,8 +31,6 @@ const RequestsPage: React.FC = () => {
   const [content, setContent] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [category, setCategory] = useState(requestCategories[3]);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -93,23 +42,11 @@ const RequestsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const requestsPerPage = 3;
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [modalContent, setModalContent] = useState({ title: '', message: '', onConfirm: () => {} });
-
   useEffect(() => {
     if (user) {
       loadRequests();
     }
   }, [user]);
-
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
 
   const loadRequests = async () => {
     if (!user) return;
@@ -133,7 +70,7 @@ const RequestsPage: React.FC = () => {
       setRequests(loadedRequests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     } catch (error) {
       console.error('Error loading requests:', error);
-      setError('Talepler yüklenirken bir hata oluştu.');
+      Swal.fire('Hata!', 'Talepler yüklenirken bir hata oluştu.', 'error');
     }
   };
 
@@ -159,22 +96,35 @@ const RequestsPage: React.FC = () => {
       setCategory(requestCategories[3]);
       setIsModalOpen(false);
       loadRequests();
-      setSuccessMessage('Talebiniz başarıyla oluşturuldu!');
+      Swal.fire('Başarılı!', 'Talebiniz başarıyla oluşturuldu!', 'success');
     } catch (error) {
       console.error('Error creating request:', error);
-      setError('Talep oluşturulurken bir hata oluştu.');
+      Swal.fire('Hata!', 'Talep oluşturulurken bir hata oluştu.', 'error');
     }
   };
 
-  const handleDeleteRequest = async (requestId: string) => {
-    try {
-      await deleteDoc(doc(db, 'requests', requestId));
-      setRequests(prev => prev.filter(req => req.id !== requestId));
-      setSuccessMessage('Talebiniz başarıyla geri çekildi.');
-    } catch (error) {
-      console.error('Error deleting request:', error);
-      setError('Talep geri çekilirken bir hata oluştu.');
-    }
+  const handleDeleteRequest = async (requestId: string, requestTitle: string) => {
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: `"${requestTitle}" başlıklı talebinizi geri çekmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, geri çek!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteDoc(doc(db, 'requests', requestId));
+          setRequests(prev => prev.filter(req => req.id !== requestId));
+          Swal.fire('Başarılı!', 'Talebiniz başarıyla geri çekildi.', 'success');
+        } catch (error) {
+          console.error('Error deleting request:', error);
+          Swal.fire('Hata!', 'Talep geri çekilirken bir hata oluştu.', 'error');
+        }
+      }
+    });
   };
 
   const getPriorityColor = (priority: string) => {
@@ -334,20 +284,6 @@ const RequestsPage: React.FC = () => {
             Yeni Talep
           </button>
         </div>
-
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg flex items-center">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            {successMessage}
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg flex items-center">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            {error}
-          </div>
-        )}
 
         <div className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -515,14 +451,7 @@ const RequestsPage: React.FC = () => {
                   </div>
                   {request.status === 'pending' && (
                     <button 
-                      onClick={() => {
-                        setModalContent({
-                          title: 'Talebi Geri Çek',
-                          message: `"${request.title}" başlıklı talebinizi geri çekmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
-                          onConfirm: () => handleDeleteRequest(request.id)
-                        });
-                        setShowConfirmModal(true);
-                      }}
+                      onClick={() => handleDeleteRequest(request.id, request.title)}
                       className="flex items-center text-sm text-gray-500 hover:text-red-600 transition-colors"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
@@ -683,14 +612,6 @@ const RequestsPage: React.FC = () => {
           </div>
         </div>
       )}
-
-      <ConfirmationModal 
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={modalContent.onConfirm}
-        title={modalContent.title}
-        message={modalContent.message}
-      />
     </div>
   );
 };

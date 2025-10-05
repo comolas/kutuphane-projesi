@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, WriteBatch } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { Search, Edit, Trash2, Users } from 'lucide-react';
 import EditUserModal from '../EditUserModal';
+import Swal from 'sweetalert2';
 
 interface UserData {
   uid: string;
@@ -49,6 +49,7 @@ const UsersTab: React.FC = () => {
       setUsers(usersData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     } catch (error) {
       console.error('Error fetching users:', error);
+      Swal.fire('Hata!', 'Kullanıcılar getirilirken bir hata oluştu.', 'error');
     }
   }, []);
 
@@ -82,10 +83,10 @@ const UsersTab: React.FC = () => {
       setUsers(prev => prev.map(user => user.uid === updatedUser.uid ? updatedUser : user));
       setShowEditUserModal(false);
       setSelectedUserToEdit(null);
-      alert('Kullanıcı bilgileri başarıyla güncellendi.');
+      Swal.fire('Başarılı!', 'Kullanıcı bilgileri başarıyla güncellendi.', 'success');
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Kullanıcı güncellenirken bir hata oluştu.');
+      Swal.fire('Hata!', 'Kullanıcı güncellenirken bir hata oluştu.', 'error');
     }
   };
 
@@ -105,43 +106,62 @@ const UsersTab: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Bu kullanıcıyı ve ilgili tüm verilerini kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
-      return;
-    }
-    try {
-      const batch = writeBatch(db);
-      await deleteUserAndData(userId, batch);
-      await batch.commit();
-      setUsers(prev => prev.filter(user => user.uid !== userId));
-      alert('Kullanıcı başarıyla silindi.');
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Kullanıcı silinirken bir hata oluştu.');
-    }
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu kullanıcıyı ve ilgili tüm verilerini kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const batch = writeBatch(db);
+          await deleteUserAndData(userId, batch);
+          await batch.commit();
+          setUsers(prev => prev.filter(user => user.uid !== userId));
+          Swal.fire('Başarılı!', 'Kullanıcı başarıyla silindi.', 'success');
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          Swal.fire('Hata!', 'Kullanıcı silinirken bir hata oluştu.', 'error');
+        }
+      }
+    });
   };
 
   const handleBulkDelete = async () => {
     if (selectedUsers.length === 0) return;
-    if (!window.confirm(`${selectedUsers.length} kullanıcıyı ve bu kullanıcılara ait tüm verileri (ödünç alma geçmişi, talepler vb.) kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-      return;
-    }
-
-    setIsBulkDeleting(true);
-    try {
-      const batch = writeBatch(db);
-      for (const userId of selectedUsers) {
-        await deleteUserAndData(userId, batch);
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: `${selectedUsers.length} kullanıcıyı ve bu kullanıcılara ait tüm verileri (ödünç alma geçmişi, talepler vb.) kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setIsBulkDeleting(true);
+        try {
+          const batch = writeBatch(db);
+          for (const userId of selectedUsers) {
+            await deleteUserAndData(userId, batch);
+          }
+          await batch.commit();
+          setUsers(prev => prev.filter(user => !selectedUsers.includes(user.uid)));
+          setSelectedUsers([]);
+          Swal.fire('Başarılı!', `${selectedUsers.length} kullanıcı başarıyla silindi.`, 'success');
+        } catch (error) {
+          console.error('Error bulk deleting users:', error);
+          Swal.fire('Hata!', 'Toplu kullanıcı silme sırasında bir hata oluştu.', 'error');
+        } finally {
+          setIsBulkDeleting(false);
+        }
       }
-      await batch.commit();
-      setUsers(prev => prev.filter(user => !selectedUsers.includes(user.uid)));
-      setSelectedUsers([]);
-      alert(`${selectedUsers.length} kullanıcı başarıyla silindi.`);
-    } catch (error) {
-      console.error('Error bulk deleting users:', error);
-      alert('Toplu kullanıcı silme sırasında bir hata oluştu.');
-    } finally {
-      setIsBulkDeleting(false);
-    }
+    });
   };
 
   const uniqueClasses = useMemo(() => {

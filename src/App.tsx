@@ -15,6 +15,7 @@ import { CollectionProvider } from './contexts/CollectionContext';
 import { BudgetProvider } from './contexts/BudgetContext';
 import { GameProvider } from './contexts/GameContext';
 import { GameReservationProvider } from './contexts/GameReservationContext';
+import { AlertProvider } from './contexts/AlertContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
@@ -89,37 +90,39 @@ const AppContent = () => {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <AuthorProvider>
-          <EventProvider>
-            <GoalsProvider>
-              <BookProvider>
-                <TaskProvider>
-                  <AssistantProvider>
-                    <ThemeProvider>
-                      <SettingsProvider>
-                        <ReviewProvider>
-                          <MagazineProvider>
-                            <CollectionProvider>
-                              <BudgetProvider>
-                                <GameProvider>
-                                  <GameReservationProvider>
-                                    <AppContent />
-                                  </GameReservationProvider>
-                                </GameProvider>
-                              </BudgetProvider>
-                            </CollectionProvider>
-                          </MagazineProvider>
-                        </ReviewProvider>
-                      </SettingsProvider>
-                    </ThemeProvider>
-                  </AssistantProvider>
-                </TaskProvider>
-              </BookProvider>
-            </GoalsProvider>
-          </EventProvider>
-        </AuthorProvider>
-      </AuthProvider>
+      <AlertProvider>
+        <AuthProvider>
+          <AuthorProvider>
+            <EventProvider>
+              <GoalsProvider>
+                <BookProvider>
+                  <TaskProvider>
+                    <AssistantProvider>
+                      <ThemeProvider>
+                        <SettingsProvider>
+                          <ReviewProvider>
+                            <MagazineProvider>
+                              <CollectionProvider>
+                                <BudgetProvider>
+                                  <GameProvider>
+                                    <GameReservationProvider>
+                                      <AppContent />
+                                    </GameReservationProvider>
+                                  </GameProvider>
+                                </BudgetProvider>
+                              </CollectionProvider>
+                            </MagazineProvider>
+                          </ReviewProvider>
+                        </SettingsProvider>
+                      </ThemeProvider>
+                    </AssistantProvider>
+                  </TaskProvider>
+                </BookProvider>
+              </GoalsProvider>
+            </EventProvider>
+          </AuthorProvider>
+        </AuthProvider>
+      </AlertProvider>
     </Router>
   );
 }

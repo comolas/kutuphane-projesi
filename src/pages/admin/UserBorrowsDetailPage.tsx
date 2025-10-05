@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { User, Book, Calendar, AlertTriangle, ArrowLeft, History, CheckCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 // Interfaces
 interface UserData {
@@ -71,6 +72,7 @@ const UserBorrowsDetailPage: React.FC = () => {
 
       } catch (error) {
         console.error("Error fetching user borrow details:", error);
+        Swal.fire('Hata!', 'Kullanıcı ödünç detayları getirilirken bir hata oluştu.', 'error');
       } finally {
         setLoading(false);
       }
@@ -107,38 +109,69 @@ const UserBorrowsDetailPage: React.FC = () => {
   };
 
   const handleReturnBook = async (borrowDocId: string, bookId: string) => {
-    if(window.confirm("Bu kitabı iade olarak işaretlemek istediğinizden emin misiniz?")){
-        const borrowDocRef = doc(db, 'borrowedBooks', borrowDocId);
-        await updateDoc(borrowDocRef, { 
-            returnStatus: 'returned',
-            returnDate: serverTimestamp()
-        });
-        const statusRef = doc(db, 'bookStatuses', bookId);
-        await updateDoc(statusRef, { status: 'available' });
-        
-        // Move the book from current to history
-        const returnedBook = currentBorrows.find(item => item.id === borrowDocId);
-        if(returnedBook) {
-            setHistoricalBorrows(prev => [{...returnedBook, returnStatus: 'returned', returnDate: {seconds: Date.now()/1000}}, ...prev]);
-            setCurrentBorrows(prev => prev.filter(item => item.id !== borrowDocId));
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu kitabı iade olarak işaretlemek istediğinizden emin misiniz?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, iade al!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const borrowDocRef = doc(db, 'borrowedBooks', borrowDocId);
+          await updateDoc(borrowDocRef, { 
+              returnStatus: 'returned',
+              returnDate: serverTimestamp()
+          });
+          const statusRef = doc(db, 'bookStatuses', bookId);
+          await updateDoc(statusRef, { status: 'available' });
+          
+          // Move the book from current to history
+          const returnedBook = currentBorrows.find(item => item.id === borrowDocId);
+          if(returnedBook) {
+              setHistoricalBorrows(prev => [{...returnedBook, returnStatus: 'returned', returnDate: {seconds: Date.now()/1000}}, ...prev]);
+              setCurrentBorrows(prev => prev.filter(item => item.id !== borrowDocId));
+          }
+          Swal.fire('Başarılı!', 'Kitap başarıyla iade alındı.', 'success');
+        } catch (error) {
+          console.error('Error returning book:', error);
+          Swal.fire('Hata!', 'Kitap iade alınırken bir hata oluştu.', 'error');
         }
-    }
+      }
+    });
   };
 
   const handleExtendDueDate = async (borrowDocId: string, currentDueDate: { seconds: number }, alreadyExtended?: boolean) => {
     if (alreadyExtended) {
-        alert("Bu kitabın süresi zaten bir kez uzatılmış.");
+        Swal.fire('Uyarı!', 'Bu kitabın süresi zaten bir kez uzatılmış.', 'warning');
         return;
     }
     const newDueDate = new Date(currentDueDate.seconds * 1000);
     newDueDate.setDate(newDueDate.getDate() + 7);
-    if(window.confirm(`İade tarihi 7 gün uzatılacak (${newDueDate.toLocaleDateString()}). Onaylıyor musunuz?`)){
-        const borrowDocRef = doc(db, 'borrowedBooks', borrowDocId);
-        await updateDoc(borrowDocRef, { dueDate: newDueDate, extended: true });
-        setCurrentBorrows(prev => prev.map(item => 
-            item.id === borrowDocId ? { ...item, dueDate: { seconds: newDueDate.getTime() / 1000 }, extended: true } : item
-        ));
-    }
+
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: `İade tarihi 7 gün uzatılacak (${newDueDate.toLocaleDateString()}). Onaylıyor musunuz?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, uzat!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const borrowDocRef = doc(db, 'borrowedBooks', borrowDocId);
+          await updateDoc(borrowDocRef, { dueDate: newDueDate, extended: true });
+          setCurrentBorrows(prev => prev.map(item => 
+              item.id === borrowDocId ? { ...item, dueDate: { seconds: newDueDate.getTime() / 1000 }, extended: true } : item
+          ));
+          Swal.fire('Başarılı!', 'Kitap süresi başarıyla uzatıldı.', 'success');
+        } catch (error) {
+          console.error('Error extending due date:', error);
+          Swal.fire('Hata!', 'Süre uzatılırken bir hata oluştu.', 'error');
+        }
+      }
+    });
   };
 
   const getRemainingDays = (dueDate: { seconds: number }) => {

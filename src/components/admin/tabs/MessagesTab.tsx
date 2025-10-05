@@ -4,6 +4,7 @@ import { Mail, Search } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { ReturnMessage } from '../../../types';
+import Swal from 'sweetalert2';
 
 const MessagesTab: React.FC = () => {
   const { borrowMessages, approveBorrow, rejectBorrow, approveReturn } = useBooks();
@@ -39,6 +40,7 @@ const MessagesTab: React.FC = () => {
       setReturnMessages(messages);
     } catch (error) {
       console.error('Error fetching return messages:', error);
+      Swal.fire('Hata!', 'İade mesajları getirilirken bir hata oluştu.', 'error');
     }
   }, []);
 
@@ -54,15 +56,67 @@ const MessagesTab: React.FC = () => {
   const handleApproveReturn = async (message: ReturnMessage) => {
     const bookTitle = message.bookData.title;
     const userName = message.userData.displayName;
-    if (window.confirm(`'${userName}' adlı kullanıcının '${bookTitle}' adlı kitabını iade olarak işaretlemek istediğinizden emin misiniz?`)) {
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: `"${userName}" adlı kullanıcının "${bookTitle}" adlı kitabını iade olarak işaretlemek istediğinizden emin misiniz?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, onayla!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
         try {
           await approveReturn(message.bookId, message.userId);
           fetchReturnMessages();
+          Swal.fire('Başarılı!', 'İade başarıyla onaylandı.', 'success');
         } catch (error) {
           console.error('Error approving return:', error);
-          alert('İade onayı sırasında bir hata oluştu.');
+          Swal.fire('Hata!', 'İade onayı sırasında bir hata oluştu.', 'error');
         }
-    }
+      }
+    });
+  };
+
+  const handleApproveBorrow = async (bookId: string, userId: string) => {
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu ödünç alma talebini onaylamak istediğinizden emin misiniz?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, onayla!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await approveBorrow(bookId, userId);
+          Swal.fire('Başarılı!', 'Ödünç alma talebi başarıyla onaylandı.', 'success');
+        } catch (error) {
+          console.error('Error approving borrow:', error);
+          Swal.fire('Hata!', 'Ödünç alma onayı sırasında bir hata oluştu.', 'error');
+        }
+      }
+    });
+  };
+
+  const handleRejectBorrow = async (bookId: string, userId: string) => {
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu ödünç alma talebini reddetmek istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, reddet!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await rejectBorrow(bookId, userId);
+          Swal.fire('Başarılı!', 'Ödünç alma talebi başarıyla reddedildi.', 'success');
+        } catch (error) {
+          console.error('Error rejecting borrow:', error);
+          Swal.fire('Hata!', 'Ödünç alma reddi sırasında bir hata oluştu.', 'error');
+        }
+      }
+    });
   };
 
   const allMessages = useMemo(() => [
@@ -109,27 +163,36 @@ const MessagesTab: React.FC = () => {
   const handleBulkApproveReturn = async () => {
     if (selectedMessages.length === 0) return;
 
-    if (window.confirm(`${selectedMessages.length} adet iade talebini onaylamak istediğinizden emin misiniz?`)) {
-      setIsBulkProcessing(true);
-      try {
-        const promises = selectedMessages.map(messageId => {
-          const message = returnMessages.find(m => m.id === messageId);
-          if (message) {
-            return approveReturn(message.bookId, message.userId);
-          }
-          return Promise.resolve();
-        });
-        await Promise.all(promises);
-        alert(`${selectedMessages.length} iade talebi başarıyla onaylandı.`);
-        setSelectedMessages([]);
-        fetchReturnMessages();
-      } catch (error) {
-        console.error("Error bulk approving returns:", error);
-        alert("Toplu iade onayı sırasında bir hata oluştu.");
-      } finally {
-        setIsBulkProcessing(false);
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: `${selectedMessages.length} adet iade talebini onaylamak istediğinizden emin misiniz?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, onayla!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setIsBulkProcessing(true);
+        try {
+          const promises = selectedMessages.map(messageId => {
+            const message = returnMessages.find(m => m.id === messageId);
+            if (message) {
+              return approveReturn(message.bookId, message.userId);
+            }
+            return Promise.resolve();
+          });
+          await Promise.all(promises);
+          Swal.fire('Başarılı!', `${selectedMessages.length} iade talebi başarıyla onaylandı.`, 'success');
+          setSelectedMessages([]);
+          fetchReturnMessages();
+        } catch (error) {
+          console.error("Error bulk approving returns:", error);
+          Swal.fire('Hata!', "Toplu iade onayı sırasında bir hata oluştu.", 'error');
+        } finally {
+          setIsBulkProcessing(false);
+        }
       }
-    }
+    });
   };
 
   return (
@@ -233,13 +296,13 @@ const MessagesTab: React.FC = () => {
                     {message.type === 'borrow' ? (
                       <>
                         <button
-                          onClick={() => approveBorrow(message.bookId, message.userId)}
+                          onClick={() => handleApproveBorrow(message.bookId, message.userId)}
                           className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-xs"
                         >
                           Onayla
                         </button>
                         <button
-                          onClick={() => rejectBorrow(message.bookId, message.userId)}
+                          onClick={() => handleRejectBorrow(message.bookId, message.userId)}
                           className="px-3 py-1 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-xs"
                         >
                           Reddet

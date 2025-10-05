@@ -123,3 +123,14 @@ export interface BudgetSummary {
   totalBudget: number;
   remainingBudget: number;
 }
+
+export interface UserData {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL: string;
+  studentClass?: string; // Assuming studentClass is an optional string
+  role: 'student' | 'teacher' | 'admin';
+  createdAt: any; // Firestore Timestamp
+  // Add other user-related fields as needed
+}

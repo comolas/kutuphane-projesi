@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGames, Game } from '../../../contexts/GameContext';
 import GameModal from '../GameModal';
 import { Plus, Edit, Trash2 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const GameManagementTab: React.FC = () => {
   const { games, addGame, updateGame, deleteGame, loading } = useGames();
@@ -22,28 +23,47 @@ const GameManagementTab: React.FC = () => {
     try {
       if (gameToEdit) {
         await updateGame(gameToEdit.id, gameData);
-        alert('Oyun başarıyla güncellendi.');
+        Swal.fire('Başarılı!', 'Oyun başarıyla güncellendi.', 'success');
       } else {
         await addGame(gameData);
-        alert('Oyun başarıyla eklendi.');
+        Swal.fire('Başarılı!', 'Oyun başarıyla eklendi.', 'success');
       }
       handleCloseModal();
     } catch (error) {
       console.error("Failed to save game:", error);
-      alert("Oyun kaydedilirken bir hata oluştu.");
+      Swal.fire('Hata!', 'Oyun kaydedilirken bir hata oluştu.', 'error');
     }
   };
 
   const handleDeleteGame = async (id: string) => {
-    if (window.confirm('Bu oyunu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
-      try {
-        await deleteGame(id);
-        alert('Oyun başarıyla silindi.');
-      } catch (error) {
-        console.error("Failed to delete game:", error);
-        alert("Oyun silinirken bir hata oluştu.");
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu oyunu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'İptal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteGame(id);
+          Swal.fire(
+            'Silindi!',
+            'Oyun başarıyla silindi.',
+            'success'
+          )
+        } catch (error) {
+          console.error("Failed to delete game:", error);
+          Swal.fire(
+            'Hata!',
+            'Oyun silinirken bir hata oluştu.',
+            'error'
+          )
+        }
       }
-    }
+    });
   };
 
   if (loading) {
