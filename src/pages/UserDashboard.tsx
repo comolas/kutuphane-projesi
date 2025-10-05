@@ -18,9 +18,12 @@ import { auth, db } from '../firebase/config';
 import { getDailyQuote } from '../utils/quotes';
 import { Event, Survey, Announcement, Request as RequestType, Book as BookType } from '../types';
 
+import { useAlert } from '../contexts/AlertContext';
+
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, userData, isAdmin } = useAuth();
+  const { showAlert } = useAlert();
   
   const { borrowedBooks, allBooks, borrowBook, recommendedBooks, fetchRecommendedBooks, getBookStatus } = useBooks();
   const { monthlyGoal, yearlyGoal, fetchGoals, showConfetti, resetConfetti } = useGoals();
@@ -176,9 +179,9 @@ const UserDashboard: React.FC = () => {
     try {
       await borrowBook(book);
       await fetchGoals();
-      alert(`${book.title} için ödünç alma talebiniz gönderildi! Admin onayından sonra kitap size ödünç verilecektir.`);
+      showAlert('Başarılı', `${book.title} için ödünç alma talebiniz gönderildi! Admin onayından sonra kitap size ödünç verilecektir.`, 'success');
     } catch (error: any) {
-      alert(`Hata: ${error.message}`);
+      showAlert('Hata', `Kitap ödünç alınırken bir hata oluştu: ${error.message}`, 'error');
       console.error(error);
     }
   };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import Swal from 'sweetalert2';
 
 interface BulkAddQuoteModalProps {
   isOpen: boolean;
@@ -12,16 +13,12 @@ interface BulkAddQuoteModalProps {
 const BulkAddQuoteModal: React.FC<BulkAddQuoteModalProps> = ({ isOpen, onClose, onQuotesAdded }) => {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setCsvFile(event.target.files[0]);
-      setError(null);
-      setSuccessMessage(null);
     } else {
       setCsvFile(null);
     }
@@ -29,13 +26,11 @@ const BulkAddQuoteModal: React.FC<BulkAddQuoteModalProps> = ({ isOpen, onClose, 
 
   const handleUpload = async () => {
     if (!csvFile) {
-      setError('Lütfen bir CSV dosyası seçin.');
+      Swal.fire('Hata!', 'Lütfen bir CSV dosyası seçin.', 'error');
       return;
     }
 
     setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -47,20 +42,20 @@ const BulkAddQuoteModal: React.FC<BulkAddQuoteModalProps> = ({ isOpen, onClose, 
       // Skip header row if present, or adjust logic based on actual CSV structure
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const parts = line.match(/(?:"([^"]*(?:""[^"]*)*)"|([^,\"]*))/g); // Regex to handle quoted commas
+        const parts = line.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^,\\"]*))/g); // Regex to handle quoted commas
 
         if (!parts || parts.length < 3) {
-          setError(`Hata: Satır ${i + 1} geçersiz formatta. Her satırda en az 3 alan (metin, yazar, kitap) olmalıdır.`);
+          Swal.fire('Hata!', `Satır ${i + 1} geçersiz formatta. Her satırda en az 3 alan (metin, yazar, kitap) olmalıdır.`, 'error');
           setLoading(false);
           return;
         }
 
-        const text = parts[0] ? parts[0].replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
-        const author = parts[1] ? parts[1].replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
-        const book = parts[2] ? parts[2].replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
+        const text = parts[0] ? parts[0].replace(/^\"|\"$/g, '').replace(/\"\"/g, '"').trim() : '';
+        const author = parts[1] ? parts[1].replace(/^\"|\"$/g, '').replace(/\"\"/g, '"').trim() : '';
+        const book = parts[2] ? parts[2].replace(/^\"|\"$/g, '').replace(/\"\"/g, '"').trim() : '';
 
         if (!text || !author || !book) {
-          setError(`Hata: Satır ${i + 1} eksik bilgi içeriyor (metin, yazar veya kitap boş).`);
+          Swal.fire('Hata!', `Satır ${i + 1} eksik bilgi içeriyor (metin, yazar veya kitap boş).`, 'error');
           setLoading(false);
           return;
         }
@@ -72,19 +67,20 @@ const BulkAddQuoteModal: React.FC<BulkAddQuoteModalProps> = ({ isOpen, onClose, 
         for (const quote of quotesToAdd) {
           await addDoc(quotesCollectionRef, quote);
         }
-        setSuccessMessage(`${quotesToAdd.length} alıntı başarıyla eklendi!`);
+        Swal.fire('Başarılı!', `${quotesToAdd.length} alıntı başarıyla eklendi!`, 'success');
         setCsvFile(null);
         onQuotesAdded(); // Notify parent to refetch quotes
+        onClose();
       } catch (err) {
         console.error('Alıntıları toplu eklerken hata:', err);
-        setError('Alıntıları eklerken bir hata oluştu. Lütfen konsolu kontrol edin.');
+        Swal.fire('Hata!', 'Alıntıları eklerken bir hata oluştu. Lütfen konsolu kontrol edin.', 'error');
       } finally {
         setLoading(false);
       }
     };
 
     reader.onerror = () => {
-      setError('Dosya okunamadı.');
+      Swal.fire('Hata!', 'Dosya okunamadı.', 'error');
       setLoading(false);
     };
 
@@ -115,8 +111,6 @@ const BulkAddQuoteModal: React.FC<BulkAddQuoteModalProps> = ({ isOpen, onClose, 
             onChange={handleFileChange}
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
           />
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-          {successMessage && <p className="text-green-500 text-sm mt-2">{successMessage}</p>}
           <div className="mt-6 flex justify-end space-x-3">
             <button
               type="button"

@@ -5,6 +5,7 @@ import { Plus, Search, Edit, Trash2, Star, Upload } from 'lucide-react';
 import AuthorModal from '../AuthorModal';
 import BulkAddAuthorModal from '../BulkAddAuthorModal';
 import { Author } from '../../../types';
+import Swal from 'sweetalert2';
 
 const AuthorManagementTab: React.FC = () => {
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -25,6 +26,7 @@ const AuthorManagementTab: React.FC = () => {
       setAuthors(authorsList.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error("Yazarlar çekilirken hata:", error);
+      Swal.fire('Hata!', 'Yazarlar çekilirken bir hata oluştu.', 'error');
     } finally {
       setLoading(false);
     }
@@ -64,59 +66,97 @@ const AuthorManagementTab: React.FC = () => {
         const authorRef = doc(db, 'authors', authorData.id);
         const { id, ...dataToUpdate } = authorData;
         await updateDoc(authorRef, dataToUpdate);
+        Swal.fire('Başarılı!', 'Yazar başarıyla güncellendi.', 'success');
       } else {
         await addDoc(collection(db, 'authors'), { ...authorData, featured: false });
+        Swal.fire('Başarılı!', 'Yazar başarıyla eklendi.', 'success');
       }
       handleCloseModal();
       fetchAuthors();
     } catch (error) {
       console.error("Yazar kaydedilirken hata:", error);
-      alert("Hata: Yazar kaydedilemedi.");
+      Swal.fire('Hata!', 'Yazar kaydedilemedi.', 'error');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Bu yazarı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
-      try {
-        await deleteDoc(doc(db, 'authors', id));
-        fetchAuthors();
-      } catch (error) {
-        console.error("Yazar silinirken hata:", error);
-        alert("Hata: Yazar silinemedi.");
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu yazarı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'İptal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteDoc(doc(db, 'authors', id));
+          fetchAuthors();
+          Swal.fire(
+            'Silindi!',
+            'Yazar başarıyla silindi.',
+            'success'
+          )
+        } catch (error) {
+          console.error("Yazar silinirken hata:", error);
+          Swal.fire(
+            'Hata!',
+            'Yazar silinemedi.',
+            'error'
+          )
+        }
       }
-    }
+    });
   };
 
   const handleSetFeatured = async (authorId: string) => {
-    const batch = writeBatch(db);
-    let currentFeaturedId: string | null = null;
+    const author = authors.find(a => a.id === authorId);
+    if (!author) return;
 
-    authors.forEach(author => {
-      if (author.featured) {
-        currentFeaturedId = author.id;
+    Swal.fire({
+      title: `Ayın Yazarı: ${author.name}`,
+      text: `Bu yazarı ayın yazarı olarak ayarlamak istediğinizden emin misiniz?`,
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Evet, ayarla!',
+      cancelButtonText: 'İptal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const batch = writeBatch(db);
+        let currentFeaturedId: string | null = null;
+
+        authors.forEach(author => {
+          if (author.featured) {
+            currentFeaturedId = author.id;
+          }
+        });
+
+        if (currentFeaturedId) {
+          if (currentFeaturedId === authorId) {
+            Swal.fire('Uyarı', 'Bu yazar zaten ayın yazarı olarak ayarlı.', 'warning');
+            return;
+          }
+          const oldFeaturedRef = doc(db, "authors", currentFeaturedId);
+          batch.update(oldFeaturedRef, { featured: false });
+        }
+
+        const newFeaturedRef = doc(db, "authors", authorId);
+        batch.update(newFeaturedRef, { featured: true, monthlyFeaturedDate: new Date() });
+
+        try {
+          await batch.commit();
+          fetchAuthors();
+          Swal.fire('Başarılı!', 'Ayın yazarı başarıyla güncellendi.', 'success');
+        } catch (error) {
+          console.error("Ayın yazarı ayarlanırken hata:", error);
+          Swal.fire('Hata!', 'Ayın yazarı ayarlanamadı.', 'error');
+        }
       }
     });
-
-    if (currentFeaturedId) {
-      if (currentFeaturedId === authorId) {
-        alert("Bu yazar zaten ayın yazarı olarak ayarlı.");
-        return;
-      }
-      const oldFeaturedRef = doc(db, "authors", currentFeaturedId);
-      batch.update(oldFeaturedRef, { featured: false });
-    }
-
-    const newFeaturedRef = doc(db, "authors", authorId);
-    batch.update(newFeaturedRef, { featured: true, monthlyFeaturedDate: new Date() });
-
-    try {
-      await batch.commit();
-      fetchAuthors();
-      alert("Ayın yazarı başarıyla güncellendi.");
-    } catch (error) {
-      console.error("Ayın yazarı ayarlanırken hata:", error);
-      alert("Hata: Ayın yazarı ayarlanamadı.");
-    }
   };
 
   return (

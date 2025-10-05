@@ -9,57 +9,9 @@ import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from 'fir
 import BookDetailsModal from '../components/common/BookDetailsModal';
 import ReadingStats from '../components/borrowed/ReadingStats';
 import { Book } from '../types';
+import Swal from 'sweetalert2';
 
 // Reusable Confirmation Modal Component
-const ConfirmationModal: React.FC<{ 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onConfirm: () => void; 
-  title: string; 
-  message: string; 
-}> = ({ isOpen, onClose, onConfirm, title, message }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
-        <div className="p-6">
-          <div className="flex items-start">
-            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
-              <ShieldQuestion className="h-6 w-6 text-indigo-600" aria-hidden="true" />
-            </div>
-            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>
-              <div className="mt-2">
-                <p className="text-sm text-gray-500">{message}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-xl">
-          <button
-            type="button"
-            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-          >
-            Onayla
-          </button>
-          <button
-            type="button"
-            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-            onClick={onClose}
-          >
-            Vazgeç
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const BorrowedBooksPage: React.FC = () => {
   const navigate = useNavigate();
   const { borrowedBooks, requestReturn, extendBook, canExtend } = useBooks();
@@ -67,7 +19,6 @@ const BorrowedBooksPage: React.FC = () => {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [activeTab, setActiveTab] = useState<'active' | 'stats'>('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,41 +28,60 @@ const BorrowedBooksPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const booksPerPage = 12;
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [modalContent, setModalContent] = useState({ title: '', message: '', onConfirm: () => {} });
-
   const returnedBooks = useMemo(() => 
     borrowedBooks.filter(b => b.returnStatus === 'returned'), 
     [borrowedBooks]
   );
 
-  const handleReturn = async (bookId: string) => {
-    try {
-      await requestReturn(bookId);
-      setErrorMessage(null);
-    } catch (error: any) {
-      console.error('Error returning book:', error);
-      setErrorMessage(error.message || 'Kitap iade edilirken bir hata oluştu. Lütfen tekrar deneyin.');
-    }
+  const handleReturn = async (bookId: string, bookTitle: string) => {
+    Swal.fire({
+      title: 'İade Talebi Onayı',
+      text: `"${bookTitle}" adlı kitap için iade talebi oluşturmak istediğinizden emin misiniz?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Onayla',
+      cancelButtonText: 'Vazgeç',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await requestReturn(bookId);
+          Swal.fire('Başarılı!', 'Kitap iade talebiniz alındı.', 'success');
+        } catch (error: any) {
+          console.error('Error returning book:', error);
+          Swal.fire('Hata!', error.message || 'Kitap iade edilirken bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+        }
+      }
+    });
   };
 
-  const handleExtend = async (bookId: string) => {
-    try {
-      setErrorMessage(null);
-      await extendBook(bookId);
-    } catch (error: any) {
-      console.error('Error extending book:', error);
-      if (error.code === 'permission-denied') {
-        setErrorMessage('Bu kitabın süresini uzatma izniniz yok. Kitap zaten uzatılmış olabilir.');
-      } else {
-        setErrorMessage('Kitap süresi uzatılırken bir hata oluştu. Lütfen tekrar deneyin.');
+  const handleExtend = async (bookId: string, bookTitle: string) => {
+    Swal.fire({
+      title: 'Süre Uzatma Onayı',
+      text: `"${bookTitle}" adlı kitabın süresini 7 gün uzatmak istediğinizden emin misiniz?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Onayla',
+      cancelButtonText: 'Vazgeç',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await extendBook(bookId);
+          Swal.fire('Başarılı!', 'Kitap süresi başarıyla uzatıldı.', 'success');
+        } catch (error: any) {
+          console.error('Error extending book:', error);
+          if (error.code === 'permission-denied') {
+            Swal.fire('Hata!', 'Bu kitabın süresini uzatma izniniz yok. Kitap zaten uzatılmış olabilir.', 'error');
+          } else {
+            Swal.fire('Hata!', 'Kitap süresi uzatılırken bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+          }
+        }
       }
-    }
+    });
   };
 
   const handleSubmitReview = async ({ rating, text }: { rating: number; text: string }) => {
     if (!selectedBook || !user || !userData) {
-      alert("Yorum göndermek için giriş yapmalısınız.");
+      Swal.fire("Hata!", "Yorum göndermek için giriş yapmalısınız.", "error");
       return;
     }
 
@@ -127,10 +97,10 @@ const BorrowedBooksPage: React.FC = () => {
         helpfulVotes: [],
       });
       setIsModalOpen(false);
-      alert("Değerlendirmeniz için teşekkürler! Yorumunuz onaylandıktan sonra yayınlanacaktır.");
+      Swal.fire("Başarılı!", "Değerlendirmeniz için teşekkürler! Yorumunuz onaylandıktan sonra yayınlanacaktır.", "success");
     } catch (error) {
       console.error("Error submitting review: ", error);
-      alert("Yorumunuz gönderilirken bir hata oluştu.");
+      Swal.fire("Hata!", "Yorumunuz gönderilirken bir hata oluştu.", "error");
     }
   };
 
@@ -239,14 +209,7 @@ const BorrowedBooksPage: React.FC = () => {
           </p>
         </div>
 
-        {errorMessage && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-              <p className="text-red-700">{errorMessage}</p>
-            </div>
-          </div>
-        )}
+
 
         <div className="mb-6">
           <div className="border-b border-gray-200">
@@ -394,14 +357,7 @@ const BorrowedBooksPage: React.FC = () => {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => {
-                                    setModalContent({
-                                      title: 'İade Talebi Onayı',
-                                      message: `"${book.title}" adlı kitap için iade talebi oluşturmak istediğinizden emin misiniz?`,
-                                      onConfirm: () => handleReturn(book.id)
-                                    });
-                                    setShowConfirmModal(true);
-                                  }}
+                                  onClick={() => handleReturn(book.id, book.title)}
                                   className="w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
                                 >
                                   İade Et
@@ -409,14 +365,7 @@ const BorrowedBooksPage: React.FC = () => {
                               )}
                               {canExtend(book.id) && !book.returnStatus && (
                                 <button
-                                  onClick={() => {
-                                    setModalContent({
-                                      title: 'Süre Uzatma Onayı',
-                                      message: `"${book.title}" adlı kitabın süresini 7 gün uzatmak istediğinizden emin misiniz?`,
-                                      onConfirm: () => handleExtend(book.id)
-                                    });
-                                    setShowConfirmModal(true);
-                                  }}
+                                  onClick={() => handleExtend(book.id, book.title)}
                                   className="w-full px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   7 Gün Uzat
@@ -488,13 +437,7 @@ const BorrowedBooksPage: React.FC = () => {
         onSubmitReview={handleSubmitReview}
         isReviewMode={isReviewMode}
       />
-      <ConfirmationModal 
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={modalContent.onConfirm}
-        title={modalContent.title}
-        message={modalContent.message}
-      />
+
     </div>
   );
 };

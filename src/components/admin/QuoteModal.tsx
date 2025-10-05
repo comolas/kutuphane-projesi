@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 interface Quote {
   id?: string;
@@ -17,7 +18,6 @@ interface QuoteModalProps {
 
 const QuoteModal: React.FC<QuoteModalProps> = ({ isOpen, onClose, onSave, quoteToEdit }) => {
   const [quote, setQuote] = useState<Quote>({ text: '', author: '', book: '' });
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (quoteToEdit) {
@@ -25,7 +25,6 @@ const QuoteModal: React.FC<QuoteModalProps> = ({ isOpen, onClose, onSave, quoteT
     } else {
       setQuote({ text: '', author: '', book: '' });
     }
-    setError(''); // Reset error on open
   }, [quoteToEdit, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -35,7 +34,7 @@ const QuoteModal: React.FC<QuoteModalProps> = ({ isOpen, onClose, onSave, quoteT
 
   const handleSave = () => {
     if (!quote.text || !quote.author || !quote.book) {
-      setError('Tüm alanlar zorunludur.');
+      Swal.fire('Hata!', 'Tüm alanlar zorunludur.', 'error');
       return;
     }
     onSave(quote);
@@ -88,7 +87,6 @@ const QuoteModal: React.FC<QuoteModalProps> = ({ isOpen, onClose, onSave, quoteT
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
         <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
           <button

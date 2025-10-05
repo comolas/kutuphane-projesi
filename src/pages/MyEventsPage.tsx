@@ -5,6 +5,7 @@ import { Calendar, MapPin, Search, ChevronLeft, ChevronRight, Menu, X, Home, Lib
 import { useAuth } from '../contexts/AuthContext';
 import { auth } from '../firebase/config';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import Swal from 'sweetalert2';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -23,8 +24,33 @@ const MyEventsPage: React.FC = () => {
   }, [fetchJoinedEvents, fetchAllItems]);
 
   const handleLeaveEvent = async (eventId: string) => {
-    await leaveEvent(eventId);
-    alert('Etkinlikten ayrıldınız.');
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu etkinlikten ayrılmak istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Evet, ayrıl!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await leaveEvent(eventId);
+          Swal.fire(
+            'Ayrıldınız!',
+            'Etkinlikten başarıyla ayrıldınız.',
+            'success'
+          )
+        } catch (error) {
+          Swal.fire(
+            'Hata!',
+            'Etkinlikten ayrılırken bir hata oluştu.',
+            'error'
+          )
+        }
+      }
+    })
   };
 
   const sortedItems = useMemo(() => {

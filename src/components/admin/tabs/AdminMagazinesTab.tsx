@@ -3,6 +3,7 @@ import { useMagazines } from '../../../contexts/MagazineContext';
 import { Magazine } from '../../../types';
 import { Search, Plus, Edit, Trash2, BookOpen } from 'lucide-react';
 import MagazineModal from '../MagazineModal';
+import Swal from 'sweetalert2';
 
 const AdminMagazinesTab: React.FC = () => {
   const { magazines, deleteMagazine } = useMagazines();
@@ -21,15 +22,26 @@ const AdminMagazinesTab: React.FC = () => {
   };
 
   const handleDeleteClick = async (magazineId: string) => {
-    if (window.confirm('Bu dergiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
-      try {
-        await deleteMagazine(magazineId);
-        alert('Dergi başarıyla silindi.');
-      } catch (error) {
-        console.error('Error deleting magazine:', error);
-        alert('Dergi silinirken bir hata oluştu.');
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu dergiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteMagazine(magazineId);
+          Swal.fire('Başarılı!', 'Dergi başarıyla silindi.', 'success');
+        } catch (error) {
+          console.error('Error deleting magazine:', error);
+          Swal.fire('Hata!', 'Dergi silinirken bir hata oluştu.', 'error');
+        }
       }
-    }
+    });
   };
 
   const filteredMagazines = magazines.filter(magazine =>

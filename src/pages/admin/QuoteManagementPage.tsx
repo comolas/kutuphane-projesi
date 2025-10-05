@@ -3,6 +3,7 @@ import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc } from 'firebase
 import { db } from '../../firebase/config';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import QuoteModal from '../../components/admin/QuoteModal';
+import Swal from 'sweetalert2';
 
 interface Quote {
   id: string;
@@ -90,22 +91,43 @@ const QuoteManagementPage: React.FC = () => {
       }
       handleCloseModal();
       fetchQuotes(); // Refresh the list
+      Swal.fire('Başarılı!', 'Alıntı başarıyla kaydedildi.', 'success');
     } catch (error) {
       console.error("Alıntı kaydedilirken hata:", error);
-      alert("Hata: Alıntı kaydedilemedi.");
+      Swal.fire('Hata!', 'Alıntı kaydedilemedi.', 'error');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Bu alıntıyı silmek istediğinizden emin misiniz?")) {
-      try {
-        await deleteDoc(doc(db, 'quotes', id));
-        fetchQuotes(); // Listeyi yenile
-      } catch (error) {
-        console.error("Alıntı silinirken hata:", error);
-        alert("Hata: Alıntı silinemedi.");
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu alıntıyı silmek istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'İptal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteDoc(doc(db, 'quotes', id));
+          fetchQuotes(); // Listeyi yenile
+          Swal.fire(
+            'Silindi!',
+            'Alıntı başarıyla silindi.',
+            'success'
+          )
+        } catch (error) {
+          console.error("Alıntı silinirken hata:", error);
+          Swal.fire(
+            'Hata!',
+            'Alıntı silinemedi.',
+            'error'
+          )
+        }
       }
-    }
+    });
   };
 
   return (

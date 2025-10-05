@@ -3,6 +3,7 @@ import { Plus, Layers, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import CollectionModal, { StoryCollection } from '../CollectionModal';
+import Swal from 'sweetalert2';
 
 const CollectionManagementTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,6 +20,7 @@ const CollectionManagementTab: React.FC = () => {
       setCollections(collectionsData);
     } catch (error) {
       console.error("Error fetching collections: ", error);
+      Swal.fire('Hata!', 'Koleksiyonlar getirilirken bir hata oluştu.', 'error');
     }
     setIsLoading(false);
   }, []);
@@ -38,15 +40,35 @@ const CollectionManagementTab: React.FC = () => {
   };
 
   const handleDelete = async (collectionId: string) => {
-    if (window.confirm("Bu koleksiyonu silmek istediğinizden emin misiniz?")) {
-      try {
-        await deleteDoc(doc(db, 'collections', collectionId));
-        setCollections(prev => prev.filter(c => c.id !== collectionId));
-      } catch (error) {
-        console.error("Error deleting collection: ", error);
-        alert("Koleksiyon silinirken bir hata oluştu.");
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu koleksiyonu silmek istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'İptal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteDoc(doc(db, 'collections', collectionId));
+          setCollections(prev => prev.filter(c => c.id !== collectionId));
+          Swal.fire(
+            'Silindi!',
+            'Koleksiyon başarıyla silindi.',
+            'success'
+          )
+        } catch (error) {
+          console.error("Error deleting collection: ", error);
+          Swal.fire(
+            'Hata!',
+            'Koleksiyon silinirken bir hata oluştu.',
+            'error'
+          )
+        }
       }
-    }
+    });
   };
 
   const handleSave = (savedCollection: StoryCollection) => {
@@ -59,6 +81,7 @@ const CollectionManagementTab: React.FC = () => {
     }
     // Re-sort the list based on order
     setCollections(prev => [...prev].sort((a, b) => a.order - b.order));
+    Swal.fire('Başarılı!', 'Koleksiyon başarıyla kaydedildi.', 'success');
   };
 
   return (

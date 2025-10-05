@@ -18,8 +18,8 @@ service cloud.firestore {
 
     // Users collection rules
     match /users/{userId} {
-      // Allow any authenticated user to read user data
-      allow read: if isAuthenticated();
+      // Allow users to read their own data, and admins to read any user data
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       
       // Allow user creation during registration
       allow create: if request.auth.uid == userId &&
@@ -73,7 +73,7 @@ service cloud.firestore {
       allow read: if isAuthenticated() && request.auth.uid == userId_goalType.split('_')[0];
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
       allow update: if isAuthenticated() && request.auth.uid == resource.data.userId;
-      allow delete: if isAuthenticated() && request.auth.uid == resource.resource.data.userId;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 
     // Events collection rules
@@ -105,11 +105,8 @@ service cloud.firestore {
       // Allow any authenticated user to read book statuses
       allow read: if isAuthenticated();
       
-      // Allow authenticated users to create and update book statuses
-      allow create, update: if isAuthenticated();
-      
-      // Only admins can delete book statuses
-      allow delete: if isAdmin();
+      // Only admins can create, update, and delete book statuses
+      allow create, update, delete: if isAdmin();
     }
 
     // User tasks collection rules
@@ -206,8 +203,8 @@ service cloud.firestore {
 
     // Borrow messages collection rules
     match /borrowMessages/{messageId} {
-      // Allow any authenticated user to read all borrow messages
-      allow read: if isAuthenticated();
+      // Allow admin to read all, and users to read their own messages
+      allow read: if isAuthenticated() && (isAdmin() || isOwner(resource.data.userId));
       
       // Allow users to create borrow requests
       allow create: if isAuthenticated() &&
@@ -254,9 +251,16 @@ service cloud.firestore {
         request.resource.data.bookId is string &&
         request.resource.data.favoritedAt is timestamp;
       allow update: if isAuthenticated() && request.auth.uid == resource.data.userId
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['note'])
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['note', 'shelves'])
                     && request.resource.data.note is string;
       allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    // Shelves collection rules
+    match /shelves/{shelfId} {
+      allow read, delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 
     // Surveys collection rules
@@ -333,16 +337,15 @@ service cloud.firestore {
     }
 
     // Game Reservations collection rules
+    match /gameReservations/{reservationId} {
+      // Allow users to read their own reservations, and admins to read any
       allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
 
-      // Authenticated users can create their own reservation.
+      // Allow authenticated users to create their own reservations
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
 
-      // Users can cancel their own reservation. Admins can cancel any.
-      allow update: if isAuthenticated() && ( (isOwner(resource.data.userId) && request.resource.data.status == 'cancelled-by-user') || isAdmin() );
-
-      // Admins can delete reservations.
-      allow delete: if isAdmin();
+      // Allow users to update/delete their own reservations (e.g., to cancel), and admins to update/delete any
+      allow update, delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
     }
 
     // Transactions collection rules

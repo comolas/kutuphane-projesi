@@ -6,6 +6,7 @@ import AnnouncementModal from '../AnnouncementModal';
 import ParticipantsModal from '../ParticipantsModal';
 import { doc, updateDoc, addDoc, collection, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import Swal from 'sweetalert2';
 
 const EventManagementTab: React.FC = () => {
   const { allItems, fetchAllItems, setAllItems, addAnnouncement, updateAnnouncement } = useEvents();
@@ -61,17 +62,17 @@ const EventManagementTab: React.FC = () => {
         const eventRef = doc(db, 'events', id);
         await updateDoc(eventRef, eventToSave);
         fetchAllItems();
-        alert('Etkinlik başarıyla güncellendi!');
+        Swal.fire('Başarılı!', 'Etkinlik başarıyla güncellendi!', 'success');
       } else {
         await addDoc(collection(db, 'events'), { ...eventToSave, type: 'event' });
         fetchAllItems();
-        alert('Etkinlik başarıyla eklendi!');
+        Swal.fire('Başarılı!', 'Etkinlik başarıyla eklendi!', 'success');
       }
       setShowEventModal(false);
       setSelectedEvent(null);
     } catch (error) {
       console.error('Error saving event:', error);
-      alert('Etkinlik kaydedilirken bir hata oluştu.');
+      Swal.fire('Hata!', 'Etkinlik kaydedilirken bir hata oluştu.', 'error');
     }
   };
 
@@ -93,7 +94,7 @@ const EventManagementTab: React.FC = () => {
           type: 'survey',
         });
         fetchAllItems();
-        alert('Anket başarıyla güncellendi!');
+        Swal.fire('Başarılı!', 'Anket başarıyla güncellendi!', 'success');
       } else {
         const surveyRef = await addDoc(collection(db, 'events'), {
           name: survey.title,
@@ -105,13 +106,13 @@ const EventManagementTab: React.FC = () => {
           type: 'survey',
         });
         setAllItems(prev => [...prev, { ...survey, name: survey.title, content: survey.description, type: 'survey', id: surveyRef.id }]);
-        alert('Anket başarıyla eklendi!');
+        Swal.fire('Başarılı!', 'Anket başarıyla eklendi!', 'success');
       }
       setShowSurveyModal(false);
       setSelectedSurvey(null);
     } catch (error) {
       console.error('Error saving survey:', error);
-      alert('Anket kaydedilirken bir hata oluştu.');
+      Swal.fire('Hata!', 'Anket kaydedilirken bir hata oluştu.', 'error');
     }
   };
 
@@ -128,31 +129,42 @@ const EventManagementTab: React.FC = () => {
             ? { ...ann, ...announcementData } 
             : ann
         ));
-        alert('Duyuru başarıyla güncellendi!');
+        Swal.fire('Başarılı!', 'Duyuru başarıyla güncellendi!', 'success');
       } else {
         const newAnn = await addAnnouncement({ ...announcementData, type: 'announcement' });
         setAllItems(prev => [...prev, newAnn]);
-        alert('Duyuru başarıyla eklendi!');
+        Swal.fire('Başarılı!', 'Duyuru başarıyla eklendi!', 'success');
       }
       setShowAnnouncementModal(false);
       setSelectedAnnouncement(null);
     } catch (error) {
       console.error('Error saving announcement:', error);
-      alert('Duyuru kaydedilirken bir hata oluştu.');
+      Swal.fire('Hata!', 'Duyuru kaydedilirken bir hata oluştu.', 'error');
     }
   };
 
   const deleteEvent = async (eventId: string) => {
-    if (!window.confirm('Bu öğeyi silmek istediğinizden emin misiniz?')) return;
-
-    try {
-      await deleteDoc(doc(db, 'events', eventId));
-      setAllItems(prev => prev.filter(event => event.id !== eventId));
-      alert('Öğe başarıyla silindi.');
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      alert('Öğe silinirken bir hata oluştu.');
-    }
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu öğeyi silmek istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteDoc(doc(db, 'events', eventId));
+          setAllItems(prev => prev.filter(event => event.id !== eventId));
+          Swal.fire('Başarılı!', 'Öğe başarıyla silindi.', 'success');
+        } catch (error) {
+          console.error('Error deleting event:', error);
+          Swal.fire('Hata!', 'Öğe silinirken bir hata oluştu.', 'error');
+        }
+      }
+    });
   };
 
   return (

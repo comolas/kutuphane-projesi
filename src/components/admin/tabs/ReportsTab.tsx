@@ -7,19 +7,38 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { Book as BookType, UserData } from '../../../types';
 import ClassDetailsModal from '../ClassDetailsModal';
+import { Book as BookType, UserData } from '../../../types';
 
 const ReportsTab: React.FC = () => {
-  const { allBorrowedBooks } = useBooks();
+  const { /* allBorrowedBooks */ } = useBooks();
   const { summary } = useBudget(); // Use budget context
-  const [reportData, setReportData] = useState({
+  const [reportData, setReportData] = useState<{
+    totalUsers: number;
+    totalBooks: number;
+    borrowedBooks: number;
+    overdueBooks: number;
+    totalFines: number;
+    monthlyBorrows: { month: string; count: number }[];
+    userRegistrationTrend: { month: string; count: number }[];
+    monthlyFinesTrend: { month: string; amount: number }[];
+    finesDistribution: { paid: number; unpaid: number };
+    collectionGrowthTrend: { month: string; count: number }[];
+    popularBooks: { title: string; author: string; count: number }[];
+    categoryDistribution: { category: string; count: number }[];
+    userActivity: { name: string; count: number }[];
+    mostReadAuthors: { name: string; count: number }[];
+    lostBooks: BookType[];
+    popularCategories: { name: string; count: number }[];
+    classReads: { most: { name: string; count: number }[]; least: { name: string; count: number; }[]; };
+    allBorrowedData: any[]; 
+    usersData: UserData[];
+  }>({
     totalUsers: 0,
     totalBooks: 0,
     borrowedBooks: 0,
     overdueBooks: 0,
     totalFines: 0,
-    // totalPaidFines is now removed as it comes from summary.totalBudget
     monthlyBorrows: [],
     userRegistrationTrend: [],
     monthlyFinesTrend: [],
@@ -32,16 +51,17 @@ const ReportsTab: React.FC = () => {
     lostBooks: [],
     popularCategories: [],
     classReads: { most: [], least: [] },
+    allBorrowedData: [],
+    usersData: [],
   });
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const reportContentRef = useRef(null);
-  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<string>('Tüm Sınıflar');
+  const [allClasses, setAllClasses] = useState<string[]>([]);
+  const [classMonthlyBorrows, setClassMonthlyBorrows] = useState<{ month: string; count: number }[]>([]);
+  const [isClassDetailsModalOpen, setIsClassDetailsModalOpen] = useState(false);
+  const [selectedClassForDetails, setSelectedClassForDetails] = useState<{ className: string; month: string } | null>(null);
 
-  const handleClassClick = (className: string) => {
-    setSelectedClass(className);
-    setIsClassModalOpen(true);
-  };
 
   const fetchReportData = async (month: string) => {
     try {
@@ -51,9 +71,21 @@ const ReportsTab: React.FC = () => {
         getDocs(collection(db, 'books'))
       ]);
 
-      const usersData = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserData[];
+      const usersData = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        uid: doc.id,
+        displayName: doc.data().displayName || '',
+        email: doc.data().email || '',
+        photoURL: doc.data().photoURL || '',
+        studentClass: doc.data().studentClass || '',
+        role: doc.data().role || 'student',
+        createdAt: doc.data().createdAt || null,
+      })) as UserData[];
       const booksData = booksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as BookType[];
       const allBorrowedData = borrowedBooksSnapshot.docs.map(doc => doc.data());
+
+      const uniqueClasses = Array.from(new Set(usersData.map(user => user.studentClass).filter(Boolean))) as string[];
+      setAllClasses(uniqueClasses);
 
       // This calculation is now done in BudgetContext. We use summary.totalBudget instead for the main display.
       // However, the local calculation is still needed for the finesDistribution chart.
@@ -260,7 +292,7 @@ const ReportsTab: React.FC = () => {
           .slice(0, 10);
 
       const classReadsCount: { [key: string]: number } = {};
-      filteredBorrowedBooks.forEach((borrow: any) => {
+      allBorrowedData.forEach((borrow: any) => { // Changed from filteredBorrowedBooks to allBorrowedData
           const user = usersData.find(u => u.uid === borrow.userId);
           if (user && user.studentClass) {
               classReadsCount[user.studentClass] = (classReadsCount[user.studentClass] || 0) + 1;
@@ -293,6 +325,8 @@ const ReportsTab: React.FC = () => {
         lostBooks,
         popularCategories,
         classReads,
+        allBorrowedData, // Store for calculations
+        usersData, // Store for calculations
       });
     } catch (error) {
       console.error('Error fetching report data:', error);
@@ -303,6 +337,51 @@ const ReportsTab: React.FC = () => {
     fetchReportData(reportMonth);
   }, [reportMonth]);
 
+  useEffect(() => {
+    if (!reportData.allBorrowedData.length) return;
+
+    const selectedYear = parseInt(reportMonth.split('-')[0], 10);
+    const selectedMonth = parseInt(reportMonth.split('-')[1], 10);
+    const startYear = selectedMonth < 9 ? selectedYear - 1 : selectedYear;
+
+    const academicYearMonths = [
+      { name: 'Eylül', monthIndex: 8, year: startYear },
+      { name: 'Ekim', monthIndex: 9, year: startYear },
+      { name: 'Kasım', monthIndex: 10, year: startYear },
+      { name: 'Aralık', monthIndex: 11, year: startYear },
+      { name: 'Ocak', monthIndex: 0, year: startYear + 1 },
+      { name: 'Şubat', monthIndex: 1, year: startYear + 1 },
+      { name: 'Mart', monthIndex: 2, year: startYear + 1 },
+      { name: 'Nisan', monthIndex: 3, year: startYear + 1 },
+      { name: 'Mayıs', monthIndex: 4, year: startYear + 1 },
+      { name: 'Haziran', monthIndex: 5, year: startYear + 1 },
+    ];
+
+    const monthlyData = academicYearMonths.map(({ name, monthIndex, year }) => {
+      let count = 0;
+
+      const classUsers = selectedClass === 'Tüm Sınıflar' 
+        ? reportData.usersData
+        : reportData.usersData.filter(u => u.studentClass === selectedClass);
+      
+      const userIdsInClass = classUsers.map(u => u.uid);
+
+      reportData.allBorrowedData.forEach((borrow: any) => {
+        if (userIdsInClass.includes(borrow.userId)) {
+          const borrowDate = (borrow.borrowedAt as Timestamp).toDate();
+          if (borrowDate.getMonth() === monthIndex && borrowDate.getFullYear() === year) {
+            count++;
+          }
+        }
+      });
+
+      return { month: name, count, year, monthIndex };
+    });
+
+    setClassMonthlyBorrows(monthlyData);
+
+  }, [selectedClass, reportData.allBorrowedData, reportData.usersData, reportMonth]);
+
   const exportToPDF = () => {
     const input = reportContentRef.current;
     if (input) {
@@ -310,7 +389,7 @@ const ReportsTab: React.FC = () => {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        // const pdfHeight = pdf.internal.pageSize.getHeight(); // Removed unused variable
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / canvasHeight;
@@ -426,6 +505,79 @@ const ReportsTab: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Class Utilization Chart */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Sınıf Bazında Kütüphane Kullanımı</h3>
+        <div className="mb-4">
+          <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">Sınıf Seç:</label>
+          <select
+            id="class-select"
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+          >
+            <option value="Tüm Sınıflar">Tüm Sınıflar</option>
+            {allClasses.map(className => (
+              <option key={className} value={className}>{className}</option>
+            ))}
+          </select>
+        </div>
+        <div className="h-96">
+          <Bar
+            data={{
+              labels: classMonthlyBorrows.map((item: any) => item.month),
+              datasets: [
+                {
+                  label: 'Ödünç Alınan Kitap Sayısı',
+                  data: classMonthlyBorrows.map((item: any) => item.count),
+                  backgroundColor: colors,
+                  borderColor: colors,
+                  borderWidth: 1
+                }
+              ]
+            }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              onClick: (event, elements) => {
+                if (elements.length > 0 && selectedClass !== 'Tüm Sınıflar') {
+                  const elementIndex = elements[0].index;
+                  const data = classMonthlyBorrows[elementIndex];
+                  const monthString = (data.monthIndex + 1).toString().padStart(2, '0');
+                  
+                  setSelectedClassForDetails({ 
+                    className: selectedClass,
+                    month: `${data.year}-${monthString}`
+                  });
+                  setIsClassDetailsModalOpen(true);
+                }
+              },
+              plugins: {
+                legend: {
+                  display: false
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: { precision: 0 }
+                }
+              }
+            }}
+          />
+        </div>
+      </div>
+
+      {isClassDetailsModalOpen && (
+        <ClassDetailsModal 
+          isOpen={isClassDetailsModalOpen}
+          onClose={() => setIsClassDetailsModalOpen(false)}
+          className={selectedClassForDetails?.className || null}
+          reportMonth={selectedClassForDetails?.month || ''}
+        />
+      )}
+
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -684,9 +836,7 @@ const ReportsTab: React.FC = () => {
                           {reportData.classReads.most.map((item: any, index: number) => (
                               <tr key={index}>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    <button onClick={() => handleClassClick(item.name)} className="text-indigo-600 hover:text-indigo-900">
-                                      {item.name}
-                                    </button>
+                                    {item.name}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.count}</td>
                               </tr>
@@ -709,9 +859,7 @@ const ReportsTab: React.FC = () => {
                           {reportData.classReads.least.map((item: any, index: number) => (
                               <tr key={index}>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    <button onClick={() => handleClassClick(item.name)} className="text-indigo-600 hover:text-indigo-900">
-                                      {item.name}
-                                    </button>
+                                    {item.name}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.count}</td>
                               </tr>
@@ -722,14 +870,6 @@ const ReportsTab: React.FC = () => {
           </div>
       </div>
 
-      {isClassModalOpen && (
-        <ClassDetailsModal 
-          isOpen={isClassModalOpen}
-          onClose={() => setIsClassModalOpen(false)}
-          className={selectedClass}
-          reportMonth={reportMonth}
-        />
-      )}
     </div>
   );
 };

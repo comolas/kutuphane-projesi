@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, DollarSign } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 interface SetFineModalProps {
   isOpen: boolean;
@@ -12,7 +12,6 @@ interface SetFineModalProps {
 const SetFineModal: React.FC<SetFineModalProps> = ({ isOpen, onClose, currentRate, onSave }) => {
   const [newRate, setNewRate] = useState(currentRate);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     setNewRate(currentRate);
@@ -22,16 +21,16 @@ const SetFineModal: React.FC<SetFineModalProps> = ({ isOpen, onClose, currentRat
 
   const handleSave = async () => {
     if (newRate === null || isNaN(newRate) || newRate < 0) {
-      setError('Lütfen geçerli bir pozitif sayı girin.');
+      Swal.fire('Hata!', 'Lütfen geçerli bir pozitif sayı girin.', 'error');
       return;
     }
-    setError('');
     setIsSaving(true);
     try {
       await onSave(newRate);
+      Swal.fire('Başarılı!', 'Yeni ceza oranı başarıyla kaydedildi.', 'success');
       onClose();
     } catch (err) {
-      setError('Ayarlar kaydedilirken bir hata oluştu.');
+      Swal.fire('Hata!', 'Ayarlar kaydedilirken bir hata oluştu.', 'error');
       console.error(err);
     } finally {
       setIsSaving(false);
@@ -71,7 +70,6 @@ const SetFineModal: React.FC<SetFineModalProps> = ({ isOpen, onClose, currentRat
               <span className="text-gray-500 sm:text-sm">TL</span>
             </div>
           </div>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
         <div className="p-4 bg-gray-50 flex justify-end space-x-2">
           <button

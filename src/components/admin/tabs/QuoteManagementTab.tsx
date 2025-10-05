@@ -4,6 +4,7 @@ import { db } from '../../../firebase/config';
 import { Plus, Search, Edit, Trash2, BookText } from 'lucide-react';
 import QuoteModal from '../QuoteModal';
 import BulkAddQuoteModal from '../BulkAddQuoteModal'; // Import the new modal
+import Swal from 'sweetalert2';
 
 interface Quote {
   id: string;
@@ -34,6 +35,7 @@ const QuoteManagementTab: React.FC = () => {
       setQuotes(quotesList);
     } catch (error) {
       console.error("Alıntılar çekilirken hata:", error);
+      Swal.fire('Hata!', 'Alıntılar çekilirken bir hata oluştu.', 'error');
     } finally {
       setLoading(false);
     }
@@ -85,27 +87,41 @@ const QuoteManagementTab: React.FC = () => {
         const quoteRef = doc(db, 'quotes', quoteData.id);
         const { id, ...dataToUpdate } = quoteData;
         await updateDoc(quoteRef, dataToUpdate);
+        Swal.fire('Başarılı!', 'Alıntı başarıyla güncellendi.', 'success');
       } else {
         await addDoc(collection(db, 'quotes'), quoteData);
+        Swal.fire('Başarılı!', 'Alıntı başarıyla eklendi.', 'success');
       }
       handleCloseModal();
       fetchQuotes();
     } catch (error) {
       console.error("Alıntı kaydedilirken hata:", error);
-      alert("Hata: Alıntı kaydedilemedi.");
+      Swal.fire("Hata!", "Hata: Alıntı kaydedilemedi.", 'error');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Bu alıntıyı silmek istediğinizden emin misiniz?")) {
-      try {
-        await deleteDoc(doc(db, 'quotes', id));
-        fetchQuotes();
-      } catch (error) {
-        console.error("Alıntı silinirken hata:", error);
-        alert("Hata: Alıntı silinemedi.");
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu alıntıyı silmek istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteDoc(doc(db, 'quotes', id));
+          fetchQuotes();
+          Swal.fire('Başarılı!', 'Alıntı başarıyla silindi.', 'success');
+        } catch (error) {
+          console.error("Alıntı silinirken hata:", error);
+          Swal.fire("Hata!", "Hata: Alıntı silinemedi.", 'error');
+        }
       }
-    }
+    });
   };
 
   return (

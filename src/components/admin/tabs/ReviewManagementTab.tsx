@@ -3,16 +3,15 @@ import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy }
 import { db } from "../../../firebase/config";
 import { Review } from '../../types';
 import { Check, X, Trash2, AlertCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const ReviewManagementTab: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
 
   const fetchReviews = async () => {
     setLoading(true);
-    setError(null);
     try {
       const q = query(
         collection(db, 'reviews'),
@@ -23,7 +22,7 @@ const ReviewManagementTab: React.FC = () => {
       setReviews(fetchedReviews);
     } catch (err) {
       console.error("Error fetching reviews: ", err);
-      setError("Yorumlar yüklenirken bir hata oluştu.");
+      Swal.fire("Hata!", "Yorumlar yüklenirken bir hata oluştu.", "error");
     }
     setLoading(false);
   };
@@ -38,26 +37,41 @@ const ReviewManagementTab: React.FC = () => {
       if (status === 'rejected') {
         await deleteDoc(reviewRef);
         setReviews(prev => prev.filter(r => r.id !== reviewId));
+        Swal.fire('Başarılı!', 'Yorum başarıyla reddedildi ve silindi.', 'success');
       } else {
         await updateDoc(reviewRef, { status });
         setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, status } : r));
+        Swal.fire('Başarılı!', 'Yorum başarıyla onaylandı.', 'success');
       }
     } catch (err) {
       console.error("Error updating review status: ", err);
-      alert("Yorum durumu güncellenirken bir hata oluştu.");
+      Swal.fire("Hata!", "Yorum durumu güncellenirken bir hata oluştu.", "error");
     }
   };
 
   const handleDelete = async (reviewId: string) => {
-    if (!window.confirm("Bu yorumu kalıcı olarak silmek istediğinizden emin misiniz?")) return;
-    const reviewRef = doc(db, 'reviews', reviewId);
-    try {
-      await deleteDoc(reviewRef);
-      setReviews(prev => prev.filter(r => r.id !== reviewId));
-    } catch (err) {
-      console.error("Error deleting review: ", err);
-      alert("Yorum silinirken bir hata oluştu.");
-    }
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu yorumu kalıcı olarak silmek istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const reviewRef = doc(db, 'reviews', reviewId);
+        try {
+          await deleteDoc(reviewRef);
+          setReviews(prev => prev.filter(r => r.id !== reviewId));
+          Swal.fire('Başarılı!', 'Yorum başarıyla silindi.', 'success');
+        } catch (err) {
+          console.error("Error deleting review: ", err);
+          Swal.fire("Hata!", "Yorum silinirken bir hata oluştu.", "error");
+        }
+      }
+    });
   };
 
   const filteredReviews = useMemo(() => {
@@ -97,9 +111,8 @@ const ReviewManagementTab: React.FC = () => {
       </div>
 
       {loading && <p>Yorumlar yükleniyor...</p>}
-      {error && <p className="text-red-500">{error}</p>}
       
-      {!loading && !error && (
+      {!loading && (
         <div className="overflow-x-auto">
           {filteredReviews.length === 0 ? (
             <div className="text-center py-12">

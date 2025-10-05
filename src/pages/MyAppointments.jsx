@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameReservations } from '../contexts/GameReservationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -27,18 +27,37 @@ const MyAppointments = () => {
   }, [user, getUserReservations]);
 
   const handleCancelReservation = async (reservationId) => {
-    if (window.confirm('Bu randevuyu iptal etmek istediğinizden emin misiniz?')) {
-      try {
-        await cancelReservation(reservationId);
-        alert('Randevunuz başarıyla iptal edildi.');
-        if (user) {
-          getUserReservations(user.uid).then(setReservations);
+    Swal.fire({
+      title: 'Emin misiniz?',
+      text: "Bu randevuyu iptal etmek istediğinizden emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Evet, iptal et!',
+      cancelButtonText: 'Vazgeç'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await cancelReservation(reservationId);
+          Swal.fire(
+            'İptal Edildi!',
+            'Randevunuz başarıyla iptal edildi.',
+            'success'
+          )
+          if (user) {
+            getUserReservations(user.uid).then(setReservations);
+          }
+        } catch (error) {
+          console.error('Error cancelling reservation:', error);
+          Swal.fire(
+            'Hata!',
+            'Randevu iptal edilirken bir hata oluştu.',
+            'error'
+          )
         }
-      } catch (error) {
-        console.error('Error cancelling reservation:', error);
-        alert('Randevu iptal edilirken bir hata oluştu.');
       }
-    }
+    });
   };
 
   const canCancel = (reservation) => {

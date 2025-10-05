@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Magazine } from '../../types';
 import { useMagazines } from '../../contexts/MagazineContext';
 import { X } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 interface MagazineModalProps {
   isOpen: boolean;
@@ -50,20 +51,20 @@ const MagazineModal: React.FC<MagazineModalProps> = ({ isOpen, onClose, magazine
       if (magazine) {
         // Update existing magazine
         await updateMagazine({ ...magazine, ...magazineData });
-        alert('Dergi başarıyla güncellendi.');
+        Swal.fire('Başarılı!', 'Dergi başarıyla güncellendi.', 'success');
       } else {
         // Add new magazine
         if (coverImageUrl && pdfUrl) {
           await addMagazine(magazineData);
-          alert('Dergi başarıyla eklendi.');
+          Swal.fire('Başarılı!', 'Dergi başarıyla eklendi.', 'success');
         } else {
-          alert('Lütfen kapak resmi ve PDF dosyası için URL girin.');
+          Swal.fire('Hata!', 'Lütfen kapak resmi ve PDF dosyası için URL girin.', 'error');
         }
       }
       onClose();
     } catch (error) {
       console.error('Error saving magazine:', error);
-      alert('Dergi kaydedilirken bir hata oluştu.');
+      Swal.fire('Hata!', 'Dergi kaydedilirken bir hata oluştu.', 'error');
     } finally {
       setIsSubmitting(false);
     }
