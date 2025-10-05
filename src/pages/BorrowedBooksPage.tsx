@@ -181,7 +181,7 @@ const BorrowedBooksPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <button
@@ -211,33 +211,31 @@ const BorrowedBooksPage: React.FC = () => {
 
 
 
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-              <button
-                onClick={() => setActiveTab('active')}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                  activeTab === 'active'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <BookCheck className="w-5 h-5 mr-2" />
-                Aktif Ödünç Aldıklarım
-              </button>
-              <button
-                onClick={() => setActiveTab('stats')}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-                  activeTab === 'stats'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <BarChart2 className="w-5 h-5 mr-2" />
-                Okuma Karnem
-              </button>
-            </nav>
-          </div>
+        <div className="mb-6 bg-white/60 backdrop-blur-xl rounded-2xl p-2 shadow-lg">
+          <nav className="flex space-x-2" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center transition-all ${
+                activeTab === 'active'
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-white/50'
+              }`}
+            >
+              <BookCheck className="w-5 h-5 mr-2" />
+              Aktif Ödünç Aldıklarım
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center transition-all ${
+                activeTab === 'stats'
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-white/50'
+              }`}
+            >
+              <BarChart2 className="w-5 h-5 mr-2" />
+              Okuma Karnem
+            </button>
+          </nav>
         </div>
 
         {activeTab === 'stats' && <ReadingStats returnedBooks={returnedBooks} onOpenRateModal={handleOpenReviewModal} />}
@@ -252,14 +250,14 @@ const BorrowedBooksPage: React.FC = () => {
                     placeholder="Kitap adı veya yazar ara..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
                   />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+                  <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
                 </div>
               </div>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center justify-center"
+                className="px-6 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 flex items-center justify-center transition-all shadow-lg font-medium"
               >
                 <Filter className="w-5 h-5 mr-2" />
                 Sırala
@@ -267,7 +265,7 @@ const BorrowedBooksPage: React.FC = () => {
             </div>
 
             {showFilters && (
-              <div className="mt-4 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+              <div className="mt-4 bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-white/20">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -308,7 +306,7 @@ const BorrowedBooksPage: React.FC = () => {
             )}
 
             {currentBooks.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center mt-6">
+              <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-8 text-center mt-6 border border-white/20">
                 <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Aktif olarak ödünç aldığınız kitap bulunmuyor
@@ -331,15 +329,22 @@ const BorrowedBooksPage: React.FC = () => {
                     const isOverdue = daysRemaining < 0;
 
                     return (
-                      <div key={`${book.id}-${book.borrowedAt}`} className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
-                        <img src={book.coverImage} alt={book.title} className="w-full h-96 object-cover" />
+                      <div key={`${book.id}-${book.borrowedAt}`} className="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col border border-white/20">
+                        <div className="relative overflow-hidden">
+                          <img src={book.coverImage} alt={book.title} className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
                         <div className="p-4 flex flex-col flex-grow">
                           <h3 className="font-semibold text-gray-900">{book.title}</h3>
                           <p className="text-sm text-gray-600">{book.author}</p>
                           
                           <div className="mt-3 flex-grow flex flex-col justify-end">
-                            <div className={`text-sm mb-2 flex items-center ${
-                              isOverdue ? 'text-red-600' : daysRemaining <= 3 ? 'text-yellow-600' : 'text-gray-600'
+                            <div className={`px-3 py-1.5 rounded-xl text-xs font-bold mb-2 flex items-center shadow-md ${
+                              isOverdue 
+                                ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white' 
+                                : daysRemaining <= 3 
+                                ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white' 
+                                : 'bg-gradient-to-r from-green-400 to-emerald-500 text-white'
                             }`}>
                               <Clock className="w-4 h-4 mr-1" />
                               {isOverdue
@@ -352,13 +357,13 @@ const BorrowedBooksPage: React.FC = () => {
                             </div>
                             <div className="space-y-2">
                               {book.returnStatus === 'pending' ? (
-                                <div className="w-full px-4 py-2 bg-yellow-50 text-yellow-600 rounded-lg text-sm font-medium text-center">
+                                <div className="w-full px-4 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-xl text-sm font-bold text-center shadow-md">
                                   İade Talebi Gönderildi
                                 </div>
                               ) : (
                                 <button
                                   onClick={() => handleReturn(book.id, book.title)}
-                                  className="w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                                  className="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all"
                                 >
                                   İade Et
                                 </button>
@@ -366,7 +371,7 @@ const BorrowedBooksPage: React.FC = () => {
                               {canExtend(book.id) && !book.returnStatus && (
                                 <button
                                   onClick={() => handleExtend(book.id, book.title)}
-                                  className="w-full px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   7 Gün Uzat
                                 </button>
@@ -387,7 +392,7 @@ const BorrowedBooksPage: React.FC = () => {
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
                       >
                         <ChevronLeft className="w-4 h-4 mr-1" />
                         Önceki
@@ -402,10 +407,10 @@ const BorrowedBooksPage: React.FC = () => {
                           <button
                             key={page}
                             onClick={() => handlePageChange(page as number)}
-                            className={`px-3 py-2 rounded-lg border transition-colors ${
+                            className={`px-4 py-2.5 rounded-xl border transition-all shadow-lg font-medium ${
                               currentPage === page
-                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent'
+                                : 'bg-white/60 backdrop-blur-xl border-white/20 text-gray-700 hover:bg-white/80'
                             }`}
                           >
                             {page}
@@ -417,7 +422,7 @@ const BorrowedBooksPage: React.FC = () => {
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
                       >
                         Sonraki
                         <ChevronRight className="w-4 h-4 ml-1" />

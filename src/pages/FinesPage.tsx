@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History } from 'lucide-react';
+import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { useBooks } from '../contexts/BookContext';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -61,7 +62,7 @@ const FinesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-4">
           <button
@@ -90,24 +91,28 @@ const FinesPage: React.FC = () => {
         </div>
 
         {activeTab === 'unpaid' && (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <div className="flex items-center justify-between">
+          <div className="relative bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-xl p-6 mb-8 overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+            <div className="relative flex items-center justify-between">
               <div className="flex items-center">
-                <DollarSign className="w-8 h-8 text-red-500 mr-3" />
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mr-4">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Toplam Borcunuz</h2>
-                  <p className="text-sm text-gray-500">Ödenmemiş tüm cezalar</p>
+                  <h2 className="text-xl font-semibold text-white">Toplam Borcunuz</h2>
+                  <p className="text-sm text-white/80">Ödenmemiş tüm cezalar</p>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-red-500">
+              <div className="text-4xl font-bold text-white">
                 {totalUnpaidFine} TL
               </div>
             </div>
             {totalUnpaidFine > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="relative mt-4 pt-4 border-t border-white/20">
                 <button 
                   onClick={() => setIsModalOpen(true)}
-                  className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center text-sm"
+                  className="w-full px-4 py-3 bg-white/20 backdrop-blur-xl text-white rounded-xl hover:bg-white/30 transition-all flex items-center justify-center text-sm font-medium"
                 >
                   <Info className="w-4 h-4 mr-2" />
                   Nasıl Öderim?
@@ -117,14 +122,14 @@ const FinesPage: React.FC = () => {
           </div>
         )}
 
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+        <div className="mb-6 bg-white/60 backdrop-blur-xl rounded-2xl p-2 shadow-lg">
+          <nav className="flex space-x-2" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('unpaid')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+              className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center transition-all ${
                 activeTab === 'unpaid'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-white/50'
               }`}
             >
               <AlertCircle className="w-5 h-5 mr-2" />
@@ -132,10 +137,10 @@ const FinesPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('paid')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+              className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm flex items-center justify-center transition-all ${
                 activeTab === 'paid'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-white/50'
               }`}
             >
               <History className="w-5 h-5 mr-2" />
@@ -153,14 +158,17 @@ const FinesPage: React.FC = () => {
               const fineRate = isFinalized ? book.fineRateSnapshot : finePerDay;
 
               return (
-              <div key={`fine-${book.id}-${book.borrowedBy}`} className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div key={`fine-${book.id}-${book.borrowedBy}`} className="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-white/20">
                 <div className="p-6">
                   <div className="flex items-start space-x-4">
-                    <img 
-                      src={book.coverImage} 
-                      alt={book.title} 
-                      className="w-24 h-32 object-cover rounded-lg"
-                    />
+                    <div className="relative">
+                      <img 
+                        src={book.coverImage} 
+                        alt={book.title} 
+                        className="w-24 h-32 object-cover rounded-xl shadow-md group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl"></div>
+                    </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{book.title}</h3>
                       <p className="text-gray-600">{book.author}</p>
@@ -187,7 +195,7 @@ const FinesPage: React.FC = () => {
                     </div>
                     
                     <div className="text-right">
-                      <div className={`text-2xl font-bold ${book.fineStatus === 'paid' ? 'text-green-600' : 'text-red-500'}`}>
+                      <div className={`text-3xl font-bold bg-gradient-to-r ${book.fineStatus === 'paid' ? 'from-green-600 to-emerald-600' : 'from-red-500 to-pink-600'} bg-clip-text text-transparent`}>
                         {fineAmount} TL
                       </div>
                       {book.fineStatus !== 'paid' && daysOverdue > 0 && (
@@ -196,13 +204,126 @@ const FinesPage: React.FC = () => {
                         </p>
                       )}
                       {book.fineStatus === 'paid' ? (
-                        <div className="mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium inline-block">
-                          Ödendi
-                          {book.paymentDate && (
-                            <div className="text-xs text-green-600 mt-1">
-                              {new Date(book.paymentDate).toLocaleDateString()}
-                            </div>
-                          )}
+                        <div className="mt-2">
+                          <div className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-medium inline-flex items-center shadow-lg">
+                            Ödendi
+                            {book.paymentDate && (
+                              <div className="text-xs text-green-600 mt-1">
+                                {new Date(book.paymentDate).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              const doc = new jsPDF();
+                              doc.setFont('helvetica', 'normal');
+                              const pageWidth = doc.internal.pageSize.getWidth();
+                              const pageHeight = doc.internal.pageSize.getHeight();
+                              
+                              const tr = (text: string) => text.replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
+                              
+                              const receiptNo = `MKB-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+                              
+                              doc.setFillColor(79, 70, 229);
+                              doc.rect(0, 0, pageWidth, 40, 'F');
+                              
+                              doc.setTextColor(255, 255, 255);
+                              doc.setFontSize(22);
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('ÖDEME MAKBUZU'), pageWidth / 2, 20, { align: 'center' });
+                              doc.setFontSize(10);
+                              doc.setFont('helvetica', 'normal');
+                              doc.text(tr('Data Koleji Kütüphanesi'), pageWidth / 2, 28, { align: 'center' });
+                              
+                              doc.setFontSize(9);
+                              doc.text(`Makbuz No: ${receiptNo}`, pageWidth - 15, 20, { align: 'right' });
+                              doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}`, pageWidth - 15, 27, { align: 'right' });
+                              
+                              doc.setDrawColor(79, 70, 229);
+                              doc.setLineWidth(0.5);
+                              doc.rect(10, 45, pageWidth - 20, pageHeight - 65, 'S');
+                              
+                              doc.setTextColor(0, 0, 0);
+                              let y = 60;
+                              
+                              doc.setFontSize(12);
+                              doc.setTextColor(34, 197, 94);
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('ÖDENDİ'), pageWidth / 2, y, { align: 'center' });
+                              y += 15;
+                              
+                              doc.setTextColor(0, 0, 0);
+                              doc.setFontSize(11);
+                              doc.text(tr('KİTAP BİLGİLERİ'), 15, y);
+                              doc.setFont('helvetica', 'normal');
+                              y += 8;
+                              
+                              doc.setDrawColor(200, 200, 200);
+                              doc.setLineWidth(0.3);
+                              doc.line(15, y, pageWidth - 15, y);
+                              y += 8;
+                              
+                              doc.setFontSize(10);
+                              doc.text(tr('Kitap Adı:'), 20, y);
+                              doc.text(tr(book.title), 70, y);
+                              y += 7;
+                              doc.text(tr('Yazar:'), 20, y);
+                              doc.text(tr(book.author), 70, y);
+                              y += 7;
+                              doc.text(tr('Son Teslim:'), 20, y);
+                              doc.text(new Date(book.dueDate).toLocaleDateString('tr-TR'), 70, y);
+                              y += 15;
+                              
+                              doc.setFont('helvetica', 'bold');
+                              doc.setFontSize(11);
+                              doc.text(tr('CEZA DETAYLARI'), 15, y);
+                              doc.setFont('helvetica', 'normal');
+                              y += 8;
+                              
+                              doc.setLineWidth(0.3);
+                              doc.line(15, y, pageWidth - 15, y);
+                              y += 8;
+                              
+                              doc.setFontSize(10);
+                              doc.text(tr('Gecikme Süresi:'), 20, y);
+                              doc.text(tr(`${daysOverdue} gün`), 70, y);
+                              y += 7;
+                              doc.text(tr('Günlük Ceza:'), 20, y);
+                              doc.text(`${fineRate} TL`, 70, y);
+                              y += 7;
+                              doc.text(tr('Ödeme Tarihi:'), 20, y);
+                              doc.text(book.paymentDate ? new Date(book.paymentDate).toLocaleDateString('tr-TR') : '-', 70, y);
+                              y += 12;
+                              
+                              doc.setFillColor(79, 70, 229);
+                              doc.rect(15, y - 5, pageWidth - 30, 12, 'F');
+                              doc.setTextColor(255, 255, 255);
+                              doc.setFont('helvetica', 'bold');
+                              doc.setFontSize(12);
+                              doc.text(tr('TOPLAM TUTAR:'), 20, y + 3);
+                              doc.text(`${fineAmount} TL`, pageWidth - 20, y + 3, { align: 'right' });
+                              y += 20;
+                              
+                              doc.setTextColor(0, 0, 0);
+                              doc.setFont('helvetica', 'normal');
+                              doc.setFontSize(9);
+                              y = pageHeight - 40;
+                              doc.line(pageWidth - 70, y, pageWidth - 20, y);
+                              doc.text(tr('Yetkili İmza'), pageWidth - 45, y + 5, { align: 'center' });
+                              
+                              doc.setFillColor(79, 70, 229);
+                              doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+                              doc.setTextColor(255, 255, 255);
+                              doc.setFontSize(8);
+                              doc.text(tr('Data Koleji Kütüphanesi - Tüm hakları saklıdır'), pageWidth / 2, pageHeight - 10, { align: 'center' });
+                              
+                              doc.save(`makbuz-${receiptNo}.pdf`);
+                            }}
+                            className="mt-2 w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-medium hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center"
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Makbuz İndir
+                          </button>
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 mt-2">
@@ -216,7 +337,7 @@ const FinesPage: React.FC = () => {
               )
             })
             ) : (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-8 text-center flex flex-col items-center justify-center border border-white/20">
                 <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">
                   {activeTab === 'unpaid' ? 'Harika! Ödenmemiş cezanız yok.' : 'Geçmişe ait ödenmiş bir cezanız bulunmuyor.'}
