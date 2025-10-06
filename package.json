@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "dependencies": {
     "firebase": "^12.2.1",
     "jspdf-autotable": "^5.0.2",
