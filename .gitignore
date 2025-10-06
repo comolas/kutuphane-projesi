@@ -1,4 +1,9 @@
+# Local environment variables
 .env.local
+
+# Dependencies
 node_modules/
 **/node_modules
-project-bolt-sb1-vae5dgoc/node_modules/
+
+# Gemini CLI temporary project
+project-bolt-sb1-vae5dgoc/
