@@ -134,3 +134,34 @@ export interface UserData {
   createdAt: any; // Firestore Timestamp
   // Add other user-related fields as needed
 }
+
+export interface Post {
+  id: string;
+  title: string;
+  content: string;
+  excerpt?: string;
+  coverImageURL: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL: string;
+  createdAt: any; // Firestore Timestamp
+  updatedAt?: any; // Firestore Timestamp
+  status: 'pending' | 'approved' | 'rejected';
+  category: string;
+  tags: string[];
+  sources?: string | string[]; // Can be string (HTML) or array (legacy)
+  areCommentsEnabled: boolean;
+  likes: string[]; // Array of user IDs
+  commentCount?: number;
+}
+
+export interface Comment {
+  id: string;
+  postId: string; // Add postId to link comment to its post
+  text: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL: string;
+  createdAt: any; // Firestore Timestamp
+  status: 'visible' | 'reported' | 'hidden';
+}

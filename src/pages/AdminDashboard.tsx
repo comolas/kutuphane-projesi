@@ -16,14 +16,16 @@ import CollectionManagementTab from '../components/admin/tabs/CollectionManageme
 import BudgetTab from '../components/admin/tabs/BudgetTab';
 import GameManagementTab from '../components/admin/tabs/GameManagementTab';
 import AdminGameReservationsTab from '../components/admin/tabs/AdminGameReservationsTab';
+import BlogManagementTab from '../components/admin/tabs/BlogManagementTab';
 import UpdateButton from '../components/common/UpdateButton'; // Added import
 import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
 import { Navigate } from 'react-router-dom';
-import { Book, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2 } from 'lucide-react'; // Layers eklendi
+import { Book as BookIcon, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2 } from 'lucide-react'; // Layers eklendi
 import { auth, db } from '../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
+import { Book } from '../types'; // Import Book type
 
 interface UserData {
   uid: string;
@@ -40,7 +42,7 @@ const AdminDashboard: React.FC = () => {
   const { isAdmin } = useAuth();
   const { refetchAllBooks, getBookStatus } = useBooks();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations'>('borrowed-books');
+  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations' | 'blog-management'>('borrowed-books');
   const [users, setUsers] = useState<UserData[]>([]);
   const [catalogBooks, setCatalogBooks] = useState<Book[]>([]);
 
@@ -97,7 +99,7 @@ const AdminDashboard: React.FC = () => {
         <div className="p-4">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
-              <Book className="w-8 h-8 mr-2" />
+              <BookIcon className="w-8 h-8 mr-2" />
               <span className="text-xl font-bold">Admin Panel</span>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-indigo-800 rounded-lg">
@@ -180,7 +182,7 @@ const AdminDashboard: React.FC = () => {
                     activeTab === 'catalog' ? 'bg-indigo-800' : ''
                   }`}
                 >
-                  <Book className="w-5 h-5" />
+                  <BookIcon className="w-5 h-5" />
                   <span>Katalog</span>
                 </button>
 
@@ -250,6 +252,15 @@ const AdminDashboard: React.FC = () => {
                 >
                   <Gamepad2 className="w-5 h-5" />
                   <span>Oyun Randevu Yönetimi</span>
+                </button>
+                <button
+                  onClick={() => { setActiveTab('blog-management'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors ${
+                    activeTab === 'blog-management' ? 'bg-indigo-800' : ''
+                  }`}
+                >
+                  <BookText className="w-5 h-5" />
+                  <span>Blog Yönetimi</span>
                 </button>
               </div>
             </div>
@@ -384,6 +395,8 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'game-management' && <GameManagementTab />}
 
         {activeTab === 'game-reservations' && <AdminGameReservationsTab />}
+
+        {activeTab === 'blog-management' && <BlogManagementTab />}
 
       </div>
     </div>

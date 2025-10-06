@@ -290,8 +290,18 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const getBookStatus = useCallback((bookId: string): 'available' | 'borrowed' | 'lost' => {
-    // First check if the book is currently borrowed (not returned)
-    const activeBorrow = allBorrowedBooks.find(book => 
+    // Check if book is marked as lost in bookStatuses
+    if (bookStatuses[bookId] === 'lost') {
+      return 'lost';
+    }
+
+    // Check if book is marked as borrowed in bookStatuses
+    if (bookStatuses[bookId] === 'borrowed') {
+      return 'borrowed';
+    }
+
+    // Fallback: check in allBorrowedBooks and borrowedBooks
+    const activeBorrow = [...allBorrowedBooks, ...borrowedBooks].find(book => 
       book.id === bookId && 
       book.returnStatus === 'borrowed' &&
       book.borrowStatus === 'approved'
@@ -301,14 +311,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return 'borrowed';
     }
 
-    // Check if book is marked as lost in bookStatuses
-    if (bookStatuses[bookId] === 'lost') {
-      return 'lost';
-    }
-
     // If not borrowed and not lost, it's available
     return 'available';
-  }, [allBorrowedBooks, bookStatuses]);
+  }, [allBorrowedBooks, borrowedBooks, bookStatuses]);
 
   const fetchRecommendedBooks = useCallback(async () => {
     if (!user) return;

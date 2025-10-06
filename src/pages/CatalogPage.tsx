@@ -29,6 +29,7 @@ const CatalogPage: React.FC = () => {
   const booksPerPage = 12;
   const [sortOrder, setSortOrder] = useState<string>('default'); // New state for sorting
   const [recommendedBooksForModal, setRecommendedBooksForModal] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -48,6 +49,13 @@ const CatalogPage: React.FC = () => {
       setUserFavorites([]); // Clear favorites if user logs out
     }
   }, [user]);
+
+  useEffect(() => {
+    // Simulate loading for books
+    if (allBooks.length > 0) {
+      setIsLoading(false);
+    }
+  }, [allBooks]);
 
   // Get unique categories
   const categories = Array.from(new Set(allBooks.map(book => book.category)));
@@ -231,112 +239,155 @@ const CatalogPage: React.FC = () => {
 
 
 
-        <div className="flex flex-col md:flex-row gap-6 mb-4">
-          <div className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Kitap veya yazar ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-            </div>
-          </div>
-          
-          <div className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Etiket ara..."
-                value={tagQuery}
-                onChange={(e) => setTagQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <Tag className="absolute left-3 top-2.5 text-gray-400" size={20} />
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex flex-1 md:flex-initial justify-center items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 focus:ring-2 focus:ring-indigo-500"
-            >
-              <Filter className="w-5 h-5 mr-2" />
-              <span>Filtrele</span>
-            </button>
-            <button
-              onClick={handleClearFilters}
-              className="flex flex-1 md:flex-initial justify-center items-center px-4 py-2 border border-red-200 bg-red-50 rounded-lg text-red-600 hover:bg-red-100 focus:ring-2 focus:ring-red-400"
-            >
-              <X className="w-5 h-5 mr-2" />
-              <span>Temizle</span>
-            </button>
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Kitap veya yazar ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
           </div>
         </div>
 
-        {showFilters && (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Filtreler</h2>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
+        {/* Main Content with Sidebar */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Filters */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold flex items-center">
+                  <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                  Filtreler
+                </h2>
+                <button
+                  onClick={handleClearFilters}
+                  className="text-sm text-red-600 hover:text-red-700"
+                >
+                  Temizle
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Tag Search */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Etiket Ara</h3>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Etiket..."
+                      value={tagQuery}
+                      onChange={(e) => setTagQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                    <Tag className="absolute left-2.5 top-2.5 text-gray-400" size={16} />
+                  </div>
+                </div>
+
+                {/* Category Filter */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Kategori</h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="category"
+                        checked={selectedCategory === 'all'}
+                        onChange={() => setSelectedCategory('all')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">Tümü</span>
+                    </label>
+                    {categories.map(category => (
+                      <label key={category} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        <input
+                          type="radio"
+                          name="category"
+                          checked={selectedCategory === category}
+                          onChange={() => setSelectedCategory(category)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">{category}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Availability Filter */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Durum</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="availability"
+                        checked={availability === 'all'}
+                        onChange={() => setAvailability('all')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">Tümü</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="availability"
+                        checked={availability === 'available'}
+                        onChange={() => setAvailability('available')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-green-600">● Müsait</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="availability"
+                        checked={availability === 'borrowed'}
+                        onChange={() => setAvailability('borrowed')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-orange-600">● Ödünç Verilmiş</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="availability"
+                        checked={availability === 'lost'}
+                        onChange={() => setAvailability('lost')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-red-600">● Kayıp</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Sort Order */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="default">Varsayılan</option>
+                    <option value="title-asc">Başlık (A-Z)</option>
+                    <option value="title-desc">Başlık (Z-A)</option>
+                    <option value="author-asc">Yazar (A-Z)</option>
+                    <option value="author-desc">Yazar (Z-A)</option>
+                    <option value="rating-desc">En Yüksek Puan</option>
+                  </select>
+                </div>
+              </div>
             </div>
+          </aside>
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Kategori</h3>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="all">Tümü</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
+          {/* Main Content Area */}
+          <div className="flex-1">
 
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Durum</h3>
-                <select
-                  value={availability}
-                  onChange={(e) => setAvailability(e.target.value as 'all' | 'available' | 'borrowed' | 'lost')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="all">Tümü</option>
-                  <option value="available">Müsait</option>
-                  <option value="borrowed">Ödünç Verilmiş</option>
-                  <option value="lost">Kayıp</option>
-                </select>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Sıralama</h3>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="default">Varsayılan</option>
-                  <option value="title-asc">Başlığa Göre (A-Z)</option>
-                  <option value="title-desc">Başlığa Göre (Z-A)</option>
-                  <option value="author-asc">Yazara Göre (A-Z)</option>
-                  <option value="author-desc">Yazara Göre (Z-A)</option>
-                  <option value="rating-desc">Puana Göre (Yüksekten Düşüğe)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="mb-8 flex flex-wrap items-center gap-2">
+            {/* Active Filters */}
+            <div className="mb-6 flex flex-wrap items-center gap-2">
           {searchQuery && (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800">
               Aranan: {searchQuery}
@@ -369,125 +420,161 @@ const CatalogPage: React.FC = () => {
               </button>
             </span>
           )}
-        </div>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {paginatedBooks.map(book => {
-            const bookStatus = getBookStatus(book.id);
-            const hasPendingRequest = borrowMessages.some(m => 
-              m.bookId === book.id && 
-              m.userId === user?.uid && 
-              m.status === 'pending'
-            );
-            return (
-              <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden relative">
-                <button
-                  onClick={() => handleToggleFavorite(book.id)}
-                  className="absolute top-2 right-2 z-10 p-1.5 bg-white/80 backdrop-blur-sm rounded-full text-gray-600 hover:text-red-500 transition-colors"
-                >
-                  <Heart className={`w-5 h-5 ${userFavorites.includes(book.id) ? 'text-red-500 fill-current' : ''}`} />
-                </button>
-                <img src={book.coverImage} alt={book.title} className="w-full h-85 object-cover" />
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900">{book.title}</h3>
-                  <p className="text-sm text-gray-600">{book.author}</p>
-                  <p className="text-xs text-gray-500 mt-1">{book.publisher}</p>
-                  <div className="flex items-center mt-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-4 h-4 ${
-                          (book.averageRating || 0) >= star ? 'text-yellow-400' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="ml-2 text-xs text-gray-600">
-                      {(book.averageRating || 0).toFixed(1)} ({book.reviewCount || 0})
-                    </span>
-                  </div>
-                  <div className="mt-3 flex justify-between items-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      hasPendingRequest
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : bookStatus === 'lost'
-                        ? 'bg-red-100 text-red-800'
-                        : bookStatus === 'borrowed'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {hasPendingRequest 
-                        ? 'Onay Bekliyor' 
-                        : bookStatus === 'lost' 
-                        ? 'Kayıp' 
-                        : bookStatus === 'borrowed' 
-                        ? 'Ödünç Verildi' 
-                        : 'Müsait'}
-                    </span>
-                    <div className="flex flex-col items-end space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
-                    <button
-                      onClick={() => handleInspectReviews(book)}
-                      className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors flex items-center"
-                    >
-                      <MessageSquare className="w-3 h-3 mr-1" />
-                      Yorumlar
-                    </button>
-                    {bookStatus === 'available' && !hasPendingRequest && (
-                      <>
-                        <button
-                          onClick={() => handleInspectBook(book)}
-                          className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors flex items-center"
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          İncele
-                        </button>
-                        <button
-                          onClick={() => handleBorrowRequest(book)}
-                          className="px-2 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                        >
-                          Ödünç Al
-                        </button>
-                      </>
-                    )}
-                    </div>
-                    {bookStatus === 'lost' && (
-                      <div className="flex items-center text-red-600">
-                        <AlertTriangle className="w-4 h-4 mr-1" />
-                        <span className="text-xs">Kayıp</span>
+            {/* Books Grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
+                    <div className="w-full aspect-[2/3] bg-gray-300"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                      <div className="flex justify-between items-center mt-3">
+                        <div className="h-6 bg-gray-300 rounded w-20"></div>
+                        <div className="h-8 bg-gray-300 rounded w-24"></div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    Konum: {book.location}
-                  </div>
+                ))}
+              </div>
+            ) : paginatedBooks.length === 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-16">
+                <div className="w-32 h-32 mb-6 text-gray-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Kitap bulunamadı</h3>
+                <p className="text-gray-500">Aradığınız kriterlere uygun kitap bulunmuyor.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedBooks.map(book => {
+                  const bookStatus = getBookStatus(book.id);
+                  const hasPendingRequest = borrowMessages.some(m => 
+                    m.bookId === book.id && 
+                    m.userId === user?.uid && 
+                    m.status === 'pending'
+                  );
+                  return (
+                    <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden relative group transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+                      <div className="relative overflow-hidden aspect-[2/3]">
+                        <button
+                          onClick={() => handleToggleFavorite(book.id)}
+                          className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 backdrop-blur-sm rounded-full text-gray-600 hover:text-red-500 transition-all duration-300 hover:scale-110 shadow-md"
+                        >
+                          <Heart className={`w-5 h-5 transition-all ${userFavorites.includes(book.id) ? 'text-red-500 fill-current scale-110' : ''}`} />
+                        </button>
+                        <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{book.title}</h3>
+                        <p className="text-sm text-gray-600">{book.author}</p>
+                        <p className="text-xs text-gray-500 mt-1">{book.publisher}</p>
+                        <div className="flex items-center mt-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-4 h-4 transition-all ${
+                                (book.averageRating || 0) >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-2 text-xs text-gray-600">
+                            {(book.averageRating || 0).toFixed(1)} ({book.reviewCount || 0})
+                          </span>
+                        </div>
+                        <div className="mt-3 flex justify-between items-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold transition-all ${
+                            hasPendingRequest
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : bookStatus === 'lost'
+                              ? 'bg-red-100 text-red-800'
+                              : bookStatus === 'borrowed'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {hasPendingRequest 
+                              ? 'Onay Bekliyor' 
+                              : bookStatus === 'lost' 
+                              ? 'Kayıp' 
+                              : bookStatus === 'borrowed' 
+                              ? 'Ödünç Verildi' 
+                              : 'Müsait'}
+                          </span>
+                          <div className="flex flex-col items-end space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+                            <button
+                              onClick={() => handleInspectReviews(book)}
+                              className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-200 transition-all hover:scale-105 flex items-center"
+                            >
+                              <MessageSquare className="w-3 h-3 mr-1" />
+                              Yorumlar
+                            </button>
+                            {bookStatus === 'available' && !hasPendingRequest && (
+                              <>
+                                <button
+                                  onClick={() => handleInspectBook(book)}
+                                  className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-200 transition-all hover:scale-105 flex items-center"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  İncele
+                                </button>
+                                <button
+                                  onClick={() => handleBorrowRequest(book)}
+                                  className="px-2 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all hover:scale-105"
+                                >
+                                  Ödünç Al
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          {bookStatus === 'lost' && (
+                            <div className="flex items-center text-red-600">
+                              <AlertTriangle className="w-4 h-4 mr-1" />
+                              <span className="text-xs">Kayıp</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                          Konum: {book.location}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p className="text-sm text-gray-600">
+                  Sayfa {currentPage} / {totalPages}
+                </p>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Önceki
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Sonraki
+                  </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {totalPages > 1 && (
-          <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-600">
-              Sayfa {currentPage} / {totalPages}
-            </p>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              >
-                Önceki
-              </button>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              >
-                Sonraki
-              </button>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Book Details Modal */}
