@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Award } from 'lucide-react';
+import { Trophy, Award, Medal, Crown } from 'lucide-react';
 
 interface LeaderboardEntry {
   userId: string;
@@ -62,12 +62,8 @@ const Leaderboard: React.FC = () => {
     return null; // Eğer veri yoksa bileşeni hiç gösterme
   }
 
-  const getMedalColor = (index: number) => {
-    if (index === 0) return 'text-yellow-500';
-    if (index === 1) return 'text-gray-400';
-    if (index === 2) return 'text-yellow-700';
-    return 'text-gray-300';
-  };
+  const topThree = topTen.slice(0, 3);
+  const restOfList = topTen.slice(3);
 
   return (
     <div className="bg-white rounded-xl shadow-sm">
@@ -77,18 +73,91 @@ const Leaderboard: React.FC = () => {
           Bu Ayın Kitap Kurtları
         </h3>
       </div>
-      <div className="p-6 space-y-4">
-        {topTen.map((user, index) => (
-          <div key={user.userId} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-            <div className="flex items-center">
-              <span className={`font-bold text-lg w-8 ${getMedalColor(index)}`}>{index + 1}</span>
-              <p className={`font-medium text-gray-800 ${user.userId === currentUser?.uid ? 'font-bold text-indigo-600' : ''}`}>
-                {user.name}
+      
+      {/* Podium */}
+      <div className="p-8">
+        <div className="flex items-end justify-center gap-4 mb-8">
+          {/* 2nd Place */}
+          {topThree[1] && (
+            <div className="flex flex-col items-center flex-1">
+              <div className="relative mb-3">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center shadow-lg">
+                  <Medal className="w-10 h-10 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 bg-gray-400 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-sm shadow-md">
+                  2
+                </div>
+              </div>
+              <p className={`font-semibold text-gray-900 text-center text-sm mb-1 ${topThree[1].userId === currentUser?.uid ? 'text-indigo-600' : ''}`}>
+                {topThree[1].name}
               </p>
+              <p className="text-xs text-gray-600 font-medium">{topThree[1].count} Kitap</p>
+              <div className="mt-3 bg-gradient-to-t from-gray-300 to-gray-200 rounded-t-lg w-full h-24 flex items-center justify-center shadow-md">
+                <span className="text-4xl font-bold text-white">2</span>
+              </div>
             </div>
-            <p className="font-bold text-gray-800">{user.count} Kitap</p>
+          )}
+
+          {/* 1st Place */}
+          {topThree[0] && (
+            <div className="flex flex-col items-center flex-1">
+              <div className="relative mb-3">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-xl">
+                  <Crown className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 bg-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold shadow-md">
+                  1
+                </div>
+              </div>
+              <p className={`font-bold text-gray-900 text-center mb-1 ${topThree[0].userId === currentUser?.uid ? 'text-indigo-600' : ''}`}>
+                {topThree[0].name}
+              </p>
+              <p className="text-sm text-gray-600 font-semibold">{topThree[0].count} Kitap</p>
+              <div className="mt-3 bg-gradient-to-t from-yellow-400 to-yellow-300 rounded-t-lg w-full h-32 flex items-center justify-center shadow-lg">
+                <span className="text-5xl font-bold text-white">1</span>
+              </div>
+            </div>
+          )}
+
+          {/* 3rd Place */}
+          {topThree[2] && (
+            <div className="flex flex-col items-center flex-1">
+              <div className="relative mb-3">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg">
+                  <Medal className="w-10 h-10 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-sm shadow-md">
+                  3
+                </div>
+              </div>
+              <p className={`font-semibold text-gray-900 text-center text-sm mb-1 ${topThree[2].userId === currentUser?.uid ? 'text-indigo-600' : ''}`}>
+                {topThree[2].name}
+              </p>
+              <p className="text-xs text-gray-600 font-medium">{topThree[2].count} Kitap</p>
+              <div className="mt-3 bg-gradient-to-t from-orange-400 to-orange-300 rounded-t-lg w-full h-20 flex items-center justify-center shadow-md">
+                <span className="text-4xl font-bold text-white">3</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Rest of the list */}
+        {restOfList.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">Diğer Sıralamalar</h4>
+            {restOfList.map((user, index) => (
+              <div key={user.userId} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-gray-600 w-6">{index + 4}</span>
+                  <p className={`font-medium text-gray-800 ${user.userId === currentUser?.uid ? 'font-bold text-indigo-600' : ''}`}>
+                    {user.name}
+                  </p>
+                </div>
+                <p className="font-semibold text-gray-700">{user.count} Kitap</p>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
       {currentUserRank && currentUserRank.rank !== '-' && (
         <div className="p-6 border-t border-gray-200 bg-indigo-50 rounded-b-xl">

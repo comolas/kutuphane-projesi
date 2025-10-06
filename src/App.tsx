@@ -38,6 +38,10 @@ import GamesPage from './pages/GamesPage';
 import GameReservationPage from './pages/GameReservationPage';
 import MyGameReservationsPage from './pages/MyGameReservationsPage';
 import MyAppointments from './pages/MyAppointments';
+import BlogPage from './pages/BlogPage';
+import SinglePostPage from './pages/SinglePostPage';
+import CreatePostPage from './pages/CreatePostPage';
+import MyPostsPage from './pages/MyPostsPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -79,6 +83,10 @@ const AppContent = () => {
           <Route path="/games/:id" element={<PrivateRoute><GameReservationPage /></PrivateRoute>} />
           <Route path="/my-game-reservations" element={<PrivateRoute><MyGameReservationsPage /></PrivateRoute>} />
           <Route path="/my-appointments" element={<PrivateRoute><MyAppointments /></PrivateRoute>} />
+          <Route path="/blog" element={<PrivateRoute><BlogPage /></PrivateRoute>} />
+          <Route path="/blog/:postId" element={<PrivateRoute><SinglePostPage /></PrivateRoute>} />
+          <Route path="/create-post" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
+          <Route path="/my-posts" element={<PrivateRoute><MyPostsPage /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>

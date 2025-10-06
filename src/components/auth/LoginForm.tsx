@@ -70,7 +70,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <>
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8 mx-auto">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-6 sm:p-8 mx-auto hover:shadow-3xl transition-all duration-300">
         <div className="flex justify-center mb-6">
           <img src="https://r.resimlink.com/BJq8au6HpG.png" alt="Data Koleji Logo" className="w-36 h-36 rounded-full border-4 border-indigo-400" />
         </div>
@@ -150,20 +150,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
         </div>
       </div>
 
-      {/* Privacy Policy Modal */}
+      {/* Privacy Policy Drawer */}
       {showPrivacyPolicy && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Gizlilik Politikası</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-end" onClick={() => setShowPrivacyPolicy(false)}>
+          <div className="bg-white/95 backdrop-blur-xl w-full max-w-2xl h-full shadow-2xl transform transition-transform duration-300 animate-slide-in" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-indigo-500 to-purple-600">
+              <h2 className="text-2xl font-bold text-white">Gizlilik Politikası</h2>
               <button
                 onClick={() => setShowPrivacyPolicy(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-white/80 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="p-6 overflow-y-auto h-[calc(100%-88px)]">
               <div className="prose max-w-none">
                 <h3 className="text-xl font-semibold mb-4">1. Veri Toplama ve Kullanım</h3>
                 <p className="mb-4">
@@ -198,20 +198,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
         </div>
       )}
 
-      {/* Terms of Service Modal */}
+      {/* Terms of Service Drawer */}
       {showTerms && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Hizmet Koşulları</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-end" onClick={() => setShowTerms(false)}>
+          <div className="bg-white/95 backdrop-blur-xl w-full max-w-2xl h-full shadow-2xl transform transition-transform duration-300 animate-slide-in" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-indigo-500 to-purple-600">
+              <h2 className="text-2xl font-bold text-white">Hizmet Koşulları</h2>
               <button
                 onClick={() => setShowTerms(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-white/80 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="p-6 overflow-y-auto h-[calc(100%-88px)]">
               <div className="prose max-w-none">
                 <h3 className="text-xl font-semibold mb-4">1. Üyelik ve Hesap</h3>
                 <p className="mb-4">

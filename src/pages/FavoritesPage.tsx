@@ -291,7 +291,7 @@ const FavoritesPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <button
@@ -318,12 +318,12 @@ const FavoritesPage: React.FC = () => {
         </div>
 
         {/* Shelf Management UI */}
-        <div className="mb-8 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">Raflarım</h2>
+        <div className="mb-8 p-6 bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Raflarım</h2>
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <button
               onClick={() => setSelectedShelf('all')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedShelf === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedShelf === 'all' ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' : 'bg-white/50 text-gray-700 hover:bg-white/80'}`}
             >
               Tüm Favoriler
             </button>
@@ -331,11 +331,11 @@ const FavoritesPage: React.FC = () => {
               <div key={shelf.id} className="relative group">
                 <button
                   onClick={() => setSelectedShelf(shelf.id)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedShelf === shelf.id ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedShelf === shelf.id ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' : 'bg-white/50 text-gray-700 hover:bg-white/80'}`}
                 >
                   {shelf.name}
                 </button>
-                <button onClick={() => handleDeleteShelf(shelf.id, shelf.name)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => handleDeleteShelf(shelf.id, shelf.name)} className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:scale-110">
                   <X size={12} />
                 </button>
               </div>
@@ -347,11 +347,11 @@ const FavoritesPage: React.FC = () => {
               value={newShelfName}
               onChange={(e) => setNewShelfName(e.target.value)}
               placeholder="Yeni raf adı..."
-              className="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              className="flex-grow px-4 py-3 bg-white/50 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all"
             />
             <button
               onClick={handleCreateShelf}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2 font-medium"
             >
               <PlusCircle size={18} />
               Oluştur
@@ -363,20 +363,20 @@ const FavoritesPage: React.FC = () => {
         {favoriteBooks.length > 0 && (
           <div className="mb-6 flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input 
                 type="text"
                 placeholder="Favorilerimde ara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
               />
             </div>
             <div className="w-full md:w-64">
               <select 
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
               >
                 <option value="date-desc">Eklenme Tarihi (Yeni)</option>
                 <option value="date-asc">Eklenme Tarihi (Eski)</option>
@@ -394,13 +394,15 @@ const FavoritesPage: React.FC = () => {
             <p className="text-gray-600">Favori kitaplar yükleniyor...</p>
           </div>
         ) : filteredAndSortedBooks.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center">
-            <Heart className="w-16 h-16 text-gray-300 mb-4" />
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-8 text-center flex flex-col items-center justify-center border border-white/20">
+            <div className="w-20 h-20 bg-gradient-to-br from-pink-400 to-red-500 rounded-full flex items-center justify-center mb-4">
+              <Heart className="w-10 h-10 text-white fill-current" />
+            </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
               {searchQuery ? 'Aramanıza uygun favori bulunamadı.' : selectedShelf !== 'all' ? 'Bu rafta henüz kitap yok.' : 'Henüz Favori Kitabınız Yok'}
             </h3>
             <p className="text-gray-600 mb-6">Katalogdan beğendiğiniz kitapları favorilerinize ekleyip raflarınıza yerleştirebilirsiniz.</p>
-            <Link to="/catalog" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+            <Link to="/catalog" className="inline-flex items-center px-6 py-3 text-sm font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:shadow-xl hover:scale-105 transition-all">
               Kataloğa Git
             </Link>
           </div>
@@ -417,45 +419,46 @@ const FavoritesPage: React.FC = () => {
                 const bookShelves = book.shelves?.map(shelfId => shelves.find(s => s.id === shelfId)?.name).filter(Boolean) || [];
 
                 return (
-                  <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
-                    <div className="relative">
-                      <img src={book.coverImage} alt={book.title} className="w-full h-80 object-cover" />
+                  <div key={book.id} className="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col border border-white/20">
+                    <div className="relative overflow-hidden">
+                      <img src={book.coverImage} alt={book.title} className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       <button
                         onClick={() => handleRemoveFavorite(book.id, book.title)}
-                        className="absolute top-2 right-2 z-10 p-1.5 bg-white/80 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-100 transition-colors"
+                        className="absolute top-3 right-3 z-10 p-2 bg-white/90 backdrop-blur-xl rounded-full text-red-500 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-600 hover:text-white transition-all shadow-lg hover:scale-110"
                       >
                         <Heart className="w-5 h-5 fill-current" />
                       </button>
                     </div>
-                    <div className="p-4 flex flex-col flex-grow">
+                    <div className="p-5 flex flex-col flex-grow">
                       <div>
                         <h3 className="font-semibold text-gray-900 truncate">{book.title}</h3>
                         <p className="text-sm text-gray-600">{book.author}</p>
                       </div>
                       
                       {bookShelves.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
+                        <div className="mt-2 flex flex-wrap gap-1.5">
                           {bookShelves.map(shelfName => (
-                            <span key={shelfName} className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full text-xs">{shelfName}</span>
+                            <span key={shelfName} className="px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-lg text-xs font-medium">{shelfName}</span>
                           ))}
                         </div>
                       )}
 
                       {book.note && (
-                        <div className="mt-3 p-2 bg-yellow-50 border-l-4 border-yellow-300">
-                          <p className="text-xs text-yellow-800 italic">{book.note}</p>
+                        <div className="mt-3 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-r-lg">
+                          <p className="text-xs text-yellow-800 italic font-medium">{book.note}</p>
                         </div>
                       )}
                       <div className="flex-grow mt-3 flex flex-col justify-end">
                         <div className="flex justify-between items-center mb-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold shadow-md ${
                             hasPendingRequest
-                              ? 'bg-yellow-100 text-yellow-800'
+                              ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white'
                               : bookStatus === 'lost'
-                              ? 'bg-red-100 text-red-800'
+                              ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white'
                               : bookStatus === 'borrowed'
-                              ? 'bg-orange-100 text-orange-800'
-                              : 'bg-green-100 text-green-800'
+                              ? 'bg-gradient-to-r from-orange-400 to-red-500 text-white'
+                              : 'bg-gradient-to-r from-green-400 to-emerald-500 text-white'
                           }`}>
                             {hasPendingRequest 
                               ? 'Onay Bekliyor' 
@@ -466,10 +469,10 @@ const FavoritesPage: React.FC = () => {
                               : 'Müsait'}
                           </span>
                           <div className="flex items-center gap-1">
-                            <button onClick={() => handleOpenNoteModal(book)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                            <button onClick={() => handleOpenNoteModal(book)} className="p-2 rounded-xl text-gray-500 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md">
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleOpenShelfModal(book)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                            <button onClick={() => handleOpenShelfModal(book)} className="p-2 rounded-xl text-gray-500 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md">
                               <BookmarkIcon className="w-4 h-4" />
                             </button>
                           </div>
@@ -477,7 +480,7 @@ const FavoritesPage: React.FC = () => {
                         {bookStatus === 'available' && !hasPendingRequest && (
                           <button
                             onClick={() => handleBorrowRequest(book)}
-                            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                            className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all"
                           >
                             Ödünç Al
                           </button>
@@ -497,14 +500,14 @@ const FavoritesPage: React.FC = () => {
                   <button
                     onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl hover:bg-white/80 disabled:opacity-50 transition-all shadow-lg"
                   >
                     Önceki
                   </button>
                   <button
                     onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl hover:bg-white/80 disabled:opacity-50 transition-all shadow-lg"
                   >
                     Sonraki
                   </button>
@@ -517,8 +520,8 @@ const FavoritesPage: React.FC = () => {
 
       {/* Note Editing Modal */}
       {isNoteModalOpen && editingNoteBook && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-lg w-full border border-white/20">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900 flex items-center">
                 <StickyNote className="w-6 h-6 mr-2 text-indigo-600" />
@@ -534,15 +537,15 @@ const FavoritesPage: React.FC = () => {
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Bu kitapla ilgili kişisel notunuz..."
-                className="w-full mt-4 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full mt-4 p-3 bg-white/50 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all"
                 rows={4}
               />
             </div>
-            <div className="p-4 bg-gray-50 flex justify-end space-x-2">
-              <button onClick={() => setIsNoteModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex justify-end space-x-2">
+              <button onClick={() => setIsNoteModalOpen(false)} className="px-5 py-2.5 bg-white/50 border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all">
                 İptal
               </button>
-              <button onClick={handleSaveNote} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+              <button onClick={handleSaveNote} className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium">
                 Kaydet
               </button>
             </div>
@@ -581,8 +584,8 @@ const ShelfManagementModal: React.FC<ShelfManagementModalProps> = ({ book, allSh
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border border-white/20">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-medium text-gray-900 flex items-center">
             <BookmarkIcon className="w-6 h-6 mr-2 text-indigo-600" />
@@ -596,7 +599,7 @@ const ShelfManagementModal: React.FC<ShelfManagementModalProps> = ({ book, allSh
           <p className="font-semibold text-gray-800 mb-4">{book.title}</p>
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {allShelves.length > 0 ? allShelves.map(shelf => (
-              <label key={shelf.id} className="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <label key={shelf.id} className="flex items-center p-3 rounded-xl hover:bg-white/50 cursor-pointer transition-all">
                 <input
                   type="checkbox"
                   checked={selectedShelves.includes(shelf.id)}
@@ -610,11 +613,11 @@ const ShelfManagementModal: React.FC<ShelfManagementModalProps> = ({ book, allSh
             )}
           </div>
         </div>
-        <div className="p-4 bg-gray-50 flex justify-end space-x-2">
-          <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex justify-end space-x-2">
+          <button onClick={onClose} className="px-5 py-2.5 bg-white/50 border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all">
             İptal
           </button>
-          <button onClick={() => onSave(selectedShelves)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          <button onClick={() => onSave(selectedShelves)} className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium">
             Kaydet
           </button>
         </div>
