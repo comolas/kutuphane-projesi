@@ -453,43 +453,51 @@ const UserDashboard: React.FC = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* At a Glance Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-blue-500 rounded-lg p-3">
-                  <BookOpen className="w-6 h-6 text-white" />
+          {/* At a Glance Summary Cards - Premium Minimal Gradient */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-2">Aktif Kitapların</p>
+                  <p className="text-4xl font-bold text-white">{summaryStats.activeBooksCount}</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
+                  <BookOpen className="w-8 h-8 text-white" />
                 </div>
               </div>
-              <p className="text-sm font-medium text-blue-700 mb-1">Aktif Kitapların</p>
-              <p className="text-3xl font-bold text-gray-900">{summaryStats.activeBooksCount}</p>
             </Link>
-            <Link to="/borrowed-books" className={`bg-gradient-to-br ${summaryStats.dueDateStatus === 'overdue' ? 'from-red-50 to-red-100' : summaryStats.dueDateStatus === 'dueSoon' ? 'from-yellow-50 to-yellow-100' : 'from-indigo-50 to-indigo-100'} p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className={`${summaryStats.dueDateStatus === 'overdue' ? 'bg-red-500' : summaryStats.dueDateStatus === 'dueSoon' ? 'bg-yellow-500' : 'bg-indigo-500'} rounded-lg p-3`}>
-                  {summaryStats.dueDateStatus === 'overdue' ? <AlertCircle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-white" />}
+            <Link to="/borrowed-books" className={`bg-gradient-to-br ${summaryStats.dueDateStatus === 'overdue' ? 'from-red-500 to-pink-600' : summaryStats.dueDateStatus === 'dueSoon' ? 'from-yellow-500 to-orange-600' : 'from-green-500 to-emerald-600'} p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-2">{summaryStats.dueDateText}</p>
+                  <p className="text-lg font-bold text-white truncate">{summaryStats.nextDueBook && summaryStats.nextDueBook.title ? `${summaryStats.nextDueBook.title.substring(0, 15)}...` : '-'}</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
+                  {summaryStats.dueDateStatus === 'overdue' ? <AlertCircle className="w-8 h-8 text-white" /> : <Clock className="w-8 h-8 text-white" />}
                 </div>
               </div>
-              <p className={`text-sm font-medium ${summaryStats.dueDateStatus === 'overdue' ? 'text-red-700' : summaryStats.dueDateStatus === 'dueSoon' ? 'text-yellow-700' : 'text-indigo-700'} mb-1`}>{summaryStats.dueDateText}</p>
-              <p className="text-lg font-bold text-gray-900 truncate">{summaryStats.nextDueBook && summaryStats.nextDueBook.title ? `${summaryStats.nextDueBook.title.substring(0, 15)}...` : '-'}</p>
             </Link>
-            <Link to="/fines" className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-red-500 rounded-lg p-3">
-                  <AlertCircle className="w-6 h-6 text-white" />
+            <Link to="/fines" className="bg-gradient-to-br from-red-500 to-pink-600 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-2">Ödenmemiş Ceza</p>
+                  <p className="text-4xl font-bold text-white">{summaryStats.totalFine} TL</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
+                  <AlertCircle className="w-8 h-8 text-white" />
                 </div>
               </div>
-              <p className="text-sm font-medium text-red-700 mb-1">Ödenmemiş Ceza</p>
-              <p className="text-3xl font-bold text-gray-900">{summaryStats.totalFine} TL</p>
             </Link>
-            <Link to="/requests" className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-purple-500 rounded-lg p-3">
-                  <MessageSquare className="w-6 h-6 text-white" />
+            <Link to="/requests" className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-2">Bekleyen Talepler</p>
+                  <p className="text-4xl font-bold text-white">{summaryStats.pendingRequestsCount}</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
+                  <MessageSquare className="w-8 h-8 text-white" />
                 </div>
               </div>
-              <p className="text-sm font-medium text-purple-700 mb-1">Bekleyen Talepler</p>
-              <p className="text-3xl font-bold text-gray-900">{summaryStats.pendingRequestsCount}</p>
             </Link>
           </div>
 
@@ -644,91 +652,98 @@ const UserDashboard: React.FC = () => {
               <Leaderboard />
             </section>
 
-            {/* Featured Author - Full Width */}
+            {/* Featured Author - Hero Banner Style */}
             <section className="lg:col-span-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <Star className="w-6 h-6 mr-2 text-yellow-500" />
-                Öne Çıkan Yazar
-              </h2>
               {featuredAuthor ? (
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  {/* Author Info Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-6 p-8 bg-gradient-to-r from-indigo-50 to-purple-50">
-                    {/* Author Image */}
-                    <div className="md:col-span-2 flex items-center justify-center">
-                      <div className="relative">
-                        <img
-                          className="w-64 h-96 object-cover rounded-2xl shadow-xl"
-                          src={featuredAuthor.image}
-                          alt={featuredAuthor.name}
-                        />
-                        <div className="absolute -bottom-3 -right-3 bg-yellow-400 rounded-full p-3 shadow-lg">
-                          <Star className="w-6 h-6 text-white fill-current" />
-                        </div>
-                      </div>
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                  {/* Background Image with Blur/Overlay */}
+                  <div className="absolute inset-0">
+                    <img
+                      src={featuredAuthor.image}
+                      alt={featuredAuthor.name}
+                      className="w-full h-full object-cover blur-sm scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="relative z-10 px-8 py-16 md:px-16 md:py-20">
+                    {/* Top Label */}
+                    <div className="flex items-center justify-center mb-6">
+                      <Star className="w-6 h-6 text-yellow-400 fill-yellow-400 mr-2" />
+                      <span className="text-yellow-400 font-bold text-sm tracking-widest uppercase">ÖNE ÇIKAN YAZAR</span>
                     </div>
-                    
-                    {/* Author Bio */}
-                    <div className="md:col-span-3 flex flex-col justify-center">
-                      <h3 className="text-3xl font-bold text-gray-900 mb-3">{featuredAuthor.name}</h3>
-                      <p className="text-gray-700 leading-relaxed mb-4">{featuredAuthor.biography}</p>
+
+                    {/* Author Name */}
+                    <h2 className="text-5xl md:text-6xl font-bold text-white text-center mb-6">
+                      {featuredAuthor.name}
+                    </h2>
+
+                    {/* Biography */}
+                    <p className="text-gray-300 text-lg text-center max-w-3xl mx-auto mb-8 leading-relaxed">
+                      {featuredAuthor.biography}
+                    </p>
+
+                    {/* Button */}
+                    <div className="flex justify-center mb-12">
                       <Link 
                         to={`/author/${featuredAuthor.id}`}
-                        className="inline-flex items-center self-start px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-md"
+                        className="inline-flex items-center px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-lg"
                       >
                         Yazarın Sayfasına Git
-                        <ExternalLink className="w-4 h-4 ml-2" />
+                        <ExternalLink className="w-5 h-5 ml-2" />
                       </Link>
                     </div>
-                  </div>
-                  
-                  {/* Books Grid Section */}
-                  <div className="p-8">
-                    <h4 className="text-xl font-semibold text-gray-900 mb-6">Öne Çıkan Eserleri</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                      {featuredAuthorBooks.slice(0, 5).map(book => {
-                        const status = getBookStatus(book.id);
-                        const isAvailable = status === 'available';
-                        return (
-                          <div key={book.id} className="group">
-                            <div className="relative overflow-hidden rounded-lg aspect-[2/3] mb-3">
-                              <img
-                                src={book.coverImage}
-                                alt={book.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="absolute bottom-0 left-0 right-0 p-3">
-                                  <button
-                                    onClick={() => handleBorrowBook(book)}
-                                    disabled={!isAvailable}
-                                    className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                                      isAvailable
-                                        ? 'bg-white text-gray-900 hover:bg-gray-100'
-                                        : 'bg-gray-400 text-white cursor-not-allowed'
-                                    }`}
-                                  >
-                                    {isAvailable ? 'Ödünç Al' : (status === 'borrowed' ? 'Ödünç Alındı' : 'Kayıp')}
-                                  </button>
+
+                    {/* Polaroid Books Section */}
+                    <div className="mt-8">
+                      <h3 className="text-2xl font-bold text-white text-center mb-8">Öne Çıkan Eserleri</h3>
+                      <div className="flex flex-wrap justify-center items-center gap-8 max-w-6xl mx-auto">
+                        {featuredAuthorBooks.slice(0, 4).map((book, index) => {
+                          const status = getBookStatus(book.id);
+                          const isAvailable = status === 'available';
+                          const rotations = ['-rotate-3', 'rotate-2', '-rotate-2', 'rotate-3'];
+                          return (
+                            <div 
+                              key={book.id} 
+                              className={`group ${rotations[index]} hover:rotate-0 transition-all duration-300 hover:scale-105`}
+                            >
+                              {/* Polaroid Frame */}
+                              <div className="bg-white/95 backdrop-blur-sm p-1 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                                {/* Image */}
+                                <div className="relative w-48 h-56 overflow-hidden">
+                                  <img
+                                    src={book.coverImage}
+                                    alt={book.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  {/* Hover Button */}
+                                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <button
+                                      onClick={() => handleBorrowBook(book)}
+                                      disabled={!isAvailable}
+                                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        isAvailable
+                                          ? 'bg-white text-gray-900 hover:bg-gray-100'
+                                          : 'bg-gray-400 text-white cursor-not-allowed'
+                                      }`}
+                                    >
+                                      {isAvailable ? 'Ödünç Al' : (status === 'borrowed' ? 'Ödünç Alındı' : 'Kayıp')}
+                                    </button>
+                                  </div>
+                                </div>
+                                {/* Polaroid Bottom - Handwritten Style Title */}
+                                <div className="bg-white/95 p-4 text-center">
+                                  <p className="text-gray-800 text-sm font-handwriting line-clamp-2" style={{ fontFamily: 'cursive' }}>
+                                    {book.title}
+                                  </p>
                                 </div>
                               </div>
                             </div>
-                            <h5 className="font-medium text-gray-900 text-sm line-clamp-2">{book.title}</h5>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {featuredAuthorBooks.length > 5 && (
-                      <div className="mt-6 text-center">
-                        <Link 
-                          to={`/author/${featuredAuthor.id}`}
-                          className="inline-flex items-center px-4 py-2 text-indigo-600 hover:text-indigo-700 font-medium"
-                        >
-                          Tüm Kitapları Gör ({featuredAuthorBooks.length})
-                          <ChevronRightIcon className="w-4 h-4 ml-1" />
-                        </Link>
+                          );
+                        })}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               ) : (

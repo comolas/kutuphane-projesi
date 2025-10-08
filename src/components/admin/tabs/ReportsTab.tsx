@@ -61,6 +61,7 @@ const ReportsTab: React.FC = () => {
   const [classMonthlyBorrows, setClassMonthlyBorrows] = useState<{ month: string; count: number }[]>([]);
   const [isClassDetailsModalOpen, setIsClassDetailsModalOpen] = useState(false);
   const [selectedClassForDetails, setSelectedClassForDetails] = useState<{ className: string; month: string } | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
 
   const fetchReportData = async (month: string) => {
@@ -382,23 +383,56 @@ const ReportsTab: React.FC = () => {
 
   }, [selectedClass, reportData.allBorrowedData, reportData.usersData, reportMonth]);
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     const input = reportContentRef.current;
-    if (input) {
-      html2canvas(input).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        // const pdfHeight = pdf.internal.pageSize.getHeight(); // Removed unused variable
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
-        const width = pdfWidth;
-        const height = width / ratio;
-        pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-        pdf.save(`rapor-${reportMonth}.pdf`);
+    if (!input) return;
+
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f8f9fa'
       });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / canvasHeight;
+      const imgWidth = pdfWidth;
+      const imgHeight = imgWidth / ratio;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save(`kutuphane-raporu-${reportMonth}.pdf`);
+    } catch (error) {
+      console.error('PDF oluşturma hatası:', error);
+      alert('PDF oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsExporting(false);
     }
+  };
+
+  const createGradient = (ctx: CanvasRenderingContext2D, color1: string, color2: string) => {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
+    return gradient;
   };
 
   const colors = [
@@ -414,101 +448,128 @@ const ReportsTab: React.FC = () => {
   ];
 
   return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
     <div ref={reportContentRef} className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-          <BarChart className="w-6 h-6 mr-2 text-indigo-600" />
-          Kütüphane Raporları
-        </h2>
-        <div className="flex items-center space-x-4">
-          <input 
-              type="month" 
-              value={reportMonth} 
-              onChange={(e) => setReportMonth(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-          <button
-            onClick={() => fetchReportData(reportMonth)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
-          >
-            Filtrele
-          </button>
-          <button
-            onClick={exportToPDF}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
-          >
-            <Download className="w-5 h-5 mr-2" />
-            PDF Olarak Dışa Aktar
-          </button>
+      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 mb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+            <BarChart className="w-6 h-6 mr-2 text-indigo-600" />
+            Kütüphane Raporları
+          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <input 
+                type="month" 
+                value={reportMonth} 
+                onChange={(e) => setReportMonth(e.target.value)}
+                className="px-4 py-2 bg-white/80 backdrop-blur-sm border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
+            <button
+              onClick={() => fetchReportData(reportMonth)}
+              className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center"
+            >
+              Filtrele
+            </button>
+            <button
+              onClick={exportToPDF}
+              disabled={isExporting}
+              className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              {isExporting ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Oluşturuluyor...
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5 mr-2" />
+                  PDF Dışa Aktar
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center">
-            <Users className="w-8 h-8 text-blue-500 mr-3" />
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0s' }}>
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Kullanıcı</p>
-              <p className="text-2xl font-bold text-gray-900">{reportData.totalUsers}</p>
+              <p className="text-sm font-medium text-white/90">Toplam Kullanıcı</p>
+              <p className="text-3xl font-bold text-white mt-2">{reportData.totalUsers}</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+              <Users className="w-12 h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center">
-            <BookOpen className="w-8 h-8 text-green-500 mr-3" />
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Kitap</p>
-              <p className="text-2xl font-bold text-gray-900">{reportData.totalBooks}</p>
+              <p className="text-sm font-medium text-white/90">Toplam Kitap</p>
+              <p className="text-3xl font-bold text-white mt-2">{reportData.totalBooks}</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+              <BookOpen className="w-12 h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center">
-            <Book className="w-8 h-8 text-yellow-500 mr-3" />
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Ödünç Verilen</p>
-              <p className="text-2xl font-bold text-gray-900">{reportData.borrowedBooks}</p>
+              <p className="text-sm font-medium text-white/90">Ödünç Verilen</p>
+              <p className="text-3xl font-bold text-white mt-2">{reportData.borrowedBooks}</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+              <Book className="w-12 h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center">
-            <AlertTriangle className="w-8 h-8 text-red-500 mr-3" />
+        <div className="bg-gradient-to-br from-red-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Gecikmiş Kitap</p>
-              <p className="text-2xl font-bold text-gray-900">{reportData.overdueBooks}</p>
+              <p className="text-sm font-medium text-white/90">Gecikmiş Kitap</p>
+              <p className="text-3xl font-bold text-white mt-2">{reportData.overdueBooks}</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+              <AlertTriangle className="w-12 h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center">
-            <DollarSign className="w-8 h-8 text-purple-500 mr-3" />
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Ceza</p>
-              <p className="text-2xl font-bold text-gray-900">{reportData.totalFines} ₺</p>
+              <p className="text-sm font-medium text-white/90">Toplam Ceza</p>
+              <p className="text-3xl font-bold text-white mt-2">{reportData.totalFines} ₺</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+              <DollarSign className="w-12 h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center">
-            <PiggyBank className="w-8 h-8 text-pink-500 mr-3" />
+        <div className="bg-gradient-to-br from-pink-500 to-rose-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.5s' }}>
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Kumbara</p>
-              <p className="text-2xl font-bold text-gray-900">{summary.totalBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+              <p className="text-sm font-medium text-white/90">Kumbara</p>
+              <p className="text-3xl font-bold text-white mt-2">{summary.totalBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+              <PiggyBank className="w-12 h-12 text-white" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Class Utilization Chart */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Sınıf Bazında Kütüphane Kullanımı</h3>
+      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+          <h3 className="text-lg font-semibold">Sınıf Bazında Kütüphane Kullanımı</h3>
+        </div>
         <div className="mb-4">
           <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">Sınıf Seç:</label>
           <select
@@ -531,15 +592,23 @@ const ReportsTab: React.FC = () => {
                 {
                   label: 'Ödünç Alınan Kitap Sayısı',
                   data: classMonthlyBorrows.map((item: any) => item.count),
-                  backgroundColor: colors,
-                  borderColor: colors,
-                  borderWidth: 1
+                  backgroundColor: (context: any) => {
+                    const ctx = context.chart.ctx;
+                    return createGradient(ctx, 'rgba(99, 102, 241, 0.8)', 'rgba(139, 92, 246, 0.4)');
+                  },
+                  borderColor: 'rgba(99, 102, 241, 1)',
+                  borderWidth: 2,
+                  borderRadius: 8
                 }
               ]
             }}
             options={{
               responsive: true,
               maintainAspectRatio: false,
+              animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+              },
               onClick: (event, elements) => {
                 if (elements.length > 0 && selectedClass !== 'Tüm Sınıflar') {
                   const elementIndex = elements[0].index;
@@ -555,7 +624,27 @@ const ReportsTab: React.FC = () => {
               },
               plugins: {
                 legend: {
-                  display: false
+                  display: true,
+                  position: 'top' as const,
+                  align: 'end' as const,
+                  labels: {
+                    boxWidth: 12,
+                    padding: 15,
+                    font: { size: 12 }
+                  }
+                },
+                tooltip: {
+                  enabled: true,
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  padding: 12,
+                  cornerRadius: 8,
+                  titleFont: { size: 14, weight: 'bold' },
+                  bodyFont: { size: 13 },
+                  callbacks: {
+                    label: (context: any) => {
+                      return `Kitap Sayısı: ${context.parsed.y}`;
+                    }
+                  }
                 }
               },
               scales: {
@@ -581,8 +670,10 @@ const ReportsTab: React.FC = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aylık Ödünç Alma Trendi</h3>
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+            <h3 className="text-lg font-semibold">Aylık Ödünç Alma Trendi</h3>
+          </div>
           <div className="h-64">
             <Bar
               data={{
@@ -591,18 +682,46 @@ const ReportsTab: React.FC = () => {
                   {
                     label: 'Ödünç Alınan Kitap Sayısı',
                     data: reportData.monthlyBorrows.map((item: any) => item.count),
-                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                    borderColor: 'rgba(99, 102, 241, 1)',
-                    borderWidth: 1
+                    backgroundColor: (context: any) => {
+                      const ctx = context.chart.ctx;
+                      return createGradient(ctx, 'rgba(59, 130, 246, 0.8)', 'rgba(147, 197, 253, 0.4)');
+                    },
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8
                   }
                 ]
               }}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
                 plugins: {
                   legend: {
-                    display: false
+                    display: true,
+                    position: 'top' as const,
+                    align: 'end' as const,
+                    labels: {
+                      boxWidth: 12,
+                      padding: 15,
+                      font: { size: 12 }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                      label: (context: any) => {
+                        return `Kitap Sayısı: ${context.parsed.y}`;
+                      }
+                    }
                   }
                 },
                 scales: {
@@ -616,8 +735,10 @@ const ReportsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Popüler Kategoriler</h3>
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+            <h3 className="text-lg font-semibold">Popüler Kategoriler</h3>
+          </div>
           <div className="h-64">
             <Pie
               data={{
@@ -626,16 +747,47 @@ const ReportsTab: React.FC = () => {
                   {
                     data: reportData.popularCategories.map((item: any) => item.count),
                     backgroundColor: colors,
-                    borderWidth: 1
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 15
                   }
                 ]
               }}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                  animateRotate: true,
+                  animateScale: true,
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
                 plugins: {
                   legend: {
-                    position: 'bottom'
+                    position: 'right' as const,
+                    align: 'center' as const,
+                    labels: {
+                      boxWidth: 12,
+                      padding: 10,
+                      font: { size: 11 }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                      label: (context: any) => {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                      }
+                    }
                   }
                 }
               }}
@@ -645,8 +797,10 @@ const ReportsTab: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aylık Kullanıcı Kayıt Trendi</h3>
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+          <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+            <h3 className="text-lg font-semibold">Aylık Kullanıcı Kayıt Trendi</h3>
+          </div>
           <div className="h-64">
             <Bar
               data={{
@@ -655,16 +809,48 @@ const ReportsTab: React.FC = () => {
                   {
                     label: 'Yeni Kullanıcı Sayısı',
                     data: reportData.userRegistrationTrend.map((item: any) => item.count),
-                    backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
+                    backgroundColor: (context: any) => {
+                      const ctx = context.chart.ctx;
+                      return createGradient(ctx, 'rgba(139, 92, 246, 0.8)', 'rgba(196, 181, 253, 0.4)');
+                    },
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8
                   }
                 ]
               }}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                animation: {
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top' as const,
+                    align: 'end' as const,
+                    labels: {
+                      boxWidth: 12,
+                      padding: 15,
+                      font: { size: 12 }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                      label: (context: any) => {
+                        return `Kullanıcı Sayısı: ${context.parsed.y}`;
+                      }
+                    }
+                  }
+                },
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
               }}
             />
@@ -673,8 +859,10 @@ const ReportsTab: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aylık Ceza Gelirleri</h3>
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+          <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+            <h3 className="text-lg font-semibold">Aylık Ceza Gelirleri</h3>
+          </div>
           <div className="h-64">
             <Bar
               data={{
@@ -683,24 +871,58 @@ const ReportsTab: React.FC = () => {
                   {
                     label: 'Toplanan Ceza (₺)',
                     data: reportData.monthlyFinesTrend.map((item: any) => item.amount),
-                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
+                    backgroundColor: (context: any) => {
+                      const ctx = context.chart.ctx;
+                      return createGradient(ctx, 'rgba(239, 68, 68, 0.8)', 'rgba(252, 165, 165, 0.4)');
+                    },
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8
                   }
                 ]
               }}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                animation: {
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top' as const,
+                    align: 'end' as const,
+                    labels: {
+                      boxWidth: 12,
+                      padding: 15,
+                      font: { size: 12 }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                      label: (context: any) => {
+                        return `Ceza: ${context.parsed.y} ₺`;
+                      }
+                    }
+                  }
+                },
                 scales: { y: { beginAtZero: true } }
               }}
             />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ceza Durum Dağılımı</h3>
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+            <h3 className="text-lg font-semibold">Ceza Durum Dağılımı</h3>
+          </div>
           <div className="h-64">
             <Pie
               data={{
@@ -708,15 +930,48 @@ const ReportsTab: React.FC = () => {
                 datasets: [
                   {
                     data: [reportData.finesDistribution.paid, reportData.finesDistribution.unpaid],
-                    backgroundColor: ['rgba(75, 192, 192, 0.8)', 'rgba(255, 99, 132, 0.8)'],
-                    borderWidth: 1
+                    backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 15
                   }
                 ]
               }}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+                animation: {
+                  animateRotate: true,
+                  animateScale: true,
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
+                plugins: {
+                  legend: {
+                    position: 'bottom' as const,
+                    align: 'center' as const,
+                    labels: {
+                      boxWidth: 12,
+                      padding: 15,
+                      font: { size: 12 }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                      label: (context: any) => {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        return `${label}: ${value.toFixed(2)} ₺`;
+                      }
+                    }
+                  }
+                }
               }}
             />
           </div>
@@ -724,8 +979,10 @@ const ReportsTab: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aylık Koleksiyon Büyüme Trendi</h3>
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+          <div className="bg-gradient-to-r from-pink-500 to-rose-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+            <h3 className="text-lg font-semibold">Aylık Koleksiyon Büyüme Trendi</h3>
+          </div>
           <div className="h-64">
             <Bar
               data={{
@@ -734,16 +991,48 @@ const ReportsTab: React.FC = () => {
                   {
                     label: 'Eklenen Yeni Kitap Sayısı',
                     data: reportData.collectionGrowthTrend.map((item: any) => item.count),
-                    backgroundColor: 'rgba(153, 102, 255, 0.8)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1
+                    backgroundColor: (context: any) => {
+                      const ctx = context.chart.ctx;
+                      return createGradient(ctx, 'rgba(236, 72, 153, 0.8)', 'rgba(251, 207, 232, 0.4)');
+                    },
+                    borderColor: 'rgba(236, 72, 153, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8
                   }
                 ]
               }}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                animation: {
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top' as const,
+                    align: 'end' as const,
+                    labels: {
+                      boxWidth: 12,
+                      padding: 15,
+                      font: { size: 12 }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                      label: (context: any) => {
+                        return `Kitap Sayısı: ${context.parsed.y}`;
+                      }
+                    }
+                  }
+                },
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
               }}
             />
@@ -752,20 +1041,22 @@ const ReportsTab: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">En Popüler Kitaplar (Ay Bazında)</h3>
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+              <h3 className="text-lg font-semibold">En Popüler Kitaplar (Ay Bazında)</h3>
+            </div>
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kitap Adı</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Yazar</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ödünç Alınma Sayısı</th>
+                <table className="min-w-full">
+                    <thead>
+                        <tr className="bg-gradient-to-r from-indigo-500 to-purple-600">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Kitap Adı</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Yazar</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ödünç Alınma Sayısı</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody>
                         {reportData.popularBooks.map((book: any, index: number) => (
-                            <tr key={index}>
+                            <tr key={index} className={`hover:bg-indigo-50 transition-colors ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/50'}`}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.title}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.count}</td>
@@ -778,19 +1069,21 @@ const ReportsTab: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">En Çok Okunan Yazarlar</h3>
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+                <h3 className="text-lg font-semibold">En Çok Okunan Yazarlar</h3>
+              </div>
               <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                          <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Yazar</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Okunma Sayısı</th>
+                  <table className="min-w-full">
+                      <thead>
+                          <tr className="bg-gradient-to-r from-blue-500 to-cyan-600">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Yazar</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Okunma Sayısı</th>
                           </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody>
                           {reportData.mostReadAuthors.map((author: any, index: number) => (
-                              <tr key={index}>
+                              <tr key={index} className={`hover:bg-blue-50 transition-colors ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/50'}`}>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{author.name}</td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{author.count}</td>
                               </tr>
@@ -799,19 +1092,21 @@ const ReportsTab: React.FC = () => {
                   </table>
               </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Kayıp Kitaplar</h3>
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+              <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+                <h3 className="text-lg font-semibold">Kayıp Kitaplar</h3>
+              </div>
               <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                          <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kitap Adı</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Yazar</th>
+                  <table className="min-w-full">
+                      <thead>
+                          <tr className="bg-gradient-to-r from-red-500 to-pink-600">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Kitap Adı</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Yazar</th>
                           </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody>
                           {reportData.lostBooks.map((book: any, index: number) => (
-                              <tr key={index}>
+                              <tr key={index} className={`hover:bg-red-50 transition-colors ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/50'}`}>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.title}</td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
                               </tr>
@@ -822,19 +1117,21 @@ const ReportsTab: React.FC = () => {
           </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">En Çok Kitap Okuyan Sınıflar</h3>
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+                <h3 className="text-lg font-semibold">En Çok Kitap Okuyan Sınıflar</h3>
+              </div>
               <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                          <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sınıf</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Okunan Kitap Sayısı</th>
+                  <table className="min-w-full">
+                      <thead>
+                          <tr className="bg-gradient-to-r from-green-500 to-emerald-600">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Sınıf</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Okunan Kitap Sayısı</th>
                           </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody>
                           {reportData.classReads.most.map((item: any, index: number) => (
-                              <tr key={index}>
+                              <tr key={index} className={`hover:bg-green-50 transition-colors ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/50'}`}>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {item.name}
                                   </td>
@@ -845,19 +1142,21 @@ const ReportsTab: React.FC = () => {
                   </table>
               </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">En Az Kitap Okuyan Sınıflar</h3>
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+                <h3 className="text-lg font-semibold">En Az Kitap Okuyan Sınıflar</h3>
+              </div>
               <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                          <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sınıf</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Okunan Kitap Sayısı</th>
+                  <table className="min-w-full">
+                      <thead>
+                          <tr className="bg-gradient-to-r from-yellow-500 to-orange-600">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Sınıf</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Okunan Kitap Sayısı</th>
                           </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody>
                           {reportData.classReads.least.map((item: any, index: number) => (
-                              <tr key={index}>
+                              <tr key={index} className={`hover:bg-yellow-50 transition-colors ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/50'}`}>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {item.name}
                                   </td>
@@ -870,6 +1169,7 @@ const ReportsTab: React.FC = () => {
           </div>
       </div>
 
+    </div>
     </div>
   );
 };

@@ -66,15 +66,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           // Update last login and get existing data
           const existingData = userDoc.data() as UserData;
-          const updatedData = {
-            ...existingData, 
+          await setDoc(userRef, {
             lastLogin: new Date(),
-            // Do not hardcode role here; it should be managed in Firestore
+          }, { merge: true });
+          currentUserData = {
+            ...existingData,
+            lastLogin: new Date(),
+            createdAt: existingData.createdAt?.toDate ? existingData.createdAt.toDate() : existingData.createdAt,
             studentClass: existingData.studentClass || '',
             studentNumber: existingData.studentNumber || '',
-          };
-          await setDoc(userRef, updatedData, { merge: true });
-          currentUserData = updatedData;
+          } as UserData;
         }
         setUserData(currentUserData);
         setIsAdmin(currentUserData.role === 'admin'); // Determine admin status from Firestore role

@@ -285,6 +285,53 @@ const RequestsPage: React.FC = () => {
           </button>
         </div>
 
+        {/* İstatistik Kartları */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <MessageSquare className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Toplam Talep</p>
+              <p className="text-4xl font-bold text-white">{requests.length}</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <AlertCircle className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Bekleyen</p>
+              <p className="text-4xl font-bold text-white">{requests.filter(r => r.status === 'pending').length}</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Tamamlandı</p>
+              <p className="text-4xl font-bold text-white">{requests.filter(r => r.status === 'completed').length}</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <ShieldQuestion className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">İşleniyor</p>
+              <p className="text-4xl font-bold text-white">{requests.filter(r => r.status === 'in-progress').length}</p>
+            </div>
+          </div>
+        </div>
+
         <div className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -426,8 +473,12 @@ const RequestsPage: React.FC = () => {
               )}
             </div>
           ) : (
-            currentRequests.map((request) => (
-              <div key={request.id} className="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-white/20">
+            currentRequests.map((request, index) => (
+              <div 
+                key={request.id} 
+                className="group bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 p-6 border border-white/20"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{request.title}</h3>
@@ -462,7 +513,7 @@ const RequestsPage: React.FC = () => {
                   {request.status === 'pending' && (
                     <button 
                       onClick={() => handleDeleteRequest(request.id, request.title)}
-                      className="flex items-center px-3 py-2 text-sm text-gray-500 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-600 hover:text-white rounded-xl transition-all shadow-sm hover:shadow-md font-medium"
+                      className="flex items-center px-3 py-2 text-sm bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
                       Geri Çek
@@ -473,7 +524,7 @@ const RequestsPage: React.FC = () => {
                 <div className="mt-4 text-gray-700">{request.content}</div>
                 
                 {request.response && (
-                  <div className="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-5 border-l-4 border-indigo-500 shadow-md">
+                  <div className="mt-4 bg-white/50 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-indigo-500 shadow-md">
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                         <MessageSquare className="w-4 h-4 text-white" />

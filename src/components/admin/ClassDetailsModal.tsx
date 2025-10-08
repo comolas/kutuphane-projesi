@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search, BookOpen, Award, TrendingUp, DollarSign } from 'lucide-react';
 import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { Bar } from 'react-chartjs-2';
@@ -232,79 +232,123 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full h-[90vh] flex flex-col">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-2xl font-semibold text-gray-900">Sınıf Detayları: {className}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-7 h-7" />
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-3xl shadow-2xl w-full h-full max-h-[calc(100vh-2rem)] flex flex-col transform transition-all duration-300 animate-slideUp">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-t-3xl flex justify-between items-center">
+          <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Award className="w-7 h-7" />
+            Sınıf Detayları: {className}
+          </h3>
+          <button onClick={onClose} className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
         <div className="p-6 flex-grow flex flex-col">
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <div className="lg:col-span-2 space-y-4">
                 <div className="relative w-full">
                   <input
                     type="text"
                     placeholder="Öğrenci adıyla ara..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full pl-12 pr-4 py-3 bg-white border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm"
                   />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+                  <Search className="absolute left-4 top-3.5 text-indigo-400" size={20} />
                 </div>
-                <div className="text-lg font-semibold text-gray-800 mt-2">
-                  {monthName} Ayı Toplam Okuma: <span className="text-indigo-600">{totalMonthlyReads}</span>
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 shadow-lg">
+                  <div className="flex items-center gap-3 text-white">
+                    <BookOpen className="w-8 h-8" />
+                    <div>
+                      <p className="text-sm opacity-90">{monthName} Ayı Toplam Okuma</p>
+                      <p className="text-3xl font-bold">{totalMonthlyReads}</p>
+                    </div>
+                  </div>
                 </div>
             </div>
-            <div className="col-span-1">
-              <h4 className="text-sm font-semibold text-center text-gray-600 mb-1">Sınıf vs. Okul Ortalaması</h4>
-              <Bar 
-                data={comparisonData} 
-                options={{ 
-                  indexAxis: 'y', 
-                  scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
-                  plugins: { legend: { display: true, position: 'bottom' } }
-                }} 
-              />
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl p-4 shadow-lg border border-indigo-100">
+                <h4 className="text-sm font-semibold text-center text-gray-700 mb-3 flex items-center justify-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-indigo-600" />
+                  Sınıf vs. Okul Ortalaması
+                </h4>
+                <Bar 
+                  data={comparisonData} 
+                  options={{ 
+                    indexAxis: 'y', 
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+                    plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                  }} 
+                />
+              </div>
             </div>
           </div>
 
           {loading ? (
             <div className="flex-grow flex items-center justify-center">
-              <p className="text-lg">Öğrenci verileri hesaplanıyor...</p>
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                <p className="text-lg text-gray-600">Öğrenci verileri hesaplanıyor...</p>
+              </div>
             </div>
           ) : (
-            <div className="flex-grow overflow-y-auto">
+            <div className="flex-grow overflow-y-auto bg-white rounded-xl shadow-inner">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
+                <thead className="bg-gradient-to-r from-indigo-50 to-purple-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('name')}>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('name')}>
                       Öğrenci Adı {sortConfig?.key === 'name' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('monthlyReads')}>
-                      {monthName} Ayı Okuma {sortConfig?.key === 'monthlyReads' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
+                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('monthlyReads')}>
+                      {monthName} Ayı {sortConfig?.key === 'monthlyReads' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('totalReads')}>
-                      Toplam Okuma {sortConfig?.key === 'totalReads' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
+                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('totalReads')}>
+                      Toplam {sortConfig?.key === 'totalReads' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('monthlyFinesPaid')}>
-                      Aylık Ceza (₺) {sortConfig?.key === 'monthlyFinesPaid' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
+                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('monthlyFinesPaid')}>
+                      Aylık Ceza {sortConfig?.key === 'monthlyFinesPaid' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('totalFinesPaid')}>
-                      Toplam Ceza (₺) {sortConfig?.key === 'totalFinesPaid' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
+                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('totalFinesPaid')}>
+                      Toplam Ceza {sortConfig?.key === 'totalFinesPaid' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {currentStudents.map(student => (
-                    <tr key={student.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer hover:text-indigo-600" onClick={() => setDetailedStudent(student)}>{student.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{student.monthlyReads}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{student.totalReads}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{student.monthlyFinesPaid}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{student.totalFinesPaid}</td>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {currentStudents.map((student, index) => (
+                    <tr key={student.id} className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200 cursor-pointer group" onClick={() => setDetailedStudent(student)}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                            {student.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{student.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                          <BookOpen className="w-4 h-4" />
+                          {student.monthlyReads}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                          <Award className="w-4 h-4" />
+                          {student.totalReads}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${student.monthlyFinesPaid > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                          <DollarSign className="w-4 h-4" />
+                          {student.monthlyFinesPaid} ₺
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${student.totalFinesPaid > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                          <DollarSign className="w-4 h-4" />
+                          {student.totalFinesPaid} ₺
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -313,53 +357,79 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
           )}
 
           {detailedStudent && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center" onClick={() => setDetailedStudent(null)}>
-              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-start">
-                  <h4 className="text-xl font-bold text-gray-900">{detailedStudent.name}</h4>
-                  <button onClick={() => setDetailedStudent(null)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+            <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-[60] flex items-center justify-center animate-fadeIn" onClick={() => setDetailedStudent(null)}>
+              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4 transform transition-all duration-300 animate-slideUp" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                      {detailedStudent.name.charAt(0).toUpperCase()}
+                    </div>
+                    <h4 className="text-2xl font-bold text-gray-900">{detailedStudent.name}</h4>
+                  </div>
+                  <button onClick={() => setDetailedStudent(null)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-all"><X size={24} /></button>
                 </div>
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <h5 className="font-semibold text-gray-700">Bu Ay Okuduğu Kitaplar ({detailedStudent.monthlyReads})</h5>
+                <div className="space-y-4">
+                  <div className="bg-white rounded-xl p-4 shadow-md border border-indigo-100">
+                    <h5 className="font-bold text-indigo-700 flex items-center gap-2 mb-3">
+                      <BookOpen className="w-5 h-5" />
+                      Bu Ay Okuduğu Kitaplar ({detailedStudent.monthlyReads})
+                    </h5>
                     {detailedStudent.monthlyBorrowsData.length > 0 ? (
-                      <ul className="list-disc list-inside mt-2 text-sm text-gray-600 max-h-40 overflow-y-auto">
+                      <ul className="space-y-2 max-h-48 overflow-y-auto">
                         {detailedStudent.monthlyBorrowsData.map((book, index) => (
-                          <li key={index}>{book.title} - <i>{book.author}</i></li>
+                          <li key={index} className="flex items-start gap-2 p-2 rounded-lg hover:bg-indigo-50 transition-colors">
+                            <span className="text-indigo-600 font-bold text-xs mt-1">•</span>
+                            <span className="text-sm text-gray-700">
+                              <span className="font-semibold">{book.title}</span>
+                              <span className="text-gray-500"> - {book.author}</span>
+                            </span>
+                          </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-sm text-gray-500 mt-2">Bu ay hiç kitap okumamış.</p>
+                      <p className="text-sm text-gray-500 italic">Bu ay hiç kitap okumamış.</p>
                     )}
                   </div>
-                  <div>
-                    <h5 className="font-semibold text-gray-700">Genel İstatistikler</h5>
-                    <p className="text-sm text-gray-600">Favori Kategorisi: <span className="font-medium text-indigo-600">{detailedStudent.favoriteCategory}</span></p>
-                    <p className="text-sm text-gray-600">Favori Yazarı: <span className="font-medium text-indigo-600">{detailedStudent.favoriteAuthor}</span></p>
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 shadow-md text-white">
+                    <h5 className="font-bold flex items-center gap-2 mb-3">
+                      <Award className="w-5 h-5" />
+                      Genel İstatistikler
+                    </h5>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center bg-white/10 rounded-lg p-2">
+                        <span className="text-sm">Favori Kategorisi:</span>
+                        <span className="font-bold">{detailedStudent.favoriteCategory}</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-white/10 rounded-lg p-2">
+                        <span className="text-sm">Favori Yazarı:</span>
+                        <span className="font-bold">{detailedStudent.favoriteAuthor}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="p-4 border-t border-gray-200 flex justify-between items-center">
+          <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-b-3xl flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-700">
-                Sayfa <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span> ({filteredStudents.length} öğrenci)
+              <p className="text-sm font-medium text-gray-700">
+                Sayfa <span className="font-bold text-indigo-600">{currentPage}</span> / <span className="font-bold text-indigo-600">{totalPages}</span>
+                <span className="ml-2 text-gray-500">({filteredStudents.length} öğrenci)</span>
               </p>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
               >
                 Önceki
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
               >
                 Sonraki
               </button>

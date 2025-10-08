@@ -324,65 +324,98 @@ const BorrowedBooksPage: React.FC = () => {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-                  {currentBooks.map(book => {
+                  {currentBooks.map((book, index) => {
                     const daysRemaining = getDaysRemaining(book.dueDate);
                     const isOverdue = daysRemaining < 0;
 
                     return (
-                      <div key={`${book.id}-${book.borrowedAt}`} className="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col border border-white/20">
-                        <div className="relative overflow-hidden">
-                          <img src={book.coverImage} alt={book.title} className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <div 
+                        key={`${book.id}-${book.borrowedAt}`} 
+                        className="group bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden flex flex-col border border-white/20"
+                        style={{ animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both` }}
+                      >
+                        <div className="relative overflow-hidden" style={{ aspectRatio: '2/3' }}>
+                          <img 
+                            src={book.coverImage} 
+                            alt={book.title} 
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                          />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        </div>
-                        <div className="p-4 flex flex-col flex-grow">
-                          <h3 className="font-semibold text-gray-900">{book.title}</h3>
-                          <p className="text-sm text-gray-600">{book.author}</p>
                           
-                          <div className="mt-3 flex-grow flex flex-col justify-end">
-                            <div className={`px-3 py-1.5 rounded-xl text-xs font-bold mb-2 flex items-center shadow-md ${
-                              isOverdue 
-                                ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white' 
-                                : daysRemaining <= 3 
-                                ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white' 
-                                : 'bg-gradient-to-r from-green-400 to-emerald-500 text-white'
-                            }`}>
-                              <Clock className="w-4 h-4 mr-1" />
-                              {isOverdue
-                                ? `${Math.abs(daysRemaining)} gün gecikmiş`
-                                : `${daysRemaining} gün kaldı`}
+                          {/* Status Badge */}
+                          <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-xl text-xs font-bold backdrop-blur-xl shadow-lg ${
+                            isOverdue 
+                              ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white' 
+                              : daysRemaining <= 3 
+                              ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white' 
+                              : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                          }`}>
+                            {isOverdue
+                              ? `${Math.abs(daysRemaining)} gün gecikmiş`
+                              : `${daysRemaining} gün`}
+                          </div>
+
+                          {/* Extended Badge */}
+                          {book.extended && (
+                            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/90 backdrop-blur-xl text-indigo-600 shadow-lg">
+                              Uzatılmış
                             </div>
-                            <div className="text-xs text-gray-500 mb-3">
-                              Son Teslim: {book.dueDate.toLocaleDateString()}
-                              {book.extended && ' (Uzatılmış)'}
+                          )}
+                        </div>
+
+                        <div className="p-4 flex flex-col flex-grow">
+                          <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">{book.title}</h3>
+                          <p className="text-sm text-gray-600 mb-3">{book.author}</p>
+                          
+                          {/* Info Box */}
+                          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-3 mb-3">
+                            <div className="flex items-center text-xs text-gray-600">
+                              <CalendarIcon className="w-4 h-4 mr-1.5" />
+                              <span>Son Teslim: {book.dueDate.toLocaleDateString('tr-TR')}</span>
                             </div>
-                            <div className="space-y-2">
-                              {book.returnStatus === 'pending' ? (
-                                <div className="w-full px-4 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-xl text-sm font-bold text-center shadow-md">
-                                  İade Talebi Gönderildi
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => handleReturn(book.id, book.title)}
-                                  className="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all"
-                                >
-                                  İade Et
-                                </button>
-                              )}
-                              {canExtend(book.id) && !book.returnStatus && (
-                                <button
-                                  onClick={() => handleExtend(book.id, book.title)}
-                                  className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  7 Gün Uzat
-                                </button>
-                              )}
-                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="space-y-2 mt-auto">
+                            {book.returnStatus === 'pending' ? (
+                              <div className="w-full px-4 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-xl text-sm font-bold text-center shadow-md">
+                                İade Talebi Gönderildi
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleReturn(book.id, book.title)}
+                                className="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300"
+                              >
+                                İade Et
+                              </button>
+                            )}
+                            {canExtend(book.id) && !book.returnStatus && (
+                              <button
+                                onClick={() => handleExtend(book.id, book.title)}
+                                className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300"
+                              >
+                                7 Gün Uzat
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
+
+                <style>{`
+                  @keyframes fadeInUp {
+                    from {
+                      opacity: 0;
+                      transform: translateY(20px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                `}</style>
 
                 {/* Pagination */}
                 {totalPages > 1 && (

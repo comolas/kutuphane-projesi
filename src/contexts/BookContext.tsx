@@ -15,6 +15,7 @@ interface BorrowedBook extends Book {
     displayName: string;
     studentClass: string;
     studentNumber: string;
+    photoURL?: string;
   };
   fineStatus?: 'pending' | 'paid';
   fineAmount?: number; // This will be deprecated by snapshot
@@ -37,6 +38,7 @@ interface BorrowMessage {
     displayName: string;
     studentClass: string;
     studentNumber: string;
+    photoURL?: string;
   };
   bookData: Book;
 }
@@ -225,7 +227,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 userData: bookUserData ? {
                     displayName: bookUserData.displayName,
                     studentClass: bookUserData.studentClass,
-                    studentNumber: bookUserData.studentNumber
+                    studentNumber: bookUserData.studentNumber,
+                    photoURL: bookUserData.photoURL
                 } : undefined,
                 fineAmountSnapshot: data.fineAmountSnapshot,
                 fineRateSnapshot: data.fineRateSnapshot,
@@ -499,7 +502,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userData: {
           displayName: userData.displayName,
           studentClass: userData.studentClass,
-          studentNumber: userData.studentNumber
+          studentNumber: userData.studentNumber,
+          photoURL: userData.photoURL
         },
         bookData: book
       });
@@ -740,7 +744,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userData: {
           displayName: userData.displayName,
           studentClass: userData.studentClass,
-          studentNumber: userData.studentNumber
+          studentNumber: userData.studentNumber,
+          photoURL: userData.photoURL
         },
         bookData: {
           title: book.title,
