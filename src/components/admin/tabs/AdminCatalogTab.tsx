@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Book, Users } from '../../../types';
 import { useBooks } from '../../../contexts/BookContext';
 import { Html5Qrcode, Html5QrcodeScanType } from "html5-qrcode";
-import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
+import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X, Filter } from 'lucide-react';
 import LendBookModal from '../LendBookModal';
 import EditBookModal from '../EditBookModal';
 import BulkAddBookModal from '../BulkAddBookModal';
@@ -41,6 +41,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [showAddBookModal, setShowAddBookModal] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -133,6 +134,12 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
 
   const categories = Array.from(new Set(catalogBooks.map(book => book.category)));
 
+  useEffect(() => {
+    if (catalogBooks.length > 0) {
+      setLoading(false);
+    }
+  }, [catalogBooks]);
+
   const handleMarkAsLost = async (bookId: string) => {
     try {
       await markBookAsLost(bookId);
@@ -160,104 +167,34 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const fetchBookDataFromISBN = async (isbn: string) => {
     setApiMessage('Kitap verileri aranıyor...');
     try {
-      // Try multiple API endpoints for better reliability
-      const apiUrls = [
-        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`,
-        `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`,
-        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`
-      ];
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
       
-      let bookData = null;
-      let lastError = null;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       
-      // Try Google Books API first
-      try {
-        const response = await fetch(apiUrls[0], {
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
       const data = await response.json();
-        
+      
       if (data.items && data.items.length > 0) {
         const volumeInfo = data.items[0].volumeInfo;
         
-        bookData = {
-          title: volumeInfo.title || '',
-          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : '',
-          publisher: volumeInfo.publisher || '',
-          pageCount: volumeInfo.pageCount || 0,
-          dimensions: volumeInfo.dimensions ? `${volumeInfo.dimensions.height} x ${volumeInfo.dimensions.width}` : '',
-          coverImage: volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || '',
-          backCover: volumeInfo.description || ''
-        };
-      }
-      } catch (error) {
-        lastError = error;
-        console.warn('Google Books API failed, trying OpenLibrary...', error);
-        
-        // Try OpenLibrary API as fallback
-        try {
-          const response = await fetch(apiUrls[1]);
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-          
-          const data = await response.json();
-          const bookKey = `ISBN:${isbn}`;
-          
-          if (data[bookKey]) {
-            const bookInfo = data[bookKey];
-            bookData = {
-              title: bookInfo.title || '',
-              author: bookInfo.authors ? bookInfo.authors.map((a: any) => a.name).join(', ') : '',
-              publisher: bookInfo.publishers ? bookInfo.publishers[0].name : '',
-              pageCount: bookInfo.number_of_pages || 0,
-              coverImage: bookInfo.cover ? bookInfo.cover.medium || bookInfo.cover.small : '',
-              backCover: bookInfo.notes || ''
-            };
-          }
-        } catch (openLibError) {
-          console.warn('OpenLibrary API also failed:', openLibError);
-          lastError = openLibError;
-        }
-      }
-      
-      if (bookData) {
         setNewBook(prev => ({
           ...prev,
-          title: bookData.title || prev.title,
-          author: bookData.author || prev.author,
-          publisher: bookData.publisher || prev.publisher,
-          pageCount: bookData.pageCount || prev.pageCount,
-          dimensions: bookData.dimensions || prev.dimensions,
-          coverImage: bookData.coverImage || prev.coverImage,
-          backCover: bookData.backCover || prev.backCover
+          title: volumeInfo.title || prev.title,
+          author: volumeInfo.authors ? volumeInfo.authors.join(', ') : prev.author,
+          publisher: volumeInfo.publisher || prev.publisher,
+          pageCount: volumeInfo.pageCount || prev.pageCount,
+          coverImage: volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || volumeInfo.imageLinks?.smallThumbnail?.replace('http:', 'https:') || prev.coverImage,
+          backCover: volumeInfo.description || prev.backCover,
+          category: volumeInfo.categories ? volumeInfo.categories[0] : prev.category
         }));
-        setApiMessage('Kitap bilgileri başarıyla bulundu ve forma eklendi!');
+        setApiMessage('✓ Kitap bilgileri başarıyla bulundu ve forma eklendi!');
       } else {
-        setApiMessage('Bu ISBN ile eşleşen bir kitap bulunamadı. Lütfen bilgileri manuel olarak girin.');
+        setApiMessage('Bu ISBN ile kitap bulunamadı. Lütfen bilgileri manuel girin.');
       }
     } catch (error) {
       console.error("Error fetching book data:", error);
-      let errorMessage = 'Kitap bilgileri alınırken bir hata oluştu.';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          errorMessage = 'İnternet bağlantısı sorunu. Lütfen bağlantınızı kontrol edin.';
-        } else if (error.message.includes('403') || error.message.includes('429')) {
-          errorMessage = 'API limiti aşıldı. Lütfen birkaç dakika sonra tekrar deneyin.';
-        } else if (error.message.includes('404')) {
-          errorMessage = 'Bu ISBN ile kitap bulunamadı. Manuel olarak bilgileri girebilirsiniz.';
-        }
-      }
-      
-      setApiMessage(errorMessage);
+      setApiMessage('Kitap bilgileri alınamadı. Lütfen bilgileri manuel girin.');
     }
   };
 
@@ -405,7 +342,9 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const totalPages = Math.ceil(filteredCatalogBooks.length / itemsPerPage);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8 px-4">
+    <div className="max-w-7xl mx-auto">
+    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden border border-white/20">
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
@@ -432,50 +371,122 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       </div>
 
       <div className="p-6">
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative md:col-span-1">
-            <input
-              type="text"
-              placeholder="Kitap adı, yazar veya ID..."
-              value={catalogSearchQuery}
-              onChange={(e) => setCatalogSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-          </div>
-          <div className="relative md:col-span-1">
-            <input
-              type="text"
-              placeholder="Etiket ara..."
-              value={catalogTagQuery}
-              onChange={(e) => setCatalogTagQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-          </div>
-          <select
-            value={catalogStatusFilter}
-            onChange={(e) => setCatalogStatusFilter(e.target.value as 'all' | 'available' | 'borrowed' | 'lost')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          >
-            <option value="all">Tüm Durumlar</option>
-            <option value="available">Müsait</option>
-            <option value="borrowed">Ödünç Verildi</option>
-            <option value="lost">Kayıp</option>
-          </select>
-          <select
-            value={catalogCategoryFilter}
-            onChange={(e) => setCatalogCategoryFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          >
-            <option value="all">Tüm Kategoriler</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-        </div>
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold flex items-center">
+                <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                Filtreler
+              </h2>
+            </div>
 
-        <div className="mb-4 flex items-center">
+            <div className="mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Kitap ara..."
+                  value={catalogSearchQuery}
+                  onChange={(e) => setCatalogSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Etiket Ara</h3>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Etiket..."
+                    value={catalogTagQuery}
+                    onChange={(e) => setCatalogTagQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <Search className="absolute left-2.5 top-2.5 text-gray-400" size={16} />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Kategori</h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input
+                      type="radio"
+                      name="category"
+                      checked={catalogCategoryFilter === 'all'}
+                      onChange={() => setCatalogCategoryFilter('all')}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Tümü</span>
+                  </label>
+                  {categories.map(category => (
+                    <label key={category} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="category"
+                        checked={catalogCategoryFilter === category}
+                        onChange={() => setCatalogCategoryFilter(category)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">{category}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Durum</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input
+                      type="radio"
+                      name="status"
+                      checked={catalogStatusFilter === 'all'}
+                      onChange={() => setCatalogStatusFilter('all')}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Tümü</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input
+                      type="radio"
+                      name="status"
+                      checked={catalogStatusFilter === 'available'}
+                      onChange={() => setCatalogStatusFilter('available')}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-green-600">● Müsait</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input
+                      type="radio"
+                      name="status"
+                      checked={catalogStatusFilter === 'borrowed'}
+                      onChange={() => setCatalogStatusFilter('borrowed')}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-orange-600">● Ödünç Verilmiş</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input
+                      type="radio"
+                      name="status"
+                      checked={catalogStatusFilter === 'lost'}
+                      onChange={() => setCatalogStatusFilter('lost')}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-red-600">● Kayıp</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div className="flex-1">
+            <div className="mb-4 flex items-center">
           <input
             type="checkbox"
             id="selectAllBooks"
@@ -512,68 +523,85 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden animate-pulse border border-white/20">
+                    <div className="w-full aspect-[2/3] bg-gradient-to-br from-gray-200 to-gray-300"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                      <div className="flex justify-between items-center mt-3">
+                        <div className="h-6 bg-gray-300 rounded w-20"></div>
+                        <div className="h-8 bg-gray-300 rounded w-24"></div>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <div className="h-7 bg-gray-300 rounded w-20"></div>
+                        <div className="h-7 bg-gray-300 rounded w-20"></div>
+                        <div className="h-7 bg-gray-300 rounded w-16"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {currentBooks.map(book => {
             const bookStatus = getBookStatus(book.id);
 
             return (
-              <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden relative">
-                <input
-                  type="checkbox"
-                  className="absolute top-3 left-3 form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
-                  checked={selectedBookIds.includes(book.id)}
-                  onChange={(e) => handleSelectBook(book.id, e.target.checked)}
-                />
-                <img src={`https://us-central1-data-49543.cloudfunctions.net/imageProxy?url=${encodeURIComponent(book.coverImage)}`} alt={book.title} className="w-full h-85 object-cover" />
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900">{book.title}</h3>
-                  <p className="text-sm text-gray-600">{book.author}</p>
-                  <p className="text-xs text-gray-500 mt-1">{book.publisher}</p>
-
-                  <div className="mt-3 flex justify-between items-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${
+              <div key={book.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden relative group transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20">
+                <div className="relative overflow-hidden aspect-[2/3]">
+                  <div className="absolute top-2 left-2 z-10">
+                    <input
+                      type="checkbox"
+                      className="form-checkbox h-5 w-5 text-indigo-600 bg-white/90 backdrop-blur-sm rounded shadow-md transition duration-150 ease-in-out"
+                      checked={selectedBookIds.includes(book.id)}
+                      onChange={(e) => handleSelectBook(book.id, e.target.checked)}
+                    />
+                  </div>
+                  <div className="absolute top-2 right-2 z-10">
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold shadow-md ${
                       bookStatus === 'lost'
-                        ? 'bg-red-100 text-red-800'
+                        ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white'
                         : bookStatus === 'borrowed'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-green-100 text-green-800'
+                        ? 'bg-gradient-to-r from-orange-400 to-red-500 text-white'
+                        : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                     }`}>
-                      {bookStatus === 'lost' && <AlertTriangle className="w-3 h-3 mr-1" />}
-                      {bookStatus === 'borrowed' && <Clock className="w-3 h-3 mr-1" />}
-                      {bookStatus === 'available' && <CheckCircle className="w-3 h-3 mr-1" />}
-                      {
-                        bookStatus === 'lost'
-                        ? 'Kayıp'
-                        : bookStatus === 'borrowed'
-                        ? 'Ödünç Verildi'
-                        : 'Müsait'}
+                      {bookStatus === 'lost' ? 'Kayıp' : bookStatus === 'borrowed' ? 'Ödünç Verildi' : 'Müsait'}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    Konum: {book.location}
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <img src={`https://us-central1-data-49543.cloudfunctions.net/imageProxy?url=${encodeURIComponent(book.coverImage)}`} alt={book.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-gray-900 text-sm line-clamp-2 mb-1">{book.title}</h3>
+                  <p className="text-xs text-gray-600">{book.author}</p>
+                  <p className="text-xs text-gray-500 mt-1">Konum: {book.location}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       onClick={() => {
                         setSelectedBookToLend(book);
                         setShowLendBookModal(true);
                       }}
                       disabled={bookStatus !== 'available'}
-                      className="px-2 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm text-blue-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <BookOpen className="w-3 h-3 mr-1" />
                       Ödünç Ver
                     </button>
                     <button
                       onClick={() => handleEditBook(book)}
-                      className="px-2 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center"
+                      className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm text-indigo-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
                     >
                       <Edit className="w-3 h-3 mr-1" />
                       Düzenle
                     </button>
+                  </div>
+                  <div className="mt-2 flex gap-2">
                     <button
                       onClick={() => handleDeleteBook(book.id)}
-                      className="px-2 py-1 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center"
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                     >
                       <Trash2 className="w-3 h-3 mr-1" />
                       Sil
@@ -581,7 +609,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                     {bookStatus === 'lost' ? (
                       <button
                         onClick={() => handleMarkAsFound(book.id)}
-                        className="px-2 py-1 rounded-lg text-xs font-medium bg-green-50 text-green-600 hover:bg-green-100 transition-colors flex items-center"
+                        className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                       >
                         <UserCheck className="w-3 h-3 mr-1" />
                         Bulundu
@@ -589,7 +617,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                     ) : (
                       <button
                         onClick={() => handleMarkAsLost(book.id)}
-                        className="px-2 py-1 rounded-lg text-xs font-medium bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors flex items-center"
+                        className="flex-1 px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                       >
                         <UserX className="w-3 h-3 mr-1" />
                         Kayıp
@@ -600,30 +628,32 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
               </div>
             );
           })}
-        </div>
+            </div>
+            )
+            }
 
-        {/* Pagination Controls */}
-        <div className="mt-8 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-700">
-              Sayfa <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span> ({filteredCatalogBooks.length} kitap)
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Önceki
-            </button>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Sonraki
-            </button>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center items-center space-x-4">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                >
+                  Önceki
+                </button>
+                <span className="px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-gray-700 font-semibold shadow-lg">
+                  Sayfa {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                >
+                  Sonraki
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -963,6 +993,8 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
           onSave={handleSaveBook}
         />
       )}
+    </div>
+    </div>
     </div>
   );
 };

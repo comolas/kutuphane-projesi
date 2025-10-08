@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useMagazines } from '../../../contexts/MagazineContext';
 import { Magazine } from '../../../types';
-import { Search, Plus, Edit, Trash2, BookOpen } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, BookOpen, Filter, X } from 'lucide-react';
 import MagazineModal from '../MagazineModal';
 import Swal from 'sweetalert2';
 
@@ -10,6 +10,24 @@ const AdminMagazinesTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMagazineModal, setShowMagazineModal] = useState(false);
   const [selectedMagazine, setSelectedMagazine] = useState<Magazine | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortOrder, setSortOrder] = useState('newest');
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    magazines.forEach(magazine => {
+      magazine.tags?.forEach(tag => {
+        if(tag) tags.add(tag);
+      });
+    });
+    return Array.from(tags);
+  }, [magazines]);
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
 
   const handleAddClick = () => {
     setSelectedMagazine(null);
@@ -44,12 +62,36 @@ const AdminMagazinesTab: React.FC = () => {
     });
   };
 
-  const filteredMagazines = magazines.filter(magazine =>
-    magazine.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMagazines = useMemo(() => {
+    const filtered = magazines.filter(magazine => {
+      const matchesSearch = magazine.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            magazine.issue.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTags = selectedTags.length === 0 ||
+                          selectedTags.every(tag => magazine.tags?.includes(tag));
+      return matchesSearch && matchesTags;
+    });
+
+    return filtered.sort((a, b) => {
+      switch (sortOrder) {
+        case 'newest':
+          return (b.addedAt?.seconds || 0) - (a.addedAt?.seconds || 0);
+        case 'oldest':
+          return (a.addedAt?.seconds || 0) - (b.addedAt?.seconds || 0);
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        default:
+          return 0;
+      }
+    });
+  }, [magazines, searchQuery, selectedTags, sortOrder]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+    <>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 px-4">
+    <div className="max-w-7xl mx-auto">
+    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden border border-white/20">
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
@@ -67,37 +109,96 @@ const AdminMagazinesTab: React.FC = () => {
       </div>
 
       <div className="p-6">
-        <div className="mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Dergi adı ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-          </div>
-        </div>
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold flex items-center">
+                <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                Filtreler
+              </h2>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedTags([]);
+                  setSortOrder('newest');
+                }}
+                className="text-sm text-red-600 hover:text-red-700"
+              >
+                Temizle
+              </button>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredMagazines.map(magazine => (
-            <div key={magazine.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <img src={magazine.coverImageUrl} alt={magazine.title} className="w-full h-64 object-cover" />
+            <div className="mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Dergi ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="newest">En Yeni</option>
+                  <option value="oldest">En Eski</option>
+                  <option value="title-asc">A'dan Z'ye</option>
+                  <option value="title-desc">Z'den A'ya</option>
+                </select>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Etiketler</h3>
+                <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto">
+                  {allTags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => handleTagClick(tag)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        selectedTags.includes(tag)
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div className="flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredMagazines.map((magazine, index) => (
+            <div key={magazine.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="relative overflow-hidden aspect-[3/4]">
+                <img src={magazine.coverImageUrl} alt={magazine.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              </div>
               <div className="p-4">
-                <h3 className="font-semibold text-gray-900 truncate">{magazine.title}</h3>
-                <p className="text-sm text-gray-600">{magazine.issue}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <h2 className="text-lg font-bold text-gray-900 truncate" title={magazine.title}>{magazine.title}</h2>
+                <p className="text-sm text-gray-600 mt-1">{magazine.issue}</p>
+                <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => handleEditClick(magazine)}
-                    className="px-2 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center"
+                    className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm text-indigo-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
                   >
                     <Edit className="w-3 h-3 mr-1" />
                     Düzenle
                   </button>
                   <button
                     onClick={() => handleDeleteClick(magazine.id)}
-                    className="px-2 py-1 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors flex items-center"
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                   >
                     <Trash2 className="w-3 h-3 mr-1" />
                     Sil
@@ -107,14 +208,19 @@ const AdminMagazinesTab: React.FC = () => {
             </div>
           ))}
         </div>
+          </div>
+        </div>
       </div>
+    </div>
+    </div>
+    </div>
 
       <MagazineModal 
         isOpen={showMagazineModal}
         onClose={() => setShowMagazineModal(false)}
         magazine={selectedMagazine}
       />
-    </div>
+    </>
   );
 };
 

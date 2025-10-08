@@ -54,6 +54,8 @@ const FinesPage: React.FC = () => {
   }, [borrowedBooks, allBorrowedBooks, settingsLoading, finePerDay, calculateFine]);
 
   const totalUnpaidFine = unpaidFines.reduce((sum, book) => sum + (book.fine || 0), 0);
+  const totalPaidFine = paidFines.reduce((sum, book) => sum + (book.fine || 0), 0);
+  const overdueCount = unpaidFines.filter(book => book.daysOverdue > 0).length;
 
   const currentList = activeTab === 'unpaid' ? unpaidFines : paidFines;
 
@@ -90,37 +92,60 @@ const FinesPage: React.FC = () => {
           </p>
         </div>
 
-        {activeTab === 'unpaid' && (
-          <div className="relative bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-xl p-6 mb-8 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mr-4">
+        {/* İstatistik Kartları */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Ödenmemiş Ceza */}
+          <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
                   <DollarSign className="w-8 h-8 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-white">Toplam Borcunuz</h2>
-                  <p className="text-sm text-white/80">Ödenmemiş tüm cezalar</p>
-                </div>
               </div>
-              <div className="text-4xl font-bold text-white">
-                {totalUnpaidFine} TL
-              </div>
-            </div>
-            {totalUnpaidFine > 0 && (
-              <div className="relative mt-4 pt-4 border-t border-white/20">
+              <p className="text-white/80 text-sm font-medium mb-2">Ödenmemiş Ceza</p>
+              <p className="text-4xl font-bold text-white mb-4">{totalUnpaidFine} TL</p>
+              {totalUnpaidFine > 0 && (
                 <button 
                   onClick={() => setIsModalOpen(true)}
-                  className="w-full px-4 py-3 bg-white/20 backdrop-blur-xl text-white rounded-xl hover:bg-white/30 transition-all flex items-center justify-center text-sm font-medium"
+                  className="w-full px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all text-sm font-medium"
                 >
-                  <Info className="w-4 h-4 mr-2" />
                   Nasıl Öderim?
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Ödenen Ceza */}
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Ödenen Ceza</p>
+              <p className="text-4xl font-bold text-white">{totalPaidFine} TL</p>
+            </div>
+          </div>
+
+          {/* Gecikmiş Kitap */}
+          <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                  <AlertCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Gecikmiş Kitap</p>
+              <p className="text-4xl font-bold text-white">{overdueCount}</p>
+            </div>
+          </div>
+        </div>
+
+
 
         <div className="mb-6 bg-white/60 backdrop-blur-xl rounded-2xl p-2 shadow-lg">
           <nav className="flex space-x-2" aria-label="Tabs">
@@ -215,107 +240,116 @@ const FinesPage: React.FC = () => {
                           </div>
                           <button
                             onClick={() => {
-                              const doc = new jsPDF();
-                              doc.setFont('helvetica', 'normal');
-                              const pageWidth = doc.internal.pageSize.getWidth();
-                              const pageHeight = doc.internal.pageSize.getHeight();
-                              
+                              const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
+                              const pageWidth = 80;
                               const tr = (text: string) => text.replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
-                              
                               const receiptNo = `MKB-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
                               
-                              doc.setFillColor(79, 70, 229);
-                              doc.rect(0, 0, pageWidth, 40, 'F');
-                              
-                              doc.setTextColor(255, 255, 255);
-                              doc.setFontSize(22);
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('ÖDEME MAKBUZU'), pageWidth / 2, 20, { align: 'center' });
-                              doc.setFontSize(10);
-                              doc.setFont('helvetica', 'normal');
-                              doc.text(tr('Data Koleji Kütüphanesi'), pageWidth / 2, 28, { align: 'center' });
-                              
-                              doc.setFontSize(9);
-                              doc.text(`Makbuz No: ${receiptNo}`, pageWidth - 15, 20, { align: 'right' });
-                              doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}`, pageWidth - 15, 27, { align: 'right' });
-                              
+                              // Border
                               doc.setDrawColor(79, 70, 229);
-                              doc.setLineWidth(0.5);
-                              doc.rect(10, 45, pageWidth - 20, pageHeight - 65, 'S');
+                              doc.setLineWidth(1);
+                              doc.rect(2, 2, pageWidth - 4, 196, 'S');
                               
-                              doc.setTextColor(0, 0, 0);
-                              let y = 60;
-                              
-                              doc.setFontSize(12);
-                              doc.setTextColor(34, 197, 94);
+                              // Header
+                              doc.setFillColor(79, 70, 229);
+                              doc.rect(2, 2, pageWidth - 4, 25, 'F');
+                              doc.setTextColor(255, 255, 255);
+                              doc.setFontSize(16);
                               doc.setFont('helvetica', 'bold');
-                              doc.text(tr('ÖDENDİ'), pageWidth / 2, y, { align: 'center' });
-                              y += 15;
-                              
-                              doc.setTextColor(0, 0, 0);
-                              doc.setFontSize(11);
-                              doc.text(tr('KİTAP BİLGİLERİ'), 15, y);
+                              doc.text(tr('ÖDEME MAKBUZU'), pageWidth / 2, 12, { align: 'center' });
+                              doc.setFontSize(9);
                               doc.setFont('helvetica', 'normal');
-                              y += 8;
+                              doc.text(tr('Data Koleji Kütüphanesi'), pageWidth / 2, 20, { align: 'center' });
+                              
+                              // Receipt Info
+                              doc.setTextColor(0, 0, 0);
+                              doc.setFontSize(7);
+                              doc.text(`Makbuz No: ${receiptNo}`, pageWidth - 5, 32, { align: 'right' });
+                              doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`, pageWidth - 5, 37, { align: 'right' });
+                              doc.text(`Saat: ${new Date().toLocaleTimeString('tr-TR')}`, pageWidth - 5, 42, { align: 'right' });
+                              
+                              // Watermark
+                              doc.setTextColor(34, 197, 94);
+                              doc.setFontSize(40);
+                              doc.setFont('helvetica', 'bold');
+                              doc.saveGraphicsState();
+                              doc.setGState(new doc.GState({ opacity: 0.1 }));
+                              doc.text(tr('ODENDI'), pageWidth / 2, 100, { align: 'center', angle: 45 });
+                              doc.restoreGraphicsState();
+                              
+                              // Content
+                              doc.setTextColor(0, 0, 0);
+                              let y = 50;
+                              
+                              doc.setFontSize(8);
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('Kitap Adi:'), 5, y);
+                              doc.setFont('helvetica', 'normal');
+                              const titleLines = doc.splitTextToSize(tr(book.title), pageWidth - 10);
+                              doc.text(titleLines, 5, y + 4);
+                              y += 4 + (titleLines.length * 4);
+                              
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('Yazar:'), 5, y);
+                              doc.setFont('helvetica', 'normal');
+                              doc.text(tr(book.author), 5, y + 4);
+                              y += 10;
                               
                               doc.setDrawColor(200, 200, 200);
-                              doc.setLineWidth(0.3);
-                              doc.line(15, y, pageWidth - 15, y);
+                              doc.line(5, y, pageWidth - 5, y);
+                              y += 6;
+                              
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('Son Teslim:'), 5, y);
+                              doc.setFont('helvetica', 'normal');
+                              doc.text(new Date(book.dueDate).toLocaleDateString('tr-TR'), pageWidth - 5, y, { align: 'right' });
+                              y += 6;
+                              
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('Gecikme Suresi:'), 5, y);
+                              doc.setFont('helvetica', 'normal');
+                              doc.text(tr(`${daysOverdue} gun`), pageWidth - 5, y, { align: 'right' });
+                              y += 6;
+                              
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('Gunluk Ceza:'), 5, y);
+                              doc.setFont('helvetica', 'normal');
+                              doc.text(`${fineRate} TL`, pageWidth - 5, y, { align: 'right' });
+                              y += 6;
+                              
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('Odeme Tarihi:'), 5, y);
+                              doc.setFont('helvetica', 'normal');
+                              doc.text(book.paymentDate ? new Date(book.paymentDate).toLocaleDateString('tr-TR') : '-', pageWidth - 5, y, { align: 'right' });
                               y += 8;
                               
+                              doc.line(5, y, pageWidth - 5, y);
+                              y += 6;
+                              
+                              // Total
+                              doc.setFillColor(79, 70, 229);
+                              doc.rect(5, y - 3, pageWidth - 10, 10, 'F');
+                              doc.setTextColor(255, 255, 255);
                               doc.setFontSize(10);
-                              doc.text(tr('Kitap Adı:'), 20, y);
-                              doc.text(tr(book.title), 70, y);
-                              y += 7;
-                              doc.text(tr('Yazar:'), 20, y);
-                              doc.text(tr(book.author), 70, y);
-                              y += 7;
-                              doc.text(tr('Son Teslim:'), 20, y);
-                              doc.text(new Date(book.dueDate).toLocaleDateString('tr-TR'), 70, y);
+                              doc.setFont('helvetica', 'bold');
+                              doc.text(tr('TOPLAM:'), 8, y + 3);
+                              doc.text(`${fineAmount} TL`, pageWidth - 8, y + 3, { align: 'right' });
                               y += 15;
                               
-                              doc.setFont('helvetica', 'bold');
-                              doc.setFontSize(11);
-                              doc.text(tr('CEZA DETAYLARI'), 15, y);
-                              doc.setFont('helvetica', 'normal');
-                              y += 8;
-                              
-                              doc.setLineWidth(0.3);
-                              doc.line(15, y, pageWidth - 15, y);
-                              y += 8;
-                              
-                              doc.setFontSize(10);
-                              doc.text(tr('Gecikme Süresi:'), 20, y);
-                              doc.text(tr(`${daysOverdue} gün`), 70, y);
-                              y += 7;
-                              doc.text(tr('Günlük Ceza:'), 20, y);
-                              doc.text(`${fineRate} TL`, 70, y);
-                              y += 7;
-                              doc.text(tr('Ödeme Tarihi:'), 20, y);
-                              doc.text(book.paymentDate ? new Date(book.paymentDate).toLocaleDateString('tr-TR') : '-', 70, y);
-                              y += 12;
-                              
-                              doc.setFillColor(79, 70, 229);
-                              doc.rect(15, y - 5, pageWidth - 30, 12, 'F');
-                              doc.setTextColor(255, 255, 255);
-                              doc.setFont('helvetica', 'bold');
-                              doc.setFontSize(12);
-                              doc.text(tr('TOPLAM TUTAR:'), 20, y + 3);
-                              doc.text(`${fineAmount} TL`, pageWidth - 20, y + 3, { align: 'right' });
-                              y += 20;
-                              
+                              // Signature
                               doc.setTextColor(0, 0, 0);
+                              doc.setFontSize(7);
                               doc.setFont('helvetica', 'normal');
-                              doc.setFontSize(9);
-                              y = pageHeight - 40;
-                              doc.line(pageWidth - 70, y, pageWidth - 20, y);
-                              doc.text(tr('Yetkili İmza'), pageWidth - 45, y + 5, { align: 'center' });
+                              y = 175;
+                              doc.line(pageWidth - 35, y, pageWidth - 5, y);
+                              doc.text(tr('Yetkili Imza'), pageWidth - 20, y + 4, { align: 'center' });
                               
+                              // Footer
                               doc.setFillColor(79, 70, 229);
-                              doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+                              doc.rect(2, 188, pageWidth - 4, 10, 'F');
                               doc.setTextColor(255, 255, 255);
-                              doc.setFontSize(8);
-                              doc.text(tr('Data Koleji Kütüphanesi - Tüm hakları saklıdır'), pageWidth / 2, pageHeight - 10, { align: 'center' });
+                              doc.setFontSize(6);
+                              doc.text(tr('Data Koleji Kutuphanesi'), pageWidth / 2, 194, { align: 'center' });
                               
                               doc.save(`makbuz-${receiptNo}.pdf`);
                             }}

@@ -45,14 +45,31 @@ const LendBookModal: React.FC<LendBookModalProps> = ({ isOpen, onClose, onLend, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-8xl w-full">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-8xl w-full border border-white/20">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-medium text-gray-900">Kullanıcı Seç</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
             <X className="w-4 h-4" />
           </button>
         </div>
+        {book && (
+          <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
+            <div className="flex items-center gap-4">
+              <img 
+                src={book.coverImage} 
+                alt={book.title} 
+                className="w-16 h-24 object-cover rounded-lg shadow-md"
+                onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/64x96'; }}
+              />
+              <div className="flex-1">
+                <h4 className="font-bold text-gray-900">{book.title}</h4>
+                <p className="text-sm text-gray-600">{book.author}</p>
+                <p className="text-xs text-gray-500 mt-1">Kod: {book.id}</p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="p-6">
           <div className="relative mb-4">
             <input

@@ -24,8 +24,9 @@ const CatalogPage: React.FC = () => {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showBookDetails, setShowBookDetails] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [userFavorites, setUserFavorites] = useState<string[]>([]); // State to store favorite book IDs
+  const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const booksPerPage = 12;
   const [sortOrder, setSortOrder] = useState<string>('default'); // New state for sorting
   const [recommendedBooksForModal, setRecommendedBooksForModal] = useState<Book[]>([]);
@@ -207,7 +208,7 @@ const CatalogPage: React.FC = () => {
   const totalPages = Math.ceil(filteredAndSortedBooks.length / booksPerPage);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-4">
           <button
@@ -239,36 +240,60 @@ const CatalogPage: React.FC = () => {
 
 
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Kitap veya yazar ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-            <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
-          </div>
-        </div>
+        {/* Floating Filter Button (Mobile) */}
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
 
-        {/* Main Content with Sidebar */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Filters */}
-          <aside className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-4">
+        {/* Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 z-50 transition-transform duration-300 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          } lg:flex-shrink-0 border border-white/20`}>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-semibold flex items-center">
                   <Filter className="w-5 h-5 mr-2 text-indigo-600" />
                   Filtreler
                 </h2>
-                <button
-                  onClick={handleClearFilters}
-                  className="text-sm text-red-600 hover:text-red-700"
-                >
-                  Temizle
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleClearFilters}
+                    className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all"
+                  >
+                    Temizle
+                  </button>
+                  <button
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="lg:hidden text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="mb-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Kitap ara..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -380,7 +405,6 @@ const CatalogPage: React.FC = () => {
                   </select>
                 </div>
               </div>
-            </div>
           </aside>
 
           {/* Main Content Area */}
@@ -388,46 +412,45 @@ const CatalogPage: React.FC = () => {
 
             {/* Active Filters */}
             <div className="mb-6 flex flex-wrap items-center gap-2">
-          {searchQuery && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800">
-              Aranan: {searchQuery}
-              <button onClick={() => setSearchQuery('')} className="ml-1.5 flex-shrink-0 text-gray-500 hover:text-gray-700">
-                <X className="w-4 h-4" />
-              </button>
-            </span>
-          )}
-          {tagQuery && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800">
-              Etiket: {tagQuery}
-              <button onClick={() => setTagQuery('')} className="ml-1.5 flex-shrink-0 text-gray-500 hover:text-gray-700">
-                <X className="w-4 h-4" />
-              </button>
-            </span>
-          )}
-          {selectedCategory !== 'all' && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
-              Kategori: {selectedCategory}
-              <button onClick={() => setSelectedCategory('all')} className="ml-1.5 flex-shrink-0 text-indigo-500 hover:text-indigo-700">
-                <X className="w-4 h-4" />
-              </button>
-            </span>
-          )}
-          {availability !== 'all' && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
-              Durum: {availability === 'available' ? 'Müsait' : availability === 'borrowed' ? 'Ödünç Verilmiş' : 'Kayıp'}
-              <button onClick={() => setAvailability('all')} className="ml-1.5 flex-shrink-0 text-orange-500 hover:text-orange-700">
-                <X className="w-4 h-4" />
-              </button>
-            </span>
-          )}
+              {searchQuery && (
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow-sm">
+                  Aranan: {searchQuery}
+                  <button onClick={() => setSearchQuery('')} className="ml-2 text-gray-500 hover:text-gray-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              )}
+              {tagQuery && (
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-indigo-800 shadow-sm">
+                  Etiket: {tagQuery}
+                  <button onClick={() => setTagQuery('')} className="ml-2 text-indigo-500 hover:text-indigo-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              )}
+              {selectedCategory !== 'all' && (
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 shadow-sm">
+                  Kategori: {selectedCategory}
+                  <button onClick={() => setSelectedCategory('all')} className="ml-2 text-purple-500 hover:text-purple-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              )}
+              {availability !== 'all' && (
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 shadow-sm">
+                  Durum: {availability === 'available' ? 'Müsait' : availability === 'borrowed' ? 'Ödünç Verilmiş' : 'Kayıp'}
+                  <button onClick={() => setAvailability('all')} className="ml-2 text-orange-500 hover:text-orange-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              )}
             </div>
 
-            {/* Books Grid */}
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(9)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
-                    <div className="w-full aspect-[2/3] bg-gray-300"></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden animate-pulse border border-white/20">
+                    <div className="w-full aspect-[2/3] bg-gradient-to-br from-gray-200 to-gray-300"></div>
                     <div className="p-4 space-y-3">
                       <div className="h-5 bg-gray-300 rounded w-3/4"></div>
                       <div className="h-4 bg-gray-300 rounded w-1/2"></div>
@@ -451,8 +474,8 @@ const CatalogPage: React.FC = () => {
                 <p className="text-gray-500">Aradığınız kriterlere uygun kitap bulunmuyor.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paginatedBooks.map(book => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {paginatedBooks.map((book, index) => {
                   const bookStatus = getBookStatus(book.id);
                   const hasPendingRequest = borrowMessages.some(m => 
                     m.bookId === book.id && 
@@ -460,43 +483,21 @@ const CatalogPage: React.FC = () => {
                     m.status === 'pending'
                   );
                   return (
-                    <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden relative group transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+                    <div 
+                      key={book.id} 
+                      className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden relative group transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
                       <div className="relative overflow-hidden aspect-[2/3]">
-                        <button
-                          onClick={() => handleToggleFavorite(book.id)}
-                          className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 backdrop-blur-sm rounded-full text-gray-600 hover:text-red-500 transition-all duration-300 hover:scale-110 shadow-md"
-                        >
-                          <Heart className={`w-5 h-5 transition-all ${userFavorites.includes(book.id) ? 'text-red-500 fill-current scale-110' : ''}`} />
-                        </button>
-                        <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{book.title}</h3>
-                        <p className="text-sm text-gray-600">{book.author}</p>
-                        <p className="text-xs text-gray-500 mt-1">{book.publisher}</p>
-                        <div className="flex items-center mt-2">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`w-4 h-4 transition-all ${
-                                (book.averageRating || 0) >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-2 text-xs text-gray-600">
-                            {(book.averageRating || 0).toFixed(1)} ({book.reviewCount || 0})
-                          </span>
-                        </div>
-                        <div className="mt-3 flex justify-between items-center">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold transition-all ${
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className={`px-2 py-1 rounded-lg text-xs font-bold shadow-md ${
                             hasPendingRequest
-                              ? 'bg-yellow-100 text-yellow-800'
+                              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
                               : bookStatus === 'lost'
-                              ? 'bg-red-100 text-red-800'
+                              ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white'
                               : bookStatus === 'borrowed'
-                              ? 'bg-orange-100 text-orange-800'
-                              : 'bg-green-100 text-green-800'
+                              ? 'bg-gradient-to-r from-orange-400 to-red-500 text-white'
+                              : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                           }`}>
                             {hasPendingRequest 
                               ? 'Onay Bekliyor' 
@@ -506,10 +507,19 @@ const CatalogPage: React.FC = () => {
                               ? 'Ödünç Verildi' 
                               : 'Müsait'}
                           </span>
-                          <div className="flex flex-col items-end space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+                        </div>
+                        <button
+                          onClick={() => handleToggleFavorite(book.id)}
+                          className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 backdrop-blur-sm rounded-full text-gray-600 hover:text-red-500 transition-all duration-300 hover:scale-110 shadow-md"
+                        >
+                          <Heart className={`w-5 h-5 transition-all ${userFavorites.includes(book.id) ? 'text-red-500 fill-current scale-110' : ''}`} />
+                        </button>
+                        <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                             <button
                               onClick={() => handleInspectReviews(book)}
-                              className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-200 transition-all hover:scale-105 flex items-center"
+                              className="w-full px-3 py-2 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
                             >
                               <MessageSquare className="w-3 h-3 mr-1" />
                               Yorumlar
@@ -518,29 +528,37 @@ const CatalogPage: React.FC = () => {
                               <>
                                 <button
                                   onClick={() => handleInspectBook(book)}
-                                  className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-200 transition-all hover:scale-105 flex items-center"
+                                  className="w-full px-3 py-2 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
                                 >
                                   <Eye className="w-3 h-3 mr-1" />
                                   İncele
                                 </button>
                                 <button
                                   onClick={() => handleBorrowRequest(book)}
-                                  className="px-2 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all hover:scale-105"
+                                  className="w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all"
                                 >
                                   Ödünç Al
                                 </button>
                               </>
                             )}
                           </div>
-                          {bookStatus === 'lost' && (
-                            <div className="flex items-center text-red-600">
-                              <AlertTriangle className="w-4 h-4 mr-1" />
-                              <span className="text-xs">Kayıp</span>
-                            </div>
-                          )}
                         </div>
-                        <div className="text-xs text-gray-500 mt-2">
-                          Konum: {book.location}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-900 text-sm line-clamp-2 mb-1">{book.title}</h3>
+                        <p className="text-xs text-gray-600">{book.author}</p>
+                        <div className="flex items-center mt-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-3 h-3 ${
+                                (book.averageRating || 0) >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-1 text-xs text-gray-600 font-medium">
+                            {(book.averageRating || 0).toFixed(1)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -549,28 +567,25 @@ const CatalogPage: React.FC = () => {
               </div>
             )}
 
-            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <p className="text-sm text-gray-600">
+              <div className="mt-8 flex justify-center items-center space-x-4">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                >
+                  Önceki
+                </button>
+                <span className="px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-gray-700 font-semibold shadow-lg">
                   Sayfa {currentPage} / {totalPages}
-                </p>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Önceki
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Sonraki
-                  </button>
-                </div>
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                >
+                  Sonraki
+                </button>
               </div>
             )}
           </div>
@@ -579,184 +594,173 @@ const CatalogPage: React.FC = () => {
 
       {/* Book Details Modal */}
       {showBookDetails && selectedBook && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-10xl w-full max-h-[120vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <BookOpen className="w-6 h-6 mr-2 text-indigo-600" />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-0 md:p-4">
+          <div className="bg-white w-full h-full md:h-[95vh] md:rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white flex items-center">
+                <BookOpen className="w-6 h-6 mr-2" />
                 Kitap Detayları
               </h2>
               <button
                 onClick={() => setShowBookDetails(false)}
-                className="text-gray-400 hover:text-gray-500"
+                className="text-white/80 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto max-h-[calc(100vh-120px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Book Cover and Basic Info */}
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <img
-                      src={selectedBook.coverImage}
-                      alt={selectedBook.title}
-                      className="w-56 h-80 object-cover rounded-lg shadow-lg mx-auto"
-                    />
+            <div className="flex flex-col md:flex-row h-[calc(100%-80px)]">
+              {/* Left Side */}
+              <div className="md:w-2/5 bg-gradient-to-br from-gray-100 to-gray-200 p-8 flex flex-col items-center justify-center">
+                <div className="relative mb-6">
+                  <img
+                    src={selectedBook.coverImage}
+                    alt={selectedBook.title}
+                    className="w-64 h-96 object-cover rounded-2xl shadow-2xl"
+                  />
+                  <div className="absolute top-3 right-3">
+                    <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg backdrop-blur-sm ${
+                      getBookStatus(selectedBook.id) === 'lost'
+                        ? 'bg-red-500/90 text-white'
+                        : getBookStatus(selectedBook.id) === 'borrowed'
+                        ? 'bg-orange-500/90 text-white'
+                        : 'bg-green-500/90 text-white'
+                    }`}>
+                      {getBookStatus(selectedBook.id) === 'lost' 
+                        ? 'Kayıp' 
+                        : getBookStatus(selectedBook.id) === 'borrowed' 
+                        ? 'Ödünç Verildi' 
+                        : 'Müsait'}
+                    </span>
                   </div>
-                  
-                  <div className="text-center space-y-2">
-                    <h3 className="text-2xl font-bold text-gray-900">{selectedBook.title}</h3>
-                    <p className="text-lg text-gray-600">{selectedBook.author}</p>
-                    <p className="text-sm text-gray-500">{selectedBook.publisher}</p>
-                    <div className="flex items-center justify-center mt-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        getBookStatus(selectedBook.id) === 'lost'
-                          ? 'bg-red-100 text-red-800'
-                          : getBookStatus(selectedBook.id) === 'borrowed'
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {getBookStatus(selectedBook.id) === 'lost' 
-                          ? 'Kayıp' 
-                          : getBookStatus(selectedBook.id) === 'borrowed' 
-                          ? 'Ödünç Verildi' 
-                          : 'Müsait'}
-                      </span>
+                </div>
+                
+                <div className="flex items-center mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-6 h-6 ${
+                        (selectedBook.averageRating || 0) >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                  <span className="ml-2 text-lg font-semibold text-gray-700">
+                    {(selectedBook.averageRating || 0).toFixed(1)}
+                  </span>
+                </div>
+
+                {getBookStatus(selectedBook.id) === 'available' && !isBorrowed(selectedBook.id) && (
+                  <button
+                    onClick={() => {
+                      handleBorrowRequest(selectedBook);
+                      setShowBookDetails(false);
+                    }}
+                    className="w-full max-w-xs px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                  >
+                    Ödünç Al
+                  </button>
+                )}
+              </div>
+
+              {/* Right Side */}
+              <div className="md:w-3/5 overflow-y-auto p-8 space-y-8">
+                <div>
+                  <h3 className="text-4xl font-bold text-gray-900 mb-2">{selectedBook.title}</h3>
+                  <p className="text-xl text-gray-600 mb-1">{selectedBook.author}</p>
+                  <p className="text-sm text-gray-500">{selectedBook.publisher}</p>
+                </div>
+
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 mb-4">Hakkında</h4>
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6">
+                    <p className="text-gray-700 leading-relaxed">
+                      {selectedBook.backCover}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                    <Ruler className="w-6 h-6 mr-2 text-indigo-600" />
+                    Fiziksel Özellikler
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                      <p className="text-sm text-gray-500 mb-1">Sayfa Sayısı</p>
+                      <p className="text-lg font-semibold text-gray-900">{selectedBook.pageCount}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                      <p className="text-sm text-gray-500 mb-1">Boyut</p>
+                      <p className="text-lg font-semibold text-gray-900">{selectedBook.dimensions}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                      <p className="text-sm text-gray-500 mb-1">Ağırlık</p>
+                      <p className="text-lg font-semibold text-gray-900">{selectedBook.weight}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                      <p className="text-sm text-gray-500 mb-1">Cilt</p>
+                      <p className="text-lg font-semibold text-gray-900">{selectedBook.binding}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Detailed Information */}
-                <div className="space-y-6">
-                  {/* Physical Properties */}
+                {recommendedBooksForModal.length > 0 && (
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <Ruler className="w-5 h-5 mr-2 text-indigo-600" />
-                      Fiziksel Özellikler
+                    <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                      <BookOpen className="w-6 h-6 mr-2 text-indigo-600" />
+                      Benzer Kitaplar
                     </h4>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Sayfa Sayısı:</span>
-                        <span className="font-small">{selectedBook.pageCount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Boyut:</span>
-                        <span className="font-small">{selectedBook.dimensions}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Ağırlık:</span>
-                        <span className="font-small">{selectedBook.weight}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Cilt:</span>
-                        <span className="font-small">{selectedBook.binding}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Konum:</span>
-                        <span className="font-small">{selectedBook.location}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Back Cover Description */}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Arka Kapak</h4>
-                    <div className="bg-indigo-50 rounded-lg p-4">
-                      <p className="text-gray-700 leading-relaxed">
-                        {selectedBook.backCover}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* "Bu kitapları da okuyabilirsin" section */}
-                  {recommendedBooksForModal.length > 0 && (
-                    <div className="mt-6">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <BookOpen className="w-5 h-5 mr-2 text-indigo-600" />
-                        Bu Kitapları da Okuyabilirsin
-                      </h4>
-                      <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
-                        {recommendedBooksForModal.map(book => (
-                          <div key={book.id} className="flex-shrink-0 w-40 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
-                            <img src={book.coverImage} alt={book.title} className="w-full h-48 object-cover" />
-                            <div className="p-3">
-                              <h5 className="font-medium text-gray-900 text-sm truncate">{book.title}</h5>
-                              <p className="text-xs text-gray-600 truncate">{book.author}</p>
-                              <div className="mt-2 flex flex-col space-y-1">
-                                <button
-                                  onClick={() => handleBorrowRequest(book as Book)}
-                                  className="w-full px-2 py-1 bg-indigo-100 text-indigo-700 rounded-md text-xs font-medium hover:bg-indigo-200 transition-colors"
-                                >
-                                  Ödünç Al
-                                </button>
-                                <button
-                                  onClick={() => handleToggleFavorite(book.id)}
-                                  className={`w-full px-2 py-1 rounded-md text-xs font-medium transition-colors flex items-center justify-center ${
-                                    userFavorites.includes(book.id)
-                                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                  }`}
-                                >
-                                  <Heart className={`w-3 h-3 mr-1 ${userFavorites.includes(book.id) ? 'fill-current' : ''}`} />
-                                  Favori
-                                </button>
-                              </div>
-                            </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {recommendedBooksForModal.slice(0, 6).map(book => (
+                        <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-lg transition-all hover:scale-105">
+                          <div className="relative aspect-[2/3]">
+                            <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
                           </div>
-                        ))}
-                      </div>
+                          <div className="p-3">
+                            <h5 className="font-semibold text-gray-900 text-sm line-clamp-1">{book.title}</h5>
+                            <p className="text-xs text-gray-600 line-clamp-1">{book.author}</p>
+                            <button
+                              onClick={() => handleBorrowRequest(book as Book)}
+                              className="mt-2 w-full px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-xs font-semibold hover:shadow-md transition-all"
+                            >
+                              Ödünç Al
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  {/* Tags */}
-                  {selectedBook.tags && selectedBook.tags.length > 0 && (
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <Tag className="w-5 h-5 mr-2 text-indigo-600" />
-                        Etiketler
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedBook.tags.slice(0, 5).map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* More Info Link */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <a
-                      href={generateBookDetailsUrl(selectedBook.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Kitap hakkında daha fazla bilgi almak için tıklayınız
-                    </a>
                   </div>
+                )}
 
-                  {/* Action Buttons */}
-                  {getBookStatus(selectedBook.id) === 'available' && !isBorrowed(selectedBook.id) && (
-                    <div className="pt-4">
-                      <button
-                        onClick={() => {
-                          handleBorrowRequest(selectedBook);
-                          setShowBookDetails(false);
-                        }}
-                        className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                      >
-                        Ödünç Al
-                      </button>
+                {selectedBook.tags && selectedBook.tags.length > 0 && (
+                  <div>
+                    <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                      <Tag className="w-6 h-6 mr-2 text-indigo-600" />
+                      Etiketler
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedBook.tags.slice(0, 8).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-xl text-sm font-semibold shadow-sm"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-gray-200">
+                  <a
+                    href={generateBookDetailsUrl(selectedBook.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl font-semibold hover:shadow-md transition-all"
+                  >
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Daha Fazla Bilgi
+                  </a>
                 </div>
               </div>
             </div>
