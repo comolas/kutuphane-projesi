@@ -16,6 +16,8 @@ import { BudgetProvider } from './contexts/BudgetContext';
 import { GameProvider } from './contexts/GameContext';
 import { GameReservationProvider } from './contexts/GameReservationContext';
 import { AlertProvider } from './contexts/AlertContext';
+import { SpinWheelProvider } from './contexts/SpinWheelContext';
+import { CouponProvider } from './contexts/CouponContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
@@ -42,6 +44,7 @@ import BlogPage from './pages/BlogPage';
 import SinglePostPage from './pages/SinglePostPage';
 import CreatePostPage from './pages/CreatePostPage';
 import MyPostsPage from './pages/MyPostsPage';
+import MyCoupons from './pages/user/MyCoupons';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -87,6 +90,7 @@ const AppContent = () => {
           <Route path="/blog/:postId" element={<PrivateRoute><SinglePostPage /></PrivateRoute>} />
           <Route path="/create-post" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
           <Route path="/my-posts" element={<PrivateRoute><MyPostsPage /></PrivateRoute>} />
+          <Route path="/my-coupons" element={<PrivateRoute><MyCoupons /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>
@@ -100,35 +104,39 @@ function App() {
     <Router>
       <AlertProvider>
         <AuthProvider>
-          <AuthorProvider>
-            <EventProvider>
-              <GoalsProvider>
-                <BookProvider>
-                  <TaskProvider>
-                    <AssistantProvider>
-                      <ThemeProvider>
-                        <SettingsProvider>
-                          <ReviewProvider>
-                            <MagazineProvider>
-                              <CollectionProvider>
-                                <BudgetProvider>
-                                  <GameProvider>
-                                    <GameReservationProvider>
-                                      <AppContent />
-                                    </GameReservationProvider>
-                                  </GameProvider>
-                                </BudgetProvider>
-                              </CollectionProvider>
-                            </MagazineProvider>
-                          </ReviewProvider>
-                        </SettingsProvider>
-                      </ThemeProvider>
-                    </AssistantProvider>
-                  </TaskProvider>
-                </BookProvider>
-              </GoalsProvider>
-            </EventProvider>
-          </AuthorProvider>
+          <SpinWheelProvider>
+            <CouponProvider>
+              <AuthorProvider>
+                <EventProvider>
+                  <GoalsProvider>
+                    <BookProvider>
+                      <TaskProvider>
+                        <AssistantProvider>
+                          <ThemeProvider>
+                            <SettingsProvider>
+                              <ReviewProvider>
+                                <MagazineProvider>
+                                  <CollectionProvider>
+                                    <BudgetProvider>
+                                      <GameProvider>
+                                        <GameReservationProvider>
+                                          <AppContent />
+                                        </GameReservationProvider>
+                                      </GameProvider>
+                                    </BudgetProvider>
+                                  </CollectionProvider>
+                                </MagazineProvider>
+                              </ReviewProvider>
+                            </SettingsProvider>
+                          </ThemeProvider>
+                        </AssistantProvider>
+                      </TaskProvider>
+                    </BookProvider>
+                  </GoalsProvider>
+                </EventProvider>
+              </AuthorProvider>
+            </CouponProvider>
+          </SpinWheelProvider>
         </AuthProvider>
       </AlertProvider>
     </Router>

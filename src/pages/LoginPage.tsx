@@ -4,9 +4,10 @@ import { ChevronRight } from 'lucide-react';
 import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
 import { auth, db } from '../firebase/config';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import Swal from 'sweetalert2';
 
 interface LoginPageProps {
   isDarkMode: boolean;
@@ -215,8 +216,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
     setIsLoading(true);
     setError('');
     try {
-      await auth.sendPasswordResetEmail(resetEmail);
-      alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.');
+      await sendPasswordResetEmail(auth, resetEmail);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
+        confirmButtonColor: '#6366f1'
+      });
       setShowForgotPasswordModal(false);
       setResetEmail('');
     } catch (error: any) {
@@ -242,9 +248,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50'}`}>
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
         {/* Form Section */}
-        <div className="flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12 animate-fade-in">
+        <div className="flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12 animate-fade-in relative overflow-hidden">
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute w-72 h-72 bg-indigo-200/30 rounded-full blur-3xl animate-blob -top-20 -left-20"></div>
+            <div className="absolute w-72 h-72 bg-purple-200/30 rounded-full blur-3xl animate-blob animation-delay-2000 top-40 -right-20"></div>
+            <div className="absolute w-72 h-72 bg-pink-200/30 rounded-full blur-3xl animate-blob animation-delay-4000 -bottom-20 left-40"></div>
+          </div>
+          <div className="relative z-10 w-full max-w-md">
           {error && (
-            <div className="w-full max-w-md mb-4 p-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm shadow-lg animate-fade-in">
+            <div className="w-full mb-4 p-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm shadow-lg animate-fade-in">
               {error}
             </div>
           )}
@@ -261,14 +274,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
             />
           )}
           {isLoading && (
-            <div className="w-full max-w-md mt-4 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg text-sm text-center shadow-lg animate-pulse">
-              İşlem gerçekleştiriliyor, lütfen bekleyin...
+            <div className="w-full mt-4 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg text-sm text-center shadow-lg">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="relative">
+                  <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="absolute top-0 left-0 w-8 h-8 border-4 border-transparent border-t-pink-300 rounded-full animate-spin animation-delay-150"></div>
+                </div>
+                <span className="animate-pulse">İşlem gerçekleştiriliyor, lütfen bekleyin...</span>
+              </div>
             </div>
           )}
+          </div>
         </div>
         
         {/* Info Section - Hidden on mobile */}
         <div className="hidden lg:flex flex-col justify-center p-12 xl:p-16 bg-indigo-900 text-white relative overflow-hidden animate-slide-in-right">
+          {/* Animated Background */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-blob top-0 -left-20"></div>
+            <div className="absolute w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-blob animation-delay-2000 top-20 right-0"></div>
+            <div className="absolute w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-blob animation-delay-4000 bottom-0 left-20"></div>
+          </div>
           <div className="relative z-10">
             <h2 className="text-2xl xl:text-3xl font-bold mb-6">{animatedTitle}<span className="animate-pulse">|</span></h2>
             <p className="text-indigo-200 mb-8 max-w-md text-sm xl:text-base">

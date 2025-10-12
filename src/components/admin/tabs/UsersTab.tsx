@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, WriteBatch } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { Search, Edit, Trash2, Users, UserPlus, BookOpen, DollarSign, Grid, List, ArrowUpDown } from 'lucide-react';
+import { Search, Edit, Trash2, Users, UserPlus, BookOpen, DollarSign, Grid, List, ArrowUpDown, Filter, MoreVertical, History, AlertCircle } from 'lucide-react';
 import EditUserModal from '../EditUserModal';
 import Swal from 'sweetalert2';
 import { useBooks } from '../../../contexts/BookContext';
+import { useNavigate } from 'react-router-dom';
 
 interface UserData {
   uid: string;
@@ -20,10 +21,13 @@ interface UserData {
 
 const UsersTab: React.FC = () => {
   const { allBorrowedBooks } = useBooks();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [usersSearchQuery, setUsersSearchQuery] = useState('');
   const [classFilter, setClassFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
+  const [activityFilter, setActivityFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [usersCurrentPage, setUsersCurrentPage] = useState(1);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -69,7 +73,7 @@ const UsersTab: React.FC = () => {
   useEffect(() => {
     setUsersCurrentPage(1);
     setSelectedUsers([]);
-  }, [usersSearchQuery, classFilter]);
+  }, [usersSearchQuery, classFilter, roleFilter, activityFilter]);
 
   const handleEditUser = (user: UserData) => {
     setSelectedUserToEdit(user);
@@ -178,6 +182,10 @@ const UsersTab: React.FC = () => {
     return ['all', ...Array.from(classes).sort()];
   }, [users]);
 
+  const activeUserIds = useMemo(() => 
+    new Set(allBorrowedBooks.filter(b => b.returnStatus === 'borrowed').map(b => b.borrowedBy))
+  , [allBorrowedBooks]);
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       (user.displayName?.toLowerCase() || '').includes(usersSearchQuery.toLowerCase()) ||
@@ -186,8 +194,13 @@ const UsersTab: React.FC = () => {
       (user.studentNumber?.toLowerCase() || '').includes(usersSearchQuery.toLowerCase());
     
     const matchesClass = classFilter === 'all' || user.studentClass === classFilter;
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const isActive = activeUserIds.has(user.uid);
+    const matchesActivity = activityFilter === 'all' || 
+      (activityFilter === 'active' && isActive) || 
+      (activityFilter === 'inactive' && !isActive);
 
-    return matchesSearch && matchesClass;
+    return matchesSearch && matchesClass && matchesRole && matchesActivity;
   }).sort((a, b) => {
     let comparison = 0;
     if (sortBy === 'name') {
@@ -236,8 +249,17 @@ const UsersTab: React.FC = () => {
       return acc;
     }, {} as Record<string, number>);
     const topClass = Object.entries(classDistribution).sort((a, b) => b[1] - a[1])[0];
-    return { total: users.length, todayRegistered, activeUsers, topClass: topClass ? `${topClass[0]} (${topClass[1]})` : '-' };
+    return { total: users.length, todayRegistered, activeUsers, topClass: topClass ? `${topClass[0]} (${topClass[1]})` : '-', classDistribution };
   }, [users, allBorrowedBooks]);
+
+  const classChartData = useMemo(() => {
+    return Object.entries(userStats.classDistribution)
+      .sort((a, b) => b[1] - a[1]);
+  }, [userStats.classDistribution]);
+
+  const maxClassCount = Math.max(...classChartData.map(d => d[1]), 1);
+
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -311,7 +333,73 @@ const UsersTab: React.FC = () => {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8 px-4">
+    <div className="max-w-7xl mx-auto">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 mb-6 border border-white/20">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+          <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Kullanıcı Aktivite Dağılımı
+        </h3>
+        <div className="flex items-center justify-center">
+          <div className="relative w-48 h-48">
+            <svg className="w-full h-full transform -rotate-90">
+              <circle cx="96" cy="96" r="80" fill="none" stroke="#e5e7eb" strokeWidth="24"/>
+              <circle 
+                cx="96" cy="96" r="80" fill="none" 
+                stroke="#10b981" strokeWidth="24"
+                strokeDasharray={`${(userStats.activeUsers / userStats.total) * 502.4} 502.4`}
+                className="transition-all duration-1000"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-bold text-gray-900">{userStats.total > 0 ? Math.round((userStats.activeUsers / userStats.total) * 100) : 0}%</span>
+              <span className="text-xs text-gray-500 mt-1">Aktif</span>
+            </div>
+          </div>
+          <div className="ml-8 space-y-3">
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-gray-700">Aktif Ödünç Alan</p>
+                <p className="text-xl font-bold text-green-600">{userStats.activeUsers}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-gray-700">Pasif Kullanıcı</p>
+                <p className="text-xl font-bold text-gray-600">{userStats.total - userStats.activeUsers}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 mb-6 border border-white/20">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+          <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          Sınıf Bazlı Kullanıcı Dağılımı
+        </h3>
+        <div className="flex items-end justify-between h-48 gap-1 overflow-x-auto">
+          {classChartData.map(([className, count], index) => (
+            <div key={className} className="flex-1 flex flex-col items-center group min-w-[40px]">
+              <div className="w-full flex flex-col items-center justify-end relative" style={{ height: '160px' }}>
+                <div className="text-xs font-medium text-gray-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{count}</div>
+                <div 
+                  className="w-full bg-gradient-to-t from-purple-600 to-purple-400 rounded-t transition-all duration-500 hover:from-purple-700 hover:to-purple-500"
+                  style={{ height: `${(count / maxClassCount) * 100}%`, minHeight: count > 0 ? '8px' : '0' }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-2 font-medium truncate w-full text-center" title={className}>{className}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-indigo-500">
           <div className="flex items-center justify-between">
@@ -360,77 +448,119 @@ const UsersTab: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden border border-white/20">
         <div className="p-6 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Users className="w-6 h-6 mr-2 text-indigo-600" />
-              Kullanıcı Yönetimi
-            </h2>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex gap-2">
-                <button onClick={() => setViewMode('table')} className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-                  <List className="w-5 h-5" />
-                </button>
-                <button onClick={() => setViewMode('card')} className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-                  <Grid className="w-5 h-5" />
-                </button>
-              </div>
-              <select
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                {uniqueClasses.map(c => (
-                  <option key={c} value={c}>{c === 'all' ? 'Tüm Sınıflar' : c}</option>
-                ))}
-              </select>
-              <select
-                value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [newSortBy, newSortOrder] = e.target.value.split('-') as [typeof sortBy, typeof sortOrder];
-                  setSortBy(newSortBy);
-                  setSortOrder(newSortOrder);
-                }}
-                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="name-asc">İsim (A-Z)</option>
-                <option value="name-desc">İsim (Z-A)</option>
-                <option value="createdAt-desc">Kayıt (Yeni-Eski)</option>
-                <option value="createdAt-asc">Kayıt (Eski-Yeni)</option>
-                <option value="lastLogin-desc">Son Giriş (Yeni-Eski)</option>
-                <option value="lastLogin-asc">Son Giriş (Eski-Yeni)</option>
-              </select>
-              <div className="relative w-full sm:w-72">
-                <input
-                  type="text"
-                  placeholder="Kullanıcı adı, email, sınıf..."
-                  value={usersSearchQuery}
-                  onChange={(e) => setUsersSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-                <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-              </div>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+            <Users className="w-6 h-6 mr-2 text-indigo-600" />
+            Kullanıcı Yönetimi
+          </h2>
         </div>
 
-        {selectedUsers.length > 0 && (
-          <div className="p-4 bg-indigo-50 border-t border-b border-indigo-200 flex items-center justify-between">
-            <span className="text-sm font-medium text-indigo-700">
-              {selectedUsers.length} kullanıcı seçildi.
-            </span>
-            <button
-              onClick={handleBulkDelete}
-              disabled={isBulkDeleting}
-              className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {isBulkDeleting ? 'Siliniyor...' : 'Seçilenleri Sil'}
-            </button>
-          </div>
-        )}
-
-        {viewMode === 'table' ? (
+        <div className="p-6">
+          <div className="flex gap-6">
+            <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold flex items-center">
+                  <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                  Filtreler
+                </h2>
+              </div>
+              <div className="mb-6">
+                <div className="relative">
+                  <input type="text" placeholder="Kullanıcı ara..." value={usersSearchQuery} onChange={(e) => setUsersSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sınıf</h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {uniqueClasses.map(c => (
+                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        <input type="radio" name="class" checked={classFilter === c} onChange={() => setClassFilter(c)} className="mr-2" />
+                        <span className="text-sm">{c === 'all' ? 'Tümü' : c}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Rol</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="role" checked={roleFilter === 'all'} onChange={() => setRoleFilter('all')} className="mr-2" />
+                      <span className="text-sm">Tümü</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="role" checked={roleFilter === 'user'} onChange={() => setRoleFilter('user')} className="mr-2" />
+                      <span className="text-sm text-green-600">● Kullanıcı</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="role" checked={roleFilter === 'admin'} onChange={() => setRoleFilter('admin')} className="mr-2" />
+                      <span className="text-sm text-red-600">● Admin</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Aktivite</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="activity" checked={activityFilter === 'all'} onChange={() => setActivityFilter('all')} className="mr-2" />
+                      <span className="text-sm">Tümü</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="activity" checked={activityFilter === 'active'} onChange={() => setActivityFilter('active')} className="mr-2" />
+                      <span className="text-sm text-green-600">● Aktif Ödünç Alan</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="activity" checked={activityFilter === 'inactive'} onChange={() => setActivityFilter('inactive')} className="mr-2" />
+                      <span className="text-sm text-gray-600">● Pasif</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="sort" checked={sortBy === 'name' && sortOrder === 'asc'} onChange={() => { setSortBy('name'); setSortOrder('asc'); }} className="mr-2" />
+                      <span className="text-sm">İsim (A-Z)</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="sort" checked={sortBy === 'name' && sortOrder === 'desc'} onChange={() => { setSortBy('name'); setSortOrder('desc'); }} className="mr-2" />
+                      <span className="text-sm">İsim (Z-A)</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="sort" checked={sortBy === 'createdAt' && sortOrder === 'desc'} onChange={() => { setSortBy('createdAt'); setSortOrder('desc'); }} className="mr-2" />
+                      <span className="text-sm">En Yeni Kayıt</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="sort" checked={sortBy === 'lastLogin' && sortOrder === 'desc'} onChange={() => { setSortBy('lastLogin'); setSortOrder('desc'); }} className="mr-2" />
+                      <span className="text-sm">Son Giriş (Yeni)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </aside>
+            <div className="flex-1">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex gap-2">
+                  <button onClick={() => setViewMode('table')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <List className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => setViewMode('card')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <Grid className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600">{filteredUsers.length} kullanıcı bulundu</p>
+              </div>
+              {selectedUsers.length > 0 && (
+                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-indigo-700">{selectedUsers.length} kullanıcı seçildi.</span>
+                  <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors">
+                    {isBulkDeleting ? 'Siliniyor...' : 'Seçilenleri Sil'}
+                  </button>
+                </div>
+              )}
+              {viewMode === 'table' ? (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -481,21 +611,32 @@ const UsersTab: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {user.createdAt.toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button 
-                        onClick={() => handleEditUser(user)} 
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                        disabled={selectedUsers.length > 0}
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteUser(user.uid)} 
-                        className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                        disabled={selectedUsers.length > 0}
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="relative">
+                        <button 
+                          onClick={() => setOpenDropdown(openDropdown === user.uid ? null : user.uid)}
+                          className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
+                          disabled={selectedUsers.length > 0}
+                        >
+                          <MoreVertical size={18} />
+                        </button>
+                        {openDropdown === user.uid && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                            <button onClick={() => { handleEditUser(user); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                              <Edit size={16} /> Düzenle
+                            </button>
+                            <button onClick={() => { navigate(`/admin/borrowed-by/${user.uid}`); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                              <History size={16} /> Ödünç Geçmişi
+                            </button>
+                            <button onClick={() => { navigate('/admin/dashboard', { state: { activeTab: 'fines', searchQuery: user.displayName } }); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                              <AlertCircle size={16} /> Cezaları Görüntüle
+                            </button>
+                            <button onClick={() => { handleDeleteUser(user.uid); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 border-t">
+                              <Trash2 size={16} /> Sil
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -508,9 +649,9 @@ const UsersTab: React.FC = () => {
               )}
             </tbody>
           </table>
-        </div>
-        ) : (
-          <div className="p-6">
+              </div>
+              ) : (
+              <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedUsers.length > 0 ? (
                 paginatedUsers.map(user => (
@@ -560,32 +701,22 @@ const UsersTab: React.FC = () => {
                 <div className="col-span-full text-center py-8 text-gray-500">Kullanıcı bulunamadı.</div>
               )}
             </div>
-          </div>
-        )}
-
-        {usersTotalPages > 1 && (
-          <div className="p-6 bg-white border-t border-gray-200 flex justify-between items-center">
-            <p className="text-sm text-gray-600">
-              Sayfa {usersCurrentPage} / {usersTotalPages} ({filteredUsers.length} sonuç)
-            </p>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setUsersCurrentPage(p => Math.max(p - 1, 1))}
-                disabled={usersCurrentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              >
-                Önceki
-              </button>
-              <button
-                onClick={() => setUsersCurrentPage(p => Math.min(p + 1, usersTotalPages))}
-                disabled={usersCurrentPage === usersTotalPages}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              >
-                Sonraki
-              </button>
+              </div>
+              )}
+              {usersTotalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 p-4 border-t mt-4">
+                  <button onClick={() => setUsersCurrentPage(p => Math.max(p - 1, 1))} disabled={usersCurrentPage === 1} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <span className="text-sm text-gray-600">Sayfa {usersCurrentPage} / {usersTotalPages}</span>
+                  <button onClick={() => setUsersCurrentPage(p => Math.min(p + 1, usersTotalPages))} disabled={usersCurrentPage === usersTotalPages} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {showEditUserModal && selectedUserToEdit && (
@@ -596,7 +727,8 @@ const UsersTab: React.FC = () => {
           onSave={handleSaveUser}
         />
       )}
-    </>
+    </div>
+    </div>
   );
 };
 

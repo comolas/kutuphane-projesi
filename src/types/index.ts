@@ -165,3 +165,29 @@ export interface Comment {
   createdAt: any; // Firestore Timestamp
   status: 'visible' | 'reported' | 'hidden';
 }
+
+export interface AppliedDiscount {
+  couponId: string;
+  discountPercent: number;
+  discountAmount: number;
+  appliedBy: string;
+  appliedAt: any; // Firestore Timestamp
+}
+
+export interface Penalty {
+  id: string;
+  userId: string;
+  bookId: string;
+  bookTitle: string;
+  bookCategory: string;
+  daysLate: number;
+  originalAmount: number;
+  isPaid: boolean;
+  paidAt?: any; // Firestore Timestamp
+  paidAmount?: number;
+  appliedDiscount?: AppliedDiscount;
+  receiptNumber?: string;
+  paymentMethod?: 'cash' | 'card' | 'other';
+  collectedBy?: string;
+  createdAt: any; // Firestore Timestamp
+}

@@ -220,10 +220,20 @@ const FinesPage: React.FC = () => {
                     </div>
                     
                     <div className="text-right">
+                      {book.appliedDiscount && (
+                        <div className="text-sm text-gray-500 line-through mb-1">
+                          {book.appliedDiscount.originalAmount} TL
+                        </div>
+                      )}
                       <div className={`text-3xl font-bold bg-gradient-to-r ${book.fineStatus === 'paid' ? 'from-green-600 to-emerald-600' : 'from-red-500 to-pink-600'} bg-clip-text text-transparent`}>
                         {fineAmount} TL
                       </div>
-                      {book.fineStatus !== 'paid' && daysOverdue > 0 && (
+                      {book.appliedDiscount && (
+                        <div className="mt-1 px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold inline-block">
+                          %{book.appliedDiscount.discountPercent} indirim uygulandı
+                        </div>
+                      )}
+                      {book.fineStatus !== 'paid' && daysOverdue > 0 && !book.appliedDiscount && (
                         <p className="text-xs text-gray-500 mt-1">
                           ({daysOverdue} gün x {fineRate} TL)
                         </p>
@@ -326,13 +336,38 @@ const FinesPage: React.FC = () => {
                               doc.line(5, y, pageWidth - 5, y);
                               y += 6;
                               
+                              // Discount section
+                              if (book.appliedDiscount) {
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr('Ceza Tutari:'), 5, y);
+                                doc.setFont('helvetica', 'normal');
+                                doc.text(`${book.appliedDiscount.originalAmount} TL`, pageWidth - 5, y, { align: 'right' });
+                                y += 6;
+                                
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr('Indirim Kuponu:'), 5, y);
+                                doc.setFont('helvetica', 'normal');
+                                doc.setTextColor(34, 197, 94);
+                                doc.text(`-${book.appliedDiscount.discountAmount} TL`, pageWidth - 5, y, { align: 'right' });
+                                doc.setTextColor(0, 0, 0);
+                                y += 4;
+                                
+                                doc.setFontSize(7);
+                                doc.text(tr(`(%${book.appliedDiscount.discountPercent} - ${book.appliedDiscount.category || 'Tum Kategoriler'})`), 5, y);
+                                doc.setFontSize(8);
+                                y += 8;
+                                
+                                doc.line(5, y, pageWidth - 5, y);
+                                y += 6;
+                              }
+                              
                               // Total
                               doc.setFillColor(79, 70, 229);
                               doc.rect(5, y - 3, pageWidth - 10, 10, 'F');
                               doc.setTextColor(255, 255, 255);
                               doc.setFontSize(10);
                               doc.setFont('helvetica', 'bold');
-                              doc.text(tr('TOPLAM:'), 8, y + 3);
+                              doc.text(tr(book.appliedDiscount ? 'TOPLAM ODENEN:' : 'TOPLAM:'), 8, y + 3);
                               doc.text(`${fineAmount} TL`, pageWidth - 8, y + 3, { align: 'right' });
                               y += 15;
                               

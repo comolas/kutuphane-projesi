@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { Eye, EyeOff, X } from 'lucide-react';
 import Button from '../common/Button';
 import FormInput from '../common/FormInput';
@@ -14,12 +15,26 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onRegisterClick,
   onForgotPasswordClick,
 }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberedEmail') !== null);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; captcha?: string }>({});
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0, answer: 0 });
+
+  React.useEffect(() => {
+    generateCaptcha();
+  }, []);
+
+  const generateCaptcha = () => {
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    setCaptchaQuestion({ num1, num2, answer: num1 + num2 });
+    setCaptchaAnswer('');
+  };
 
   const validateField = (fieldName: string, value: string) => {
     let errorMessage = '';
@@ -41,7 +56,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; captcha?: string } = {};
     
     if (!email) {
       newErrors.email = 'E-posta adresi gereklidir';
@@ -53,6 +68,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
       newErrors.password = 'Şifre gereklidir';
     }
     
+    if (parseInt(captchaAnswer) !== captchaQuestion.answer) {
+      newErrors.captcha = 'Güvenlik doğrulaması hatalı';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -60,7 +79,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
       onSubmit(email, password);
+      generateCaptcha();
+    } else {
+      generateCaptcha();
     }
   };
 
@@ -109,6 +136,50 @@ const LoginForm: React.FC<LoginFormProps> = ({
               aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
             >
               {showPassword ? <EyeOff size={1} /> : <Eye size={1} />}
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Güvenlik Doğrulaması</label>
+            <div className="flex items-center space-x-3">
+              <div className="flex-1 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 border-2 border-indigo-300 rounded-lg p-4">
+                <span className="text-2xl font-bold text-indigo-900">{captchaQuestion.num1} + {captchaQuestion.num2} = ?</span>
+              </div>
+              <button
+                type="button"
+                onClick={generateCaptcha}
+                className="p-3 bg-indigo-100 hover:bg-indigo-200 rounded-lg transition-colors"
+                title="Yeni soru"
+              >
+                <RefreshCw className="w-5 h-5 text-indigo-600" />
+              </button>
+            </div>
+            <input
+              type="number"
+              value={captchaAnswer}
+              onChange={(e) => setCaptchaAnswer(e.target.value)}
+              placeholder="Cevabınız"
+              className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
+            {errors.captcha && <p className="mt-1 text-sm text-red-600">{errors.captcha}</p>}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <label className="flex items-center cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer"
+              />
+              <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800 transition-colors">Beni Hatırla</span>
+            </label>
+            <button
+              type="button"
+              onClick={onForgotPasswordClick}
+              className="text-sm text-indigo-600 hover:text-indigo-500 font-medium transition-colors"
+            >
+              Şifremi Unuttum
             </button>
           </div>
 

@@ -139,3 +139,59 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #4f46e5, #7c3aed);
 }
+
+
+/* Blob animation for login page */
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -50px) scale(1.1);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  75% {
+    transform: translate(50px, 50px) scale(1.05);
+  }
+}
+
+.animate-blob {
+  animation: blob 20s infinite ease-in-out;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+
+/* Quill Editor Custom Fonts */
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before {
+  content: 'Times New Roman';
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="garamond"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="garamond"]::before {
+  content: 'Garamond';
+  font-family: Garamond, 'EB Garamond', serif;
+}
+
+.ql-font-times-new-roman {
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.ql-font-garamond {
+  font-family: Garamond, 'EB Garamond', serif;
+}
