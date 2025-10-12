@@ -118,6 +118,23 @@ const BorrowedBooksTab: React.FC = () => {
     return ['all', ...Array.from(classes).sort()];
   }, [usersWithBorrows]);
 
+  const statistics = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const totalUsers = usersWithBorrows.length;
+    const totalBooks = usersWithBorrows.reduce((sum, user) => sum + user.borrowCount, 0);
+    const overdueCount = usersWithBorrows.filter(user => user.isOverdue).length;
+    const dueTodayCount = usersWithBorrows.filter(user => {
+      const dueDate = new Date(user.soonestDueDate * 1000);
+      return dueDate >= today && dueDate < tomorrow;
+    }).length;
+
+    return { totalUsers, totalBooks, overdueCount, dueTodayCount };
+  }, [usersWithBorrows]);
+
   const sortedAndFilteredUsers = useMemo(() => {
     const filtered = usersWithBorrows
       .filter(user => {
@@ -210,88 +227,207 @@ const BorrowedBooksTab: React.FC = () => {
   }
 
   return (
-    <div className="p-1">
-        <div className="bg-white rounded-xl shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8 px-4">
+    <div className="max-w-7xl mx-auto">
+    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden border border-white/20">
             <div className="p-6 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                     <Library className="w-6 h-6 mr-2 text-indigo-600" />
                     Kitap Ödünç Alan Kullanıcılar
                 </h2>
             </div>
-            {/* Filter and Search Bar */}
-            <div className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-700">Görünüm</h3>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                            </svg>
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
+
+            <div className="p-6">
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-blue-100 text-sm font-medium">Toplam Kullanıcı</p>
+                                <p className="text-3xl font-bold mt-2">{statistics.totalUsers}</p>
+                            </div>
+                            <div className="bg-white/20 p-3 rounded-lg">
+                                <UsersIcon className="w-8 h-8" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-purple-100 text-sm font-medium">Toplam Kitap</p>
+                                <p className="text-3xl font-bold mt-2">{statistics.totalBooks}</p>
+                            </div>
+                            <div className="bg-white/20 p-3 rounded-lg">
+                                <BookIcon className="w-8 h-8" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-red-100 text-sm font-medium">Gecikmiş İade</p>
+                                <p className="text-3xl font-bold mt-2">{statistics.overdueCount}</p>
+                            </div>
+                            <div className="bg-white/20 p-3 rounded-lg">
+                                <AlertTriangle className="w-8 h-8" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-orange-100 text-sm font-medium">Bugün Teslim</p>
+                                <p className="text-3xl font-bold mt-2">{statistics.dueTodayCount}</p>
+                            </div>
+                            <div className="bg-white/20 p-3 rounded-lg">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
-                <div className="lg:col-span-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input 
-                        type="text"
-                        placeholder="Kullanıcı veya kitap adına göre ara..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                </div>
-                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 transition-colors duration-200" />
-                        <select 
-                            value={classFilter}
-                            onChange={e => setClassFilter(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none transition-all duration-200 hover:border-indigo-400"
-                        >
-                            {uniqueClasses.map(c => (
-                                <option key={c} value={c}>{c === 'all' ? 'Tüm Sınıflar' : c}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="relative">
-                        <ArrowDownUp className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 transition-colors duration-200" />
-                        <select 
-                            value={sortOption}
-                            onChange={e => setSortOption(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none transition-all duration-200 hover:border-indigo-400"
-                        >
-                            <option value="due-date-asc">En Yakın Teslim Tarihi</option>
-                            <option value="name-asc">İsme Göre (A-Z)</option>
-                            <option value="name-desc">İsme Göre (Z-A)</option>
-                            <option value="book-count-desc">Kitap Sayısı (En Çok)</option>
-                            <option value="book-count-asc">Kitap Sayısı (En Az)</option>
-                        </select>
-                    </div>
-                    <div className="flex items-center justify-end">
-                        <input 
-                            type="checkbox"
-                            id="overdueFilter"
-                            checked={showOnlyOverdue}
-                            onChange={e => setShowOnlyOverdue(e.target.checked)}
-                            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 transition-all duration-200 cursor-pointer"
-                        />
-                        <label htmlFor="overdueFilter" className="ml-2 block text-sm font-medium text-gray-700">Sadece Gecikenleri Göster</label>
-                    </div>
-                </div>
-            </div>
-            </div>
+
+                <div className="flex gap-6">
+                    {/* Sidebar */}
+                    <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-lg font-semibold flex items-center">
+                                <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                </svg>
+                                Filtreler
+                            </h2>
+                        </div>
+
+                        <div className="mb-6">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Kullanıcı veya kitap ara..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                />
+                                <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sınıf</h3>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                    {uniqueClasses.map(c => (
+                                        <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                            <input
+                                                type="radio"
+                                                name="class"
+                                                checked={classFilter === c}
+                                                onChange={() => setClassFilter(c)}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm">{c === 'all' ? 'Tümü' : c}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                                <div className="space-y-2">
+                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                        <input
+                                            type="radio"
+                                            name="sort"
+                                            checked={sortOption === 'due-date-asc'}
+                                            onChange={() => setSortOption('due-date-asc')}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">En Yakın Teslim</span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                        <input
+                                            type="radio"
+                                            name="sort"
+                                            checked={sortOption === 'name-asc'}
+                                            onChange={() => setSortOption('name-asc')}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">İsim (A-Z)</span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                        <input
+                                            type="radio"
+                                            name="sort"
+                                            checked={sortOption === 'name-desc'}
+                                            onChange={() => setSortOption('name-desc')}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">İsim (Z-A)</span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                        <input
+                                            type="radio"
+                                            name="sort"
+                                            checked={sortOption === 'book-count-desc'}
+                                            onChange={() => setSortOption('book-count-desc')}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">En Çok Kitap</span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                        <input
+                                            type="radio"
+                                            name="sort"
+                                            checked={sortOption === 'book-count-asc'}
+                                            onChange={() => setSortOption('book-count-asc')}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">En Az Kitap</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-900 mb-3">Durum</h3>
+                                <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                    <input
+                                        type="checkbox"
+                                        checked={showOnlyOverdue}
+                                        onChange={(e) => setShowOnlyOverdue(e.target.checked)}
+                                        className="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-red-600">● Sadece Gecikenler</span>
+                                </label>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <div className="flex-1">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <p className="text-sm text-gray-600">{sortedAndFilteredUsers.length} kullanıcı bulundu</p>
+                        </div>
 
             {sortedAndFilteredUsers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -417,7 +553,11 @@ const BorrowedBooksTab: React.FC = () => {
                 )}
                 </>
             )}
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
     </div>
   );
 };

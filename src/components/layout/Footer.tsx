@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, Mail, Phone, MapPin, X, Instagram } from 'lucide-react';
+import { Book, Mail, Phone, MapPin, X, Instagram, Clock } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -83,6 +83,27 @@ const Footer: React.FC = () => {
                   </span>
                 </li>
               </ul>
+              
+              <div className="pt-4 border-t border-gray-300 dark:border-gray-600">
+                <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
+                  <Clock size={16} className="mr-2 text-indigo-900 dark:text-indigo-400" />
+                  Çalışma Saatleri
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Pazartesi - Cuma</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-300">08:00 - 17:00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Cumartesi</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-300">09:00 - 14:00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Pazar</span>
+                    <span className="font-medium text-red-600 dark:text-red-400">Kapalı</span>
+                  </div>
+                </div>
+              </div>
             </div>
             
             {/* iPhone Mockup */}

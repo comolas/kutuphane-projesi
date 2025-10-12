@@ -10,6 +10,8 @@ interface BorrowedBook extends Book {
   dueDate: Date;
   returnedAt?: Date;
   extended: boolean;
+  extensionCount?: number; // Number of times extended (0, 1, or 2)
+  maxExtensions?: number; // Maximum allowed extensions (1 or 2 from spin reward)
   borrowedBy: string;
   userData?: {
     displayName: string;
@@ -26,6 +28,8 @@ interface BorrowedBook extends Book {
   fineAmountSnapshot?: number;
   fineRateSnapshot?: number;
   daysOverdueSnapshot?: number;
+  discountApplied?: number;
+  originalFineAmount?: number;
 }
 
 interface BorrowMessage {
@@ -56,7 +60,7 @@ interface BookContextType {
   isBorrowed: (bookId: string) => boolean;
   isBookBorrowed: (bookId: string) => boolean;
   canExtend: (bookId: string) => boolean;
-  markFineAsPaid: (bookId: string, userId: string, currentFineRate: number) => Promise<void>;
+  markFineAsPaid: (bookId: string, userId: string, currentFineRate: number, discountPercent?: number) => Promise<number>;
   hasPendingFine: (bookId: string) => boolean;
   requestReturn: (bookId: string) => Promise<void>;
   approveReturn: (bookId: string, userId: string) => Promise<void>;
@@ -649,20 +653,34 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const book = borrowedBooks.find(b => b.id === bookId);
-      if (!book || book.extended || book.returnStatus !== 'borrowed') {
+      if (!book || book.returnStatus !== 'borrowed') {
         throw new Error('Book cannot be extended');
+      }
+
+      const currentExtensionCount = book.extensionCount || 0;
+      const maxExtensions = book.maxExtensions || 1;
+
+      if (currentExtensionCount >= maxExtensions) {
+        throw new Error(`Bu kitap maksimum ${maxExtensions} kez uzatılabilir`);
       }
 
       const newDueDate = new Date(book.dueDate);
       newDueDate.setDate(newDueDate.getDate() + 7);
+      const newExtensionCount = currentExtensionCount + 1;
 
       const borrowedBookRef = doc(db, 'borrowedBooks', `${user.uid}_${bookId}`);
       await updateDoc(borrowedBookRef, {
         dueDate: newDueDate,
-        extended: true
+        extended: newExtensionCount >= maxExtensions,
+        extensionCount: newExtensionCount
       });
 
-      const updatedBook = { ...book, dueDate: newDueDate, extended: true };
+      const updatedBook = { 
+        ...book, 
+        dueDate: newDueDate, 
+        extended: newExtensionCount >= maxExtensions,
+        extensionCount: newExtensionCount
+      };
 
       setBorrowedBooks(prev => prev.map(b => 
         b.id === bookId ? updatedBook : b
@@ -676,7 +694,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, borrowedBooks]);
 
-  const markFineAsPaid = useCallback(async (bookId: string, userId: string, currentFineRate: number) => {
+  const markFineAsPaid = useCallback(async (bookId: string, userId: string, currentFineRate: number, discountPercent?: number) => {
     try {
       const bookToUpdate = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
       if (!bookToUpdate) {
@@ -686,23 +704,26 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const today = new Date();
       const diffTime = today.getTime() - bookToUpdate.dueDate.getTime();
       const daysOverdue = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-      const fineAmount = daysOverdue * currentFineRate;
+      const originalFineAmount = daysOverdue * currentFineRate;
+      const finalFineAmount = discountPercent ? originalFineAmount - (originalFineAmount * discountPercent / 100) : originalFineAmount;
 
       const borrowedBookRef = doc(db, 'borrowedBooks', `${userId}_${bookId}`);
       await updateDoc(borrowedBookRef, {
         fineStatus: 'paid',
         paymentDate: serverTimestamp(),
-        fineAmountSnapshot: fineAmount,
+        fineAmountSnapshot: finalFineAmount,
         fineRateSnapshot: currentFineRate,
-        daysOverdueSnapshot: daysOverdue
+        daysOverdueSnapshot: daysOverdue,
+        ...(discountPercent && { discountApplied: discountPercent, originalFineAmount })
       });
 
       const snapshotData = {
-        fineStatus: 'paid',
+        fineStatus: 'paid' as const,
         paymentDate: new Date(),
-        fineAmountSnapshot: fineAmount,
+        fineAmountSnapshot: finalFineAmount,
         fineRateSnapshot: currentFineRate,
-        daysOverdueSnapshot: daysOverdue
+        daysOverdueSnapshot: daysOverdue,
+        ...(discountPercent && { discountApplied: discountPercent, originalFineAmount })
       };
 
       const updateBooks = (books: BorrowedBook[]) =>
@@ -714,6 +735,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setBorrowedBooks(prev => updateBooks(prev));
       setAllBorrowedBooks(prev => updateBooks(prev));
+      
+      return finalFineAmount;
     } catch (error) {
       console.error('Ceza ödemesi işlenirken hata oluştu:', error);
       throw error;
@@ -722,7 +745,12 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const canExtend = useCallback((bookId: string) => {
     const book = borrowedBooks.find(b => b.id === bookId);
-    return book ? !book.extended && book.returnStatus === 'borrowed' && book.borrowStatus === 'approved' : false;
+    if (!book || book.returnStatus !== 'borrowed' || book.borrowStatus !== 'approved') return false;
+    
+    const currentExtensionCount = book.extensionCount || 0;
+    const maxExtensions = book.maxExtensions || 1;
+    
+    return currentExtensionCount < maxExtensions;
   }, [borrowedBooks]);
 
   const requestReturn = useCallback(async (bookId: string) => {

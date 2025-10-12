@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Star, Heart, MessageSquare } from 'lucide-react';
 import { Book } from '../types';
@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
 // Add borrowMessages to the import from useBooks
 const CatalogPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { allBooks, borrowBook, isBorrowed, getBookStatus, borrowMessages } = useBooks();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,6 +58,16 @@ const CatalogPage: React.FC = () => {
       setIsLoading(false);
     }
   }, [allBooks]);
+
+  // Çark ödülünden gelen kategoriyi otomatik seç
+  useEffect(() => {
+    const state = location.state as { selectedCategory?: string };
+    if (state?.selectedCategory) {
+      setSelectedCategory(state.selectedCategory);
+      // State'i temizle
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   // Get unique categories
   const categories = Array.from(new Set(allBooks.map(book => book.category)));

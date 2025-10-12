@@ -2,9 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useBooks } from '../../../contexts/BookContext';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useBudget } from '../../../contexts/BudgetContext';
+import { useCoupons } from '../../../contexts/CouponContext';
 import SetFineModal from '../SetFineModal';
-import { DollarSign, Search, Filter, SortAsc, SortDesc, Users, Settings } from 'lucide-react';
+import ApplyDiscountModal from '../ApplyDiscountModal';
+import { DollarSign, Search, Filter, SortAsc, SortDesc, Users, Settings, Ticket } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { useLocation } from 'react-router-dom';
 
 interface BorrowedBook {
   id: string;
@@ -29,13 +32,17 @@ interface BorrowedBook {
 }
 
 const FinesTab: React.FC = () => {
+  const location = useLocation();
   const { allBorrowedBooks, markFineAsPaid } = useBooks();
   const { finePerDay, setFinePerDay, loading: settingsLoading } = useSettings();
   const { addTransaction } = useBudget();
+  const { useCoupon, getAvailableCouponsForCategory } = useCoupons();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [selectedBookForDiscount, setSelectedBookForDiscount] = useState<BorrowedBook | null>(null);
+  const [appliedDiscounts, setAppliedDiscounts] = useState<Record<string, { couponId: string; discountPercent: number }>>({});
   const [loading, setLoading] = useState(true);
-  const [finesSearchQuery, setFinesSearchQuery] = useState('');
-  const [showFinesFilters, setShowFinesFilters] = useState(false);
+  const [finesSearchQuery, setFinesSearchQuery] = useState(location.state?.searchQuery || '');
   const [finesStatusFilter, setFinesStatusFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
   const [finesSortBy, setFinesSortBy] = useState<'dueDate' | 'amount'>('dueDate');
   const [finesSortOrder, setFinesSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -45,37 +52,122 @@ const FinesTab: React.FC = () => {
   const [chartView, setChartView] = useState<'monthly' | 'class'>('monthly');
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [classFilter, setClassFilter] = useState('all');
   const finesPerPage = 10;
+
+  useEffect(() => {
+    if (location.state?.searchQuery) {
+      setFinesSearchQuery(location.state.searchQuery);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     setFinesCurrentPage(1);
     setSelectedFines([]);
-  }, [finesSearchQuery, finesStatusFilter, finesSortBy, finesSortOrder]);
+  }, [finesSearchQuery, finesStatusFilter, finesSortBy, finesSortOrder, classFilter]);
+
+  const handleApplyDiscount = (book: BorrowedBook) => {
+    setSelectedBookForDiscount(book);
+    setIsDiscountModalOpen(true);
+  };
+
+  const handleDiscountApplied = (couponId: string, discountPercent: number) => {
+    if (!selectedBookForDiscount) return;
+    const fineKey = `${selectedBookForDiscount.id}-${selectedBookForDiscount.borrowedBy}`;
+    setAppliedDiscounts(prev => ({
+      ...prev,
+      [fineKey]: { couponId, discountPercent }
+    }));
+    Swal.fire('Başarılı!', `%${discountPercent} indirim uygulandı!`, 'success');
+  };
+
+  const handleRemoveDiscount = (bookId: string, userId: string) => {
+    const fineKey = `${bookId}-${userId}`;
+    setAppliedDiscounts(prev => {
+      const newDiscounts = { ...prev };
+      delete newDiscounts[fineKey];
+      return newDiscounts;
+    });
+    Swal.fire('Başarılı!', 'İndirim kaldırıldı!', 'success');
+  };
 
   const handlePaymentReceived = async (bookId: string, userId: string) => {
+    const fineKey = `${bookId}-${userId}`;
+    const discount = appliedDiscounts[fineKey];
+    const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
+    
+    const today = new Date();
+    const diffTime = today.getTime() - new Date(book?.dueDate || new Date()).getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const originalAmount = diffDays > 0 ? diffDays * finePerDay : 0;
+    const finalAmount = discount ? originalAmount - (originalAmount * discount.discountPercent / 100) : originalAmount;
+    
+    const confirmHtml = discount 
+      ? `<div style="text-align: left; padding: 10px;">
+          <p><strong>Kullanıcı:</strong> ${book?.userData?.displayName}</p>
+          <p><strong>Orijinal Tutar:</strong> <span style="text-decoration: line-through;">${originalAmount.toFixed(2)} TL</span></p>
+          <p><strong>İndirim:</strong> %${discount.discountPercent} (-${(originalAmount * discount.discountPercent / 100).toFixed(2)} TL)</p>
+          <p style="font-size: 18px; color: #16a34a;"><strong>Ödenecek Tutar:</strong> ${finalAmount.toFixed(2)} TL</p>
+        </div>`
+      : `<div style="text-align: left; padding: 10px;">
+          <p><strong>Kullanıcı:</strong> ${book?.userData?.displayName}</p>
+          <p style="font-size: 18px; color: #16a34a;"><strong>Ödenecek Tutar:</strong> ${finalAmount.toFixed(2)} TL</p>
+        </div>`;
+    
     Swal.fire({
-      title: 'Emin misiniz?',
-      text: "Bu cezanın ödendiğini onaylamak istediğinizden emin misiniz?",
+      title: 'Ödeme Onayı',
+      html: confirmHtml,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Evet, onayla!',
+      confirmButtonText: 'Ödemeyi Onayla',
       cancelButtonText: 'Vazgeç'
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
-          if (paidAmount) {
-            const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
-            addTransaction({
-              date: new Date(),
-              description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
-              amount: paidAmount,
-              type: 'income',
-              category: 'Ödeme',
-              relatedFineId: `${bookId}-${userId}`
-            });
+          if (discount) {
+            await useCoupon(discount.couponId, fineKey, userId);
           }
-          Swal.fire('Başarılı!', 'Ödeme başarıyla işlendi.', 'success');
+          
+          const paidAmount = await markFineAsPaid(bookId, userId, finePerDay, discount?.discountPercent);
+          
+          await addTransaction({
+            date: new Date(),
+            description: `${book?.userData?.displayName} isimli kullanıcıdan ödeme alındı${discount ? ` (%${discount.discountPercent} indirimli)` : ''}`,
+            amount: paidAmount,
+            type: 'income',
+            category: 'Ödeme',
+            relatedFineId: fineKey
+          });
+          
+          const receiptHtml = `<div style="text-align: left; padding: 15px; border: 2px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+            <h3 style="text-align: center; color: #16a34a; margin-bottom: 15px;">✓ ÖDEME MAKBUZU</h3>
+            <hr style="margin: 10px 0;">
+            <p><strong>Kullanıcı:</strong> ${book?.userData?.displayName}</p>
+            <p><strong>Kitap:</strong> ${book?.title}</p>
+            <p><strong>Gecikme:</strong> ${diffDays} gün</p>
+            ${discount ? `
+              <hr style="margin: 10px 0;">
+              <p><strong>Orijinal Ceza:</strong> <span style="text-decoration: line-through;">${originalAmount.toFixed(2)} TL</span></p>
+              <p><strong>Uygulanan İndirim:</strong> %${discount.discountPercent}</p>
+              <p><strong>İndirim Tutarı:</strong> -${(originalAmount * discount.discountPercent / 100).toFixed(2)} TL</p>
+              <hr style="margin: 10px 0;">
+            ` : ''}
+            <p style="font-size: 20px; color: #16a34a; margin-top: 10px;"><strong>Ödenen Tutar:</strong> ${paidAmount.toFixed(2)} TL</p>
+            <p style="text-align: center; color: #6b7280; font-size: 12px; margin-top: 15px;">Makbuz No: #${bookId.slice(-6)}</p>
+          </div>`;
+          
+          setAppliedDiscounts(prev => {
+            const newDiscounts = { ...prev };
+            delete newDiscounts[fineKey];
+            return newDiscounts;
+          });
+          
+          Swal.fire({
+            title: 'Ödeme Başarılı!',
+            html: receiptHtml,
+            icon: 'success',
+            confirmButtonText: 'Tamam'
+          });
         } catch (error) {
           console.error('Error processing payment:', error);
           Swal.fire('Hata!', "Ödeme işlenirken bir hata oluştu.", 'error');
@@ -92,9 +184,17 @@ const FinesTab: React.FC = () => {
       const today = new Date();
       const diffTime = today.getTime() - new Date(book.dueDate).getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays > 0 ? diffDays * finePerDay : 0;
+      const originalFine = diffDays > 0 ? diffDays * finePerDay : 0;
+      
+      const fineKey = `${book.id}-${book.borrowedBy}`;
+      const discount = appliedDiscounts[fineKey];
+      if (discount) {
+        return originalFine - (originalFine * discount.discountPercent / 100);
+      }
+      
+      return originalFine;
     };
-  }, [finePerDay]);
+  }, [finePerDay, appliedDiscounts]);
 
   const overdueBooks = useMemo(() => {
     const books = (allBorrowedBooks || []).filter(book => {
@@ -108,6 +208,11 @@ const FinesTab: React.FC = () => {
     return books;
   }, [allBorrowedBooks]);
 
+  const uniqueClasses = useMemo(() => {
+    const classes = new Set(overdueBooks.map(b => b.userData?.studentClass).filter(Boolean));
+    return ['all', ...Array.from(classes).sort()];
+  }, [overdueBooks]);
+
   const filteredOverdueBooks = useMemo(() => overdueBooks
     .filter(book => {
       const matchesSearch = 
@@ -120,7 +225,9 @@ const FinesTab: React.FC = () => {
         (finesStatusFilter === 'paid' && book.fineStatus === 'paid') ||
         (finesStatusFilter === 'unpaid' && book.fineStatus !== 'paid');
 
-      return matchesSearch && matchesStatus;
+      const matchesClass = classFilter === 'all' || book.userData?.studentClass === classFilter;
+
+      return matchesSearch && matchesStatus && matchesClass;
     })
     .sort((a, b) => {
       if (finesSortBy === 'amount') {
@@ -251,22 +358,21 @@ const FinesTab: React.FC = () => {
       if (result.isConfirmed) {
         setIsBulkPaying(true);
         try {
-          const promises = selectedFines.map(async (key) => {
+          for (const key of selectedFines) {
             const [bookId, userId] = key.split('-');
+            const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
             const paidAmount = await markFineAsPaid(bookId, userId, finePerDay);
             if (paidAmount) {
-              const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
               await addTransaction({
                 date: new Date(),
-                description: `${book?.userData?.displayName} isimli kullanıdan ödeme alındı`,
+                description: `${book?.userData?.displayName} isimli kullanıcıdan ödeme alındı`,
                 amount: paidAmount,
                 type: 'income',
                 category: 'Ödeme',
                 relatedFineId: key
               });
             }
-          });
-          await Promise.all(promises);
+          }
           Swal.fire('Başarılı!', `${selectedFines.length} ceza başarıyla ödendi olarak işaretlendi.`, 'success');
           setSelectedFines([]);
         } catch (error) {
@@ -342,12 +448,28 @@ const FinesTab: React.FC = () => {
   }
 
   return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8 px-4">
+    <div className="max-w-7xl mx-auto">
     <>
       <SetFineModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         currentRate={finePerDay}
         onSave={setFinePerDay}
+      />
+      
+      <ApplyDiscountModal
+        isOpen={isDiscountModalOpen}
+        onClose={() => { setIsDiscountModalOpen(false); setSelectedBookForDiscount(null); }}
+        userId={selectedBookForDiscount?.borrowedBy || ''}
+        bookCategory={(selectedBookForDiscount as any)?.category || ''}
+        originalAmount={selectedBookForDiscount ? (() => {
+          const today = new Date();
+          const diffTime = today.getTime() - new Date(selectedBookForDiscount.dueDate).getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays > 0 ? diffDays * finePerDay : 0;
+        })() : 0}
+        onApply={handleDiscountApplied}
       />
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -403,49 +525,21 @@ const FinesTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Ceza Dağılımı</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setChartView('monthly')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                chartView === 'monthly'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Aylık Trend
-            </button>
-            <button
-              onClick={() => setChartView('class')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                chartView === 'class'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Sınıf Bazında
-            </button>
-          </div>
-        </div>
-        {selectedClass && chartView === 'class' && (
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Seçili Sınıf: {selectedClass}</span>
-            <button
-              onClick={() => setSelectedClass(null)}
-              className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded transition-colors"
-            >
-              Temizle
-            </button>
-          </div>
-        )}
-        <div className="flex items-end justify-between h-48 gap-4">
-          {chartView === 'monthly' ? (
-            monthlyData.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div className="w-full flex flex-col items-center justify-end" style={{ height: '160px' }}>
-                  <div className="text-xs font-medium text-gray-600 mb-1">{data.count}</div>
+      {/* Visualization Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Monthly Trend Chart */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-white/20">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+            </svg>
+            Aylık Ceza Trendi
+          </h3>
+          <div className="flex items-end justify-between h-48 gap-2">
+            {monthlyData.map((data, index) => (
+              <div key={index} className="flex-1 flex flex-col items-center group">
+                <div className="w-full flex flex-col items-center justify-end relative" style={{ height: '160px' }}>
+                  <div className="text-xs font-medium text-gray-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{data.count}</div>
                   <div 
                     className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t transition-all duration-500 hover:from-indigo-700 hover:to-indigo-500"
                     style={{ height: `${(data.count / maxCount) * 100}%`, minHeight: data.count > 0 ? '8px' : '0' }}
@@ -453,40 +547,27 @@ const FinesTab: React.FC = () => {
                 </div>
                 <div className="text-xs text-gray-500 mt-2 font-medium">{data.month}</div>
               </div>
-            ))
-          ) : selectedClass ? (
-            classMonthlyData.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center group">
-                <div className="w-full flex flex-col items-center justify-end relative" style={{ height: '160px' }}>
-                  <div className="text-xs font-medium text-gray-600 mb-1">{data.totalAmount} TL</div>
-                  <div className="w-full flex flex-col justify-end" style={{ height: `${(data.totalAmount / maxMonthlyAmount) * 100}%`, minHeight: data.totalAmount > 0 ? '16px' : '0' }}>
-                    <div 
-                      className="w-full bg-green-500 hover:bg-green-600 transition-all duration-300 relative"
-                      style={{ height: `${data.totalAmount > 0 ? (data.paidAmount / data.totalAmount) * 100 : 0}%`, minHeight: data.paidAmount > 0 ? '4px' : '0' }}
-                      title={`Ödenen: ${data.paidAmount} TL`}
-                    ></div>
-                    <div 
-                      className="w-full bg-red-500 hover:bg-red-600 transition-all duration-300 rounded-t"
-                      style={{ height: `${data.totalAmount > 0 ? (data.unpaidAmount / data.totalAmount) * 100 : 0}%`, minHeight: data.unpaidAmount > 0 ? '4px' : '0' }}
-                      title={`Ödenmemiş: ${data.unpaidAmount} TL`}
-                    ></div>
-                  </div>
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    Ödenen: {data.paidAmount} TL<br/>Ödenmemiş: {data.unpaidAmount} TL
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-2 font-medium">{data.month}</div>
-              </div>
-            ))
-          ) : (
-            classFineData.map((data, index) => (
+            ))}
+          </div>
+        </div>
+
+        {/* Class Comparison Chart */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-white/20">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Sınıf Bazlı Ceza Dağılımı
+          </h3>
+          <div className="flex items-end justify-between h-48 gap-1">
+            {classFineData.slice(0, 8).map((data, index) => (
               <div 
                 key={index} 
                 className="flex-1 flex flex-col items-center cursor-pointer group"
                 onClick={() => setSelectedClass(data.className)}
               >
                 <div className="w-full flex flex-col items-center justify-end relative" style={{ height: '160px' }}>
-                  <div className="text-xs font-medium text-gray-600 mb-1">{data.count} / {data.totalAmount}TL</div>
+                  <div className="text-xs font-medium text-gray-600 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{data.totalAmount.toFixed(0)}₺</div>
                   <div className="w-full flex flex-col justify-end" style={{ height: `${(data.totalAmount / maxClassAmount) * 100}%`, minHeight: data.totalAmount > 0 ? '16px' : '0' }}>
                     <div 
                       className="w-full bg-green-500 group-hover:bg-green-600 transition-all duration-300"
@@ -497,16 +578,14 @@ const FinesTab: React.FC = () => {
                       style={{ height: `${data.totalAmount > 0 ? ((data.totalAmount - data.paidAmount) / data.totalAmount) * 100 : 0}%`, minHeight: (data.totalAmount - data.paidAmount) > 0 ? '4px' : '0' }}
                     ></div>
                   </div>
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    Ödenen: {data.paidAmount} TL<br/>Ödenmemiş: {data.totalAmount - data.paidAmount} TL
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                    Ödenen: {data.paidAmount.toFixed(0)}₺<br/>Ödenmemiş: {(data.totalAmount - data.paidAmount).toFixed(0)}₺
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 mt-2 font-medium truncate w-full text-center" title={data.className}>{data.className}</div>
               </div>
-            ))
-          )}
-        </div>
-        {chartView === 'class' && !selectedClass && (
+            ))}
+          </div>
           <div className="mt-4 flex items-center justify-center gap-4 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-500 rounded"></div>
@@ -516,24 +595,11 @@ const FinesTab: React.FC = () => {
               <div className="w-4 h-4 bg-blue-500 rounded"></div>
               <span className="text-gray-600">Ödenmemiş</span>
             </div>
-            <span className="text-gray-500 italic">Sınıfa tıklayarak aylık detayı görün</span>
           </div>
-        )}
-        {chartView === 'class' && selectedClass && (
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <span className="text-gray-600">Ödenen</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span className="text-gray-600">Ödenmemiş</span>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden border border-white/20">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
             <DollarSign className="w-6 h-6 mr-2 text-indigo-600" />
@@ -550,93 +616,161 @@ const FinesTab: React.FC = () => {
         </div>
 
         <div className="p-6">
-          <div className="mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
+          <div className="flex gap-6">
+            {/* Sidebar */}
+            <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold flex items-center">
+                  <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                  Filtreler
+                </h2>
+              </div>
+
+              <div className="mb-6">
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Kullanıcı adı, öğrenci no veya kitap adı..."
+                    placeholder="Kullanıcı veya kitap ara..."
                     value={finesSearchQuery}
                     onChange={(e) => setFinesSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setViewMode('table')} className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                </button>
-                <button onClick={() => setViewMode('card')} className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                </button>
-                <button onClick={() => setShowFinesFilters(!showFinesFilters)} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center justify-center">
-                  <Filter className="w-5 h-5 mr-2" />Filtrele
-                </button>
-              </div>
-            </div>
 
-            {showFinesFilters && (
-              <div className="mt-4 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Durumu</label>
-                    <select
-                      value={finesStatusFilter}
-                      onChange={(e) => setFinesStatusFilter(e.target.value as 'all' | 'paid' | 'unpaid')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    >
-                      <option value="all">Tümü</option>
-                      <option value="paid">Ödenmiş</option>
-                      <option value="unpaid">Ödenmemiş</option>
-                    </select>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sınıf</h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {uniqueClasses.map(c => (
+                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        <input
+                          type="radio"
+                          name="class"
+                          checked={classFilter === c}
+                          onChange={() => setClassFilter(c)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">{c === 'all' ? 'Tümü' : c}</span>
+                      </label>
+                    ))}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sıralama</label>
-                    <select
-                      value={finesSortBy}
-                      onChange={(e) => setFinesSortBy(e.target.value as 'dueDate' | 'amount')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    >
-                      <option value="dueDate">İade Tarihine Göre</option>
-                      <option value="amount">Ceza Tutarına Göre</option>
-                    </select>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Ödeme Durumu</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={finesStatusFilter === 'all'}
+                        onChange={() => setFinesStatusFilter('all')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">Tümü</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={finesStatusFilter === 'unpaid'}
+                        onChange={() => setFinesStatusFilter('unpaid')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-red-600">● Ödenmemiş</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={finesStatusFilter === 'paid'}
+                        onChange={() => setFinesStatusFilter('paid')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-green-600">● Ödenmiş</span>
+                    </label>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sıralama Yönü</label>
-                    <button
-                      onClick={() => setFinesSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center"
-                    >
-                      {finesSortOrder === 'asc' ? (
-                        <><SortAsc className="w-5 h-5 mr-2" /> Artan</>
-                      ) : (
-                        <><SortDesc className="w-5 h-5 mr-2" /> Azalan</>
-                      )}
-                    </button>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="sort"
+                        checked={finesSortBy === 'dueDate' && finesSortOrder === 'desc'}
+                        onChange={() => { setFinesSortBy('dueDate'); setFinesSortOrder('desc'); }}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">En Geç İade</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="sort"
+                        checked={finesSortBy === 'dueDate' && finesSortOrder === 'asc'}
+                        onChange={() => { setFinesSortBy('dueDate'); setFinesSortOrder('asc'); }}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">En Erken İade</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="sort"
+                        checked={finesSortBy === 'amount' && finesSortOrder === 'desc'}
+                        onChange={() => { setFinesSortBy('amount'); setFinesSortOrder('desc'); }}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">En Yüksek Ceza</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input
+                        type="radio"
+                        name="sort"
+                        checked={finesSortBy === 'amount' && finesSortOrder === 'asc'}
+                        onChange={() => { setFinesSortBy('amount'); setFinesSortOrder('asc'); }}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">En Düşük Ceza</span>
+                    </label>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </aside>
 
-          {selectedFines.length > 0 && (
-            <div className="p-4 bg-indigo-50 border-t border-b border-indigo-200 flex items-center justify-between mb-6">
-              <span className="text-sm font-medium text-indigo-700">
-                {selectedFines.length} ceza seçildi.
-              </span>
-              <button
-                onClick={handleBulkPaymentReceived}
-                disabled={isBulkPaying}
-                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors"
-              >
-                {isBulkPaying ? 'İşleniyor...' : 'Seçili Olanları Öde'}
-              </button>
-            </div>
-          )}
+            <div className="flex-1">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex gap-2">
+                  <button onClick={() => setViewMode('table')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                  <button onClick={() => setViewMode('card')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600">{filteredOverdueBooks.length} ceza bulundu</p>
+              </div>
 
-          {viewMode === 'table' ? (
+              {selectedFines.length > 0 && (
+                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-indigo-700">
+                    {selectedFines.length} ceza seçildi.
+                  </span>
+                  <button
+                    onClick={handleBulkPaymentReceived}
+                    disabled={isBulkPaying}
+                    className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isBulkPaying ? 'İşleniyor...' : 'Seçili Olanları Öde'}
+                  </button>
+                </div>
+              )}
+
+              {viewMode === 'table' ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -746,7 +880,22 @@ const FinesTab: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col space-y-1">
-                          <span className="text-sm font-medium text-red-600">{fine} TL</span>
+                          {appliedDiscounts[fineKey] && (
+                            <div className="text-xs text-gray-500 line-through">
+                              {(() => {
+                                const today = new Date();
+                                const diffTime = today.getTime() - new Date(book.dueDate).getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                return diffDays > 0 ? diffDays * finePerDay : 0;
+                              })()} TL
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-red-600">{fine.toFixed(2)} TL</span>
+                          {appliedDiscounts[fineKey] && (
+                            <span className="text-xs font-semibold text-green-600">
+                              %{appliedDiscounts[fineKey].discountPercent} indirim uygulandı
+                            </span>
+                          )}
                           {book.fineStatus === 'paid' ? (
                             <div className="flex flex-col gap-1">
                               <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full inline-flex items-center gap-1">
@@ -760,20 +909,42 @@ const FinesTab: React.FC = () => {
                                   {new Date(book.paymentDate).toLocaleDateString()}
                                 </span>
                               )}
+                              {book.discountApplied && book.originalFineAmount && (
+                                <span className="text-xs text-green-600 font-semibold">
+                                  %{book.discountApplied} indirimli
+                                </span>
+                              )}
                               {book.fineAmountSnapshot && (
-                                <span className="text-xs text-gray-500" title={`Ödeme Tutarı: ${book.fineAmountSnapshot} TL`}>
+                                <span className="text-xs text-gray-500" title={`Ödenen: ${book.fineAmountSnapshot.toFixed(2)} TL${book.originalFineAmount ? ` (Orijinal: ${book.originalFineAmount.toFixed(2)} TL)` : ''}`}>
                                   Makbuz: #{book.id.slice(-6)}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <button
-                              onClick={() => handlePaymentReceived(book.id, book.borrowedBy)}
-                              disabled={selectedFines.length > 0}
-                              className="px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                            >
-                              Ödeme Al
-                            </button>
+                            <div className="flex gap-1">
+                              {appliedDiscounts[fineKey] ? (
+                                <button
+                                  onClick={() => handleRemoveDiscount(book.id, book.borrowedBy)}
+                                  className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
+                                >
+                                  İndirimi Kaldır
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleApplyDiscount(book)}
+                                  className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors flex items-center gap-1"
+                                >
+                                  <Ticket className="w-3 h-3" />
+                                  İndirim Uygula
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handlePaymentReceived(book.id, book.borrowedBy)}
+                                className="px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors"
+                              >
+                                Ödeme Al
+                              </button>
+                            </div>
                           )}
                         </div>
                       </td>
@@ -782,8 +953,8 @@ const FinesTab: React.FC = () => {
                 })}
               </tbody>
             </table>
-          </div>
-          ) : (
+              </div>
+              ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedFines.map((book) => {
                 const fineKey = `${book.id}-${book.borrowedBy}`;
@@ -806,40 +977,101 @@ const FinesTab: React.FC = () => {
                         <div className="flex items-center justify-between text-sm"><span className="text-gray-600">İade:</span><span className="font-medium">{new Date(book.dueDate).toLocaleDateString()}</span></div>
                         <div className="flex items-center justify-between text-sm"><span className="text-gray-600">Gecikme:</span><span className={`px-2 py-1 rounded-full text-xs font-medium ${daysOverdue > 30 ? 'bg-red-100 text-red-800' : daysOverdue > 14 ? 'bg-orange-100 text-orange-800' : 'bg-yellow-100 text-yellow-800'}`}>{daysOverdue > 30 ? 'Yüksek' : daysOverdue > 14 ? 'Orta' : 'Düşük'} - {daysOverdue} gün</span></div>
                       </div>
-                      <div className="flex items-center justify-between pt-3 border-t">
-                        <div><p className="text-xs text-gray-500">Ceza Tutarı</p><p className="text-xl font-bold text-red-600">{fine} TL</p></div>
-                        {book.fineStatus === 'paid' ? <div className="text-right"><span className="px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full inline-flex items-center gap-1"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>Ödendi</span>{book.paymentDate && <p className="text-xs text-gray-500 mt-1">{new Date(book.paymentDate).toLocaleDateString()}</p>}</div> : <button onClick={() => handlePaymentReceived(book.id, book.borrowedBy)} disabled={selectedFines.length > 0} className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">Ödeme Al</button>}
+                      <div className="pt-3 border-t">
+                        <div className="flex items-end justify-between mb-2">
+                          <div>
+                            <p className="text-xs text-gray-500">Ceza Tutarı</p>
+                            {appliedDiscounts[fineKey] && (
+                              <p className="text-sm text-gray-500 line-through">
+                                {(() => {
+                                  const today = new Date();
+                                  const diffTime = today.getTime() - new Date(book.dueDate).getTime();
+                                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                  return (diffDays > 0 ? diffDays * finePerDay : 0).toFixed(2);
+                                })()} TL
+                              </p>
+                            )}
+                            <p className="text-xl font-bold text-red-600">{fine.toFixed(2)} TL</p>
+                          </div>
+                          {book.fineStatus === 'paid' ? (
+                            <div className="text-right">
+                              <span className="px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full inline-flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                Ödendi
+                              </span>
+                              {book.paymentDate && <p className="text-xs text-gray-500 mt-1">{new Date(book.paymentDate).toLocaleDateString()}</p>}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              {appliedDiscounts[fineKey] ? (
+                                <button
+                                  onClick={() => handleRemoveDiscount(book.id, book.borrowedBy)}
+                                  className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                                >
+                                  Kaldır
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleApplyDiscount(book)}
+                                  className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center gap-1"
+                                >
+                                  <Ticket className="w-3 h-3" /> İndirim
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handlePaymentReceived(book.id, book.borrowedBy)}
+                                disabled={selectedFines.length > 0}
+                                className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                              >
+                                Ödeme Al
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {appliedDiscounts[fineKey] && (
+                          <div className="text-right text-xs font-semibold text-green-600">
+                            %{appliedDiscounts[fineKey].discountPercent} indirim uygulandı
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 );
               })}
-            </div>
-          )}
-          {finesTotalPages > 1 && (
-            <div className="p-6 bg-white border-t border-gray-200 flex justify-between items-center">
-              <p className="text-sm text-gray-600">Sayfa {finesCurrentPage} / {finesTotalPages} ({filteredOverdueBooks.length} sonuç)</p>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setFinesCurrentPage(p => Math.max(p - 1, 1))}
-                  disabled={finesCurrentPage === 1}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Önceki
-                </button>
-                <button
-                  onClick={() => setFinesCurrentPage(p => Math.min(p + 1, finesTotalPages))}
-                  disabled={finesCurrentPage === finesTotalPages}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Sonraki
-                </button>
               </div>
+              )}
+              {finesTotalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 p-4 border-t mt-4">
+                  <button
+                    onClick={() => setFinesCurrentPage(p => Math.max(p - 1, 1))}
+                    disabled={finesCurrentPage === 1}
+                    className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Sayfa {finesCurrentPage} / {finesTotalPages}
+                  </span>
+                  <button
+                    onClick={() => setFinesCurrentPage(p => Math.min(p + 1, finesTotalPages))}
+                    disabled={finesCurrentPage === finesTotalPages}
+                    className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>
+    </div>
+    </div>
   );
 };
 

@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRight as ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2 } from 'lucide-react';
+import { useSpinWheel } from '../contexts/SpinWheelContext';
+import SpinWheelModal from '../components/user/SpinWheelModal';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
 import ItemDetailsModal from '../components/common/ItemDetailsModal';
 import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
 import ItemSlider from '../components/common/ItemSlider';
 import Leaderboard from '../components/dashboard/Leaderboard'; // Lider tablosu import edildi
 import UpdateButton from '../components/common/UpdateButton'; // Added import
+import ChatBot from '../components/ChatBot'; // Chat bot import edildi
 
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -47,6 +50,15 @@ const UserDashboard: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showItemDetailsModal, setShowItemDetailsModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Event | Survey | Announcement | null>(null);
+  const [showSpinModal, setShowSpinModal] = useState(false);
+  const { canSpin } = useSpinWheel();
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '🌅 Günaydın';
+    if (hour < 18) return '☀️ İyi Günler';
+    return '🌙 İyi Akşamlar';
+  };
 
   // Fetch user-specific requests
   useEffect(() => {
@@ -332,6 +344,10 @@ const UserDashboard: React.FC = () => {
               <DollarSign className="w-5 h-5" />
               <span>Cezalarım</span>
             </Link>
+            <Link to="/my-coupons" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+              <MessageSquare className="w-5 h-5" />
+              <span>Kuponlarım</span>
+            </Link>
             <Link to="/favorites" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
               <Heart className="w-5 h-5" />
               <span>Favorilerim</span>
@@ -437,8 +453,14 @@ const UserDashboard: React.FC = () => {
       )}
 
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-indigo-900 text-white py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-indigo-900 text-white py-8 relative overflow-hidden">
+          {/* Animated Gradient Background */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-blob -top-20 -left-20"></div>
+            <div className="absolute w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-blob animation-delay-2000 top-10 right-0"></div>
+            <div className="absolute w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-blob animation-delay-4000 -bottom-20 left-40"></div>
+          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={toggleSidebar}
@@ -446,7 +468,39 @@ const UserDashboard: React.FC = () => {
               >
                 <Menu className="w-6 h-6" />
               </button>
-              <h1 className="text-3xl font-bold">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  {userData?.photoURL ? (
+                    <img
+                      src={userData.photoURL}
+                      alt="Profil"
+                      className="w-16 h-16 rounded-full border-4 border-white/30 shadow-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full border-4 border-white/30 shadow-lg bg-indigo-700 flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">
+                        {(userData?.displayName || user.displayName || user.email?.split('@')[0] || 'U')[0].toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-indigo-900 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm border-2 border-indigo-900 shadow-lg">
+                    {userData?.level || 1}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-lg text-indigo-200 mb-1">{getGreeting()}</p>
+                  <h1 className="text-3xl font-bold">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex-1 bg-indigo-800 rounded-full h-2 w-48">
+                      <div
+                        className="bg-yellow-400 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${((userData?.totalXP || 0) % 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-indigo-200 font-medium">{userData?.totalXP || 0} XP</span>
+                  </div>
+                </div>
+              </div>
               <UpdateButton /> {/* Added UpdateButton here */}
             </div>
           </div>
@@ -454,7 +508,26 @@ const UserDashboard: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* At a Glance Summary Cards - Premium Minimal Gradient */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            {/* Çark Butonu */}
+            <button
+              onClick={() => setShowSpinModal(true)}
+              className="relative bg-gradient-to-br from-purple-500 to-pink-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 group overflow-hidden touch-manipulation min-h-[120px]"
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative flex flex-col items-center justify-center h-full">
+                <div className="text-4xl sm:text-6xl mb-1 sm:mb-2 group-hover:rotate-180 transition-transform duration-700">🎡</div>
+                <p className="text-white font-bold text-sm sm:text-lg text-center">Günlük Şans Çarkı</p>
+                {canSpin && (
+                  <div className="mt-1 sm:mt-2 px-2 sm:px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
+                    <span className="text-white text-xs font-semibold flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                      Hakkın Var!
+                    </span>
+                  </div>
+                )}
+              </div>
+            </button>
             <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
@@ -958,6 +1031,11 @@ const UserDashboard: React.FC = () => {
         onClose={handleCloseItemModal}
         item={selectedItem}
       />
+
+      <SpinWheelModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
+      
+      {/* Chat Bot */}
+      <ChatBot />
     </div>
   );
 };

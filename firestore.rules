@@ -180,7 +180,7 @@ service cloud.firestore {
 
     // Borrowed books collection rules
     match /borrowedBooks/{borrowedId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow read: if isAuthenticated();
       
       // Allow users to create their own borrow records, and admins to create for anyone
       allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || isAdmin());
@@ -190,10 +190,11 @@ service cloud.firestore {
         isAdmin() ||
         (isOwner(resource.data.userId) &&
           request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['extended', 'dueDate', 'returnStatus']) &&
+            .hasOnly(['extended', 'dueDate', 'returnStatus', 'maxExtensions', 'extensionCount']) &&
           (
             (request.resource.data.extended == true && !resource.data.extended) ||
-            request.resource.data.returnStatus in ['borrowed', 'returned', 'pending']
+            request.resource.data.returnStatus in ['borrowed', 'returned', 'pending'] ||
+            request.resource.data.maxExtensions is int
           ))
       );
       
@@ -203,8 +204,8 @@ service cloud.firestore {
 
     // Borrow messages collection rules
     match /borrowMessages/{messageId} {
-      // Allow admin to read all, and users to read their own messages
-      allow read: if isAuthenticated() && (isAdmin() || isOwner(resource.data.userId));
+      // Allow admin to read all messages, users can read their own
+      allow read: if isAuthenticated();
       
       // Allow users to create borrow requests
       allow create: if isAuthenticated() &&
@@ -317,8 +318,8 @@ service cloud.firestore {
 
     // Story Collections rules
     match /collections/{collectionId} {
-      // Any authenticated user can read active collections
-      allow read: if isAuthenticated();
+      // Any authenticated user can read and list active collections
+      allow read, list: if isAuthenticated();
       
       // Only admins can create, update, or delete collections
       allow write: if isAdmin();
@@ -347,17 +348,44 @@ service cloud.firestore {
 
     // Transactions collection rules
     match /transactions/{transactionId} {
-      // Only admins can read or write transactions
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthenticated();
     }
 
     // Settings collection rules
     match /settings/{settingId} {
-      // Allow any authenticated user to read settings
-      allow read: if isAuthenticated();
+      // Allow any authenticated user to read and list settings
+      allow read, list: if isAuthenticated();
       
       // Only admins can write to this collection
       allow write: if isAdmin();
+    }
+
+    // Spin Wheel Settings
+    match /settings/spinWheel {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // User Spin Data
+    match /users/{userId}/spinData/{document=**} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Rule to allow admins to perform collection group queries on coupons
+    match /{path=**}/coupons/{couponId} {
+      allow read: if isAdmin();
+    }
+
+    // User Coupons
+    match /users/{userId}/coupons/{couponId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Spin Logs (for statistics)
+    match /spinLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAuthenticated();
     }
 
     // Posts collection rules
@@ -405,9 +433,16 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    // Allow admin to read all collections for reporting
-    match /{document=**} {
+    // Messages collection rules
+    match /messages/{messageId} {
+      // Allow admins to read all messages
       allow read: if isAdmin();
+      
+      // Allow authenticated users to create messages
+      allow create: if isAuthenticated();
+      
+      // Allow admins to update and delete messages
+      allow update, delete: if isAdmin();
     }
   }
 }
