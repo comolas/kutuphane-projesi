@@ -222,51 +222,51 @@ const RequestsTab: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeIn">
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8 animate-fadeIn">
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Talepler</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.total}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Talepler</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.total}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <MessageSquare className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <MessageSquare className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Bekleyen</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.pending}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Bekleyen</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.pending}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Clock className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Clock className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">İşleniyor</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.inProgress}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">İşleniyor</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.inProgress}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <AlertCircle className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <AlertCircle className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Tamamlanan</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.completed}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Tamamlanan</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.completed}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <CheckCircle className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <CheckCircle className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
@@ -456,21 +456,21 @@ const RequestsTab: React.FC = () => {
       )}
 
       {/* Main Content with Sidebar */}
-      <div className="flex gap-6 animate-fadeIn">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <div className="w-80 flex-shrink-0">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 sticky top-6">
-            <div className="flex items-center justify-between mb-6">
+        <div className="w-full lg:w-80 flex-shrink-0">
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 lg:sticky lg:top-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-lg font-bold text-gray-900">Filtreler</h3>
+                <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtreler</h3>
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Search */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Arama</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Arama</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -478,20 +478,20 @@ const RequestsTab: React.FC = () => {
                     placeholder="Talep, kullanıcı ara..."
                     value={requestSearchQuery}
                     onChange={(e) => setRequestSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm"
+                    className="w-full pl-9 pr-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Durum</label>
-                <div className="space-y-2">
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">Durum</label>
+                <div className="space-y-1 sm:space-y-2">
                   {[{ value: 'all', label: 'Tümü', count: stats.total }, 
                     { value: 'pending', label: 'Bekleyen', count: stats.pending },
                     { value: 'in-progress', label: 'İşleniyor', count: stats.inProgress },
                     { value: 'completed', label: 'Tamamlanan', count: stats.completed }].map(status => (
-                    <label key={status.value} className="flex items-center justify-between p-2 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors">
+                    <label key={status.value} className="flex items-center justify-between p-2 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors touch-manipulation">
                       <div className="flex items-center gap-2">
                         <input
                           type="radio"
@@ -501,7 +501,7 @@ const RequestsTab: React.FC = () => {
                           onChange={(e) => setRequestStatusFilter(e.target.value as any)}
                           className="w-4 h-4 text-indigo-600"
                         />
-                        <span className="text-sm font-medium text-gray-700">{status.label}</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">{status.label}</span>
                       </div>
                       <span className="text-xs font-bold text-gray-500">{status.count}</span>
                     </label>
@@ -511,11 +511,11 @@ const RequestsTab: React.FC = () => {
 
               {/* Priority Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Öncelik</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">Öncelik</label>
                 <select
                   value={requestPriorityFilter}
                   onChange={(e) => setRequestPriorityFilter(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium"
+                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-xs sm:text-sm font-medium"
                 >
                   <option value="all">Tüm Öncelikler</option>
                   <option value="high">Yüksek</option>
@@ -526,11 +526,11 @@ const RequestsTab: React.FC = () => {
 
               {/* Category Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Kategori</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">Kategori</label>
                 <select
                   value={requestCategoryFilter}
                   onChange={(e) => setRequestCategoryFilter(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium"
+                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-xs sm:text-sm font-medium"
                 >
                   <option value="all">Tüm Kategoriler</option>
                   <option value="Kitap Önerisi">Kitap Önerisi</option>
@@ -542,11 +542,11 @@ const RequestsTab: React.FC = () => {
 
               {/* Items Per Page */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">Sayfa Başına</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium"
+                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-xs sm:text-sm font-medium"
                 >
                   <option value={10}>10 talep</option>
                   <option value={20}>20 talep</option>
@@ -579,44 +579,44 @@ const RequestsTab: React.FC = () => {
 
             {/* Bulk Actions */}
             {paginatedRequests.length > 0 && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                     <button
                       onClick={toggleSelectAll}
-                      className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-sm text-gray-700"
+                      className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-xs sm:text-sm text-gray-700 min-h-[40px] touch-manipulation w-full sm:w-auto justify-center"
                     >
                       {paginatedRequests.every(r => selectedRequests.includes(r.id)) ? (
-                        <CheckSquare className="w-5 h-5 text-indigo-600" />
+                        <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                       ) : (
-                        <Square className="w-5 h-5 text-gray-400" />
+                        <Square className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                       )}
                       {paginatedRequests.every(r => selectedRequests.includes(r.id)) ? 'Tümünü Kaldır' : 'Tümünü Seç'}
                     </button>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs sm:text-sm text-gray-600">
                       {selectedRequests.length} / {paginatedRequests.length} talep seçildi
                     </span>
                   </div>
                   
                   {selectedRequests.length > 0 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                       <button
                         onClick={() => handleBulkStatusChange('in-progress')}
-                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                       >
                         <AlertCircle className="w-4 h-4" />
                         Toplu İşleme Al
                       </button>
                       <button
                         onClick={() => handleBulkStatusChange('completed')}
-                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                       >
                         <CheckCircle className="w-4 h-4" />
                         Toplu Tamamla
                       </button>
                       <button
                         onClick={handleBulkDelete}
-                        className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                       >
                         <Trash2 className="w-4 h-4" />
                         Toplu Sil
@@ -699,31 +699,31 @@ const RequestsTab: React.FC = () => {
                           </div>
                           
                           {!expandedRequestId || expandedRequestId !== request.id ? (
-                            <p className="text-gray-600 text-sm line-clamp-2">{request.content}</p>
+                            <p className="text-gray-600 text-sm line-clamp-2 break-words">{request.content}</p>
                           ) : null}
                         </div>
 
                         {expandedRequestId === request.id && (
-                          <div className="px-6 pb-6 border-t border-gray-200 pt-4 ml-10">
-                            <div className="bg-white rounded-lg p-4 mb-4">
-                              <p className="text-gray-700 leading-relaxed">{request.content}</p>
+                          <div className="px-2 sm:px-6 pb-4 sm:pb-6 border-t border-gray-200 pt-4 ml-0 sm:ml-10">
+                            <div className="bg-white rounded-lg p-3 sm:p-4 mb-4">
+                              <p className="text-gray-700 leading-relaxed break-words whitespace-pre-wrap">{request.content}</p>
                             </div>
                             
                             {request.response && (
-                              <div className="bg-indigo-50 rounded-lg p-4 mb-4 border-2 border-indigo-200">
+                              <div className="bg-indigo-50 rounded-lg p-3 sm:p-4 mb-4 border-2 border-indigo-200">
                                 <div className="flex items-center gap-2 mb-2">
                                   <CheckCircle className="w-5 h-5 text-indigo-600" />
                                   <span className="font-bold text-indigo-900">Yanıt:</span>
                                 </div>
-                                <p className="text-gray-700 mb-2">{request.response}</p>
+                                <p className="text-gray-700 mb-2 break-words whitespace-pre-wrap">{request.response}</p>
                                 <p className="text-sm text-gray-500">{request.responseDate?.toLocaleDateString('tr-TR')}</p>
                               </div>
                             )}
                             
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setSelectedRequest(request); }}
-                                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all duration-200 flex items-center gap-2 font-semibold text-sm"
+                                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm min-h-[40px] touch-manipulation"
                               >
                                 <Send className="w-4 h-4" />
                                 Yanıtla
@@ -731,7 +731,7 @@ const RequestsTab: React.FC = () => {
                               {request.status === 'pending' && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); updateRequestStatus(request.id, 'in-progress'); }}
-                                  className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all duration-200 flex items-center gap-2 font-semibold text-sm"
+                                  className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm min-h-[40px] touch-manipulation"
                                 >
                                   <AlertCircle className="w-4 h-4" />
                                   İşleme Al
@@ -740,7 +740,7 @@ const RequestsTab: React.FC = () => {
                               {request.status === 'in-progress' && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); updateRequestStatus(request.id, 'completed'); }}
-                                  className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all duration-200 flex items-center gap-2 font-semibold text-sm"
+                                  className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm min-h-[40px] touch-manipulation"
                                 >
                                   <CheckCircle className="w-4 h-4" />
                                   Tamamla

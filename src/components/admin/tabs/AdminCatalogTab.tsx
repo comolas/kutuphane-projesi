@@ -346,24 +346,24 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
     <div className="max-w-7xl mx-auto">
     <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden border border-white/20">
       <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <BookIcon className="w-6 h-6 mr-2 text-indigo-600" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
+            <BookIcon className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-indigo-600" />
             Katalog Yönetimi
           </h2>
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-2 sm:space-x-3">
             <button
               onClick={() => setShowAddBookModal(true)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center text-sm sm:text-base touch-manipulation min-h-[40px]"
             >
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Yeni Kitap Ekle
             </button>
             <button
               onClick={() => setShowBulkAddModal(true)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+              className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm sm:text-base touch-manipulation min-h-[40px]"
             >
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Toplu Kitap Ekle
             </button>
           </div>
@@ -371,26 +371,26 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       </div>
 
       <div className="p-6">
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Sidebar */}
-          <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold flex items-center">
-                <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+          <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                <Filter className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-indigo-600" />
                 Filtreler
               </h2>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Kitap ara..."
                   value={catalogSearchQuery}
                   onChange={(e) => setCatalogSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-                <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                <Search className="absolute left-2.5 sm:left-3 top-2.5 text-gray-400" size={14} />
               </div>
             </div>
 
@@ -524,7 +524,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
         )}
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden animate-pulse border border-white/20">
                     <div className="w-full aspect-[2/3] bg-gradient-to-br from-gray-200 to-gray-300"></div>
@@ -546,7 +546,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {currentBooks.map(book => {
             const bookStatus = getBookStatus(book.id);
 
@@ -609,18 +609,20 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                     {bookStatus === 'lost' ? (
                       <button
                         onClick={() => handleMarkAsFound(book.id)}
-                        className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                       >
                         <UserCheck className="w-3 h-3 mr-1" />
-                        Bulundu
+                        <span className="hidden sm:inline">Bulundu</span>
+                        <span className="sm:hidden">Bul</span>
                       </button>
                     ) : (
                       <button
                         onClick={() => handleMarkAsLost(book.id)}
-                        className="flex-1 px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                       >
                         <UserX className="w-3 h-3 mr-1" />
-                        Kayıp
+                        <span className="hidden sm:inline">Kayıp</span>
+                        <span className="sm:hidden">Kay</span>
                       </button>
                     )}
                   </div>

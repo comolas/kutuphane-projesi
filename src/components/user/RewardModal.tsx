@@ -56,7 +56,7 @@ const RewardModal: React.FC<RewardModalProps> = ({ result, onClose }) => {
             : 'Bu kuponu tüm kitapların cezalarında kullanabilirsiniz.',
           info: 'Son Kullanma: 30 gün',
           buttonText: 'Kuponlarım',
-          buttonAction: () => { navigate('/fines'); onClose(); },
+          buttonAction: () => { navigate('/my-coupons'); onClose(); },
           bgColor: 'from-green-500 to-emerald-600',
         };
 
@@ -123,11 +123,11 @@ const RewardModal: React.FC<RewardModalProps> = ({ result, onClose }) => {
           <div className={`bg-gradient-to-r ${content.bgColor} p-6 sm:p-8 text-white text-center relative`}>
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors touch-manipulation z-10"
             >
               <X className="w-5 h-5" />
             </button>
-            <div className="text-5xl sm:text-6xl mb-3 sm:mb-4 animate-bounce">{result.reward.icon}</div>
+            <div className="text-5xl sm:text-6xl mb-3 sm:mb-4">{result.reward.icon}</div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-2">{content.title}</h2>
             <p className="text-lg sm:text-xl font-semibold">{content.message}</p>
           </div>

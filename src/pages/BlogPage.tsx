@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Post } from '../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PostCard from '../components/blog/PostCard';
-import { Search, X, SlidersHorizontal, FileText, FolderOpen, Heart, MessageCircle, BookOpen, TrendingUp, Clock, Tag, ArrowUp } from 'lucide-react';
+import { Search, X, SlidersHorizontal, FileText, FolderOpen, Heart, MessageCircle, BookOpen, TrendingUp, Clock, Tag, ArrowUp, ChevronLeft } from 'lucide-react';
 
 const BlogPage: React.FC = () => {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -126,70 +127,91 @@ const BlogPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl sm:text-4xl font-bold">Blog</h1>
-        <div className="flex gap-3">
+      <div className="mb-4">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" />
+          Geri Dön
+        </button>
+      </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Blog</h1>
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+            className="lg:hidden flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <SlidersHorizontal size={20} />
             Filtrele
           </button>
-          <Link to="/create-post" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+          <Link to="/create-post" className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-center text-sm sm:text-base">
             Yeni Yazı Ekle
           </Link>
         </div>
       </div>
 
       {/* İstatistik Kartları */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-indigo-100 text-sm mb-1">Toplam Yazı</p>
-              <p className="text-3xl font-bold">{posts.length}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
             </div>
-            <FileText size={40} className="opacity-80" />
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yazı</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{posts.length}</p>
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 text-sm mb-1">Kategori</p>
-              <p className="text-3xl font-bold">{categories.length}</p>
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <FolderOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
             </div>
-            <FolderOpen size={40} className="opacity-80" />
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Kategori</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{categories.length}</p>
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-pink-500 to-pink-600 text-white p-6 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-pink-100 text-sm mb-1">Toplam Beğeni</p>
-              <p className="text-3xl font-bold">{posts.reduce((sum, post) => sum + (post.likes?.length || 0), 0)}</p>
+        <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
             </div>
-            <Heart size={40} className="opacity-80" />
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Beğeni</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{posts.reduce((sum, post) => sum + (post.likes?.length || 0), 0)}</p>
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-sm mb-1">Toplam Yorum</p>
-              <p className="text-3xl font-bold">{posts.reduce((sum, post) => sum + ((post as any).commentCount || 0), 0)}</p>
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
             </div>
-            <MessageCircle size={40} className="opacity-80" />
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yorum</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{posts.reduce((sum, post) => sum + ((post as any).commentCount || 0), 0)}</p>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex gap-4 lg:gap-6">
         {/* Sidebar */}
         <aside className={`
           fixed lg:sticky top-0 left-0 h-screen lg:h-auto z-50 lg:z-0
-          w-72 lg:w-64 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg
+          w-80 lg:w-64 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg
           transform transition-transform duration-300 lg:transform-none
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
@@ -483,21 +505,21 @@ const BlogPage: React.FC = () => {
           
           {/* Pagination */}
           {filteredPosts.length > postsPerPage && (
-            <div className="flex justify-center items-center gap-2 mt-8">
+            <div className="flex flex-wrap justify-center items-center gap-2 mt-6 sm:mt-8">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm sm:text-base disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Önceki
               </button>
-              <span className="px-4 py-2 font-semibold">
+              <span className="px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base">
                 Sayfa {currentPage} / {Math.ceil(filteredPosts.length / postsPerPage)}
               </span>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredPosts.length / postsPerPage)))}
                 disabled={currentPage === Math.ceil(filteredPosts.length / postsPerPage)}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm sm:text-base disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Sonraki
               </button>

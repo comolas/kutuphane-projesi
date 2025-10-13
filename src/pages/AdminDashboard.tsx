@@ -128,53 +128,53 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full w-96 bg-indigo-900 text-white transform transition-transform duration-300 ease-in-out z-50 ${
+      <div className={`fixed top-0 left-0 h-full w-80 sm:w-96 bg-indigo-900 text-white transform transition-transform duration-300 ease-in-out z-50 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-4">
+        <div className="p-3 sm:p-4">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
             <div className="flex items-center">
-              <BookIcon className="w-8 h-8 mr-2" />
-              <span className="text-xl font-bold">Admin Panel</span>
+              <BookIcon className="w-6 h-6 sm:w-8 sm:h-8 mr-2" />
+              <span className="text-lg sm:text-xl font-bold">Admin Panel</span>
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-indigo-800 rounded-lg">
-              <X className="w-6 h-6" />
+            <button onClick={() => setSidebarOpen(false)} className="p-1.5 sm:p-2 hover:bg-indigo-800 rounded-lg touch-manipulation">
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
           
-          <div className="mb-4">
+          <div className="mb-3 sm:mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-2.5 sm:left-3 top-2.5 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Menüde ara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-indigo-800 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full pl-8 sm:pl-9 pr-2 sm:pr-3 py-1.5 sm:py-2 bg-indigo-800 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
               />
             </div>
           </div>
           
-          <nav className="space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+          <nav className="space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
             {(!searchQuery || 'ödünç verilen kitaplar'.includes(searchQuery.toLowerCase()) || 'mesajlar gönderilen talepler ceza'.includes(searchQuery.toLowerCase())) && (
             <div>
               <button
                 onClick={() => setExpandedCategories(prev => ({ ...prev, main: !prev.main }))}
-                className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-white transition-colors"
+                className="flex items-center justify-between w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-white transition-colors touch-manipulation"
               >
                 <span>Ana Panel</span>
-                {expandedCategories.main ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                {expandedCategories.main ? <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </button>
               {expandedCategories.main && (
               <div className="mt-1 space-y-1">
                 {(!searchQuery || 'ödünç verilen kitaplar kitap'.includes(searchQuery.toLowerCase())) && (
                 <button
                   onClick={() => { setActiveTab('borrowed-books'); setSidebarOpen(false); }}
-                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 hover:scale-105 hover:shadow-lg transition-all duration-200 ${
-                    activeTab === 'borrowed-books' ? 'bg-indigo-800 scale-105 shadow-lg' : ''
+                  className={`flex items-center w-full space-x-2 sm:space-x-3 p-1.5 sm:p-2 rounded-lg hover:bg-indigo-800 transition-all duration-200 touch-manipulation text-sm ${
+                    activeTab === 'borrowed-books' ? 'bg-indigo-800' : ''
                   }`}
                 >
-                  <Library className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
+                  <Library className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span>Ödünç Verilen Kitaplar</span>
                 </button>
                 )}
@@ -462,12 +462,12 @@ const AdminDashboard: React.FC = () => {
           </nav>
         </div>
         
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
           <button 
             onClick={handleLogout}
-            className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-indigo-800 transition-colors text-red-300 hover:text-red-400"
+            className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 w-full rounded-lg hover:bg-indigo-800 transition-colors text-red-300 hover:text-red-400 touch-manipulation text-sm"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Çıkış Yap</span>
           </button>
         </div>
@@ -483,25 +483,25 @@ const AdminDashboard: React.FC = () => {
 
       {/* Header */}
       <div className="bg-indigo-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 hover:bg-indigo-800 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 hover:bg-indigo-800 rounded-lg transition-colors touch-manipulation"
               >
-                <Menu className="w-6 h-6" />
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
-              <h1 className="text-2xl font-bold ml-4">Admin Paneli</h1>
+              <h1 className="text-lg sm:text-2xl font-bold ml-2 sm:ml-4">Admin Paneli</h1>
             </div>
-            <div className="flex items-center space-x-4"> {/* Added a div to group buttons */}
-              <UpdateButton /> {/* Added UpdateButton here */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <UpdateButton />
               <button
                 onClick={handleLogout}
-                className="flex items-center px-4 py-2 bg-indigo-800 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-indigo-800 rounded-lg hover:bg-indigo-700 transition-colors touch-manipulation text-sm sm:text-base"
               >
-                <LogOut className="w-5 h-5 mr-2" />
-                Çıkış Yap
+                <LogOut className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+                <span className="hidden sm:inline">Çıkış Yap</span>
               </button>
             </div>
           </div>
@@ -509,7 +509,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         
         {activeTab === 'borrowed-books' && <BorrowedBooksTab />}
 

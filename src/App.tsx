@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import SplashScreen from './components/SplashScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { EventProvider } from './contexts/EventContext';
 import { BookProvider } from './contexts/BookContext';
@@ -18,6 +19,8 @@ import { GameReservationProvider } from './contexts/GameReservationContext';
 import { AlertProvider } from './contexts/AlertContext';
 import { SpinWheelProvider } from './contexts/SpinWheelContext';
 import { CouponProvider } from './contexts/CouponContext';
+import { LocalNotificationProvider } from './contexts/LocalNotificationContext';
+import { useContentNotifications } from './hooks/useContentNotifications';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
@@ -45,6 +48,9 @@ import SinglePostPage from './pages/SinglePostPage';
 import CreatePostPage from './pages/CreatePostPage';
 import MyPostsPage from './pages/MyPostsPage';
 import MyCoupons from './pages/user/MyCoupons';
+import TeacherDashboard from './pages/TeacherDashboard';
+import MyClassPage from './pages/MyClassPage';
+import TeacherReportsPage from './pages/TeacherReportsPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -59,7 +65,9 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const showHeader = location.pathname !== '/login' && location.pathname !== '/admin';
+  const showHeader = location.pathname !== '/login' && location.pathname !== '/admin' && !location.pathname.startsWith('/teacher');
+  
+  useContentNotifications();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -91,6 +99,9 @@ const AppContent = () => {
           <Route path="/create-post" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
           <Route path="/my-posts" element={<PrivateRoute><MyPostsPage /></PrivateRoute>} />
           <Route path="/my-coupons" element={<PrivateRoute><MyCoupons /></PrivateRoute>} />
+          <Route path="/teacher-dashboard" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
+          <Route path="/teacher/my-class" element={<PrivateRoute><MyClassPage /></PrivateRoute>} />
+          <Route path="/teacher/reports" element={<PrivateRoute><TeacherReportsPage /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </main>
@@ -100,6 +111,25 @@ const AppContent = () => {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    // Check if this is the first load
+    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
+    if (hasSeenSplash) {
+      setShowSplash(false);
+    }
+  }, []);
+
+  const handleSplashFinish = () => {
+    sessionStorage.setItem('hasSeenSplash', 'true');
+    setShowSplash(false);
+  };
+
+  if (showSplash) {
+    return <SplashScreen onFinish={handleSplashFinish} />;
+  }
+
   return (
     <Router>
       <AlertProvider>
@@ -110,27 +140,29 @@ function App() {
                 <EventProvider>
                   <GoalsProvider>
                     <BookProvider>
-                      <TaskProvider>
-                        <AssistantProvider>
-                          <ThemeProvider>
-                            <SettingsProvider>
-                              <ReviewProvider>
-                                <MagazineProvider>
-                                  <CollectionProvider>
-                                    <BudgetProvider>
-                                      <GameProvider>
-                                        <GameReservationProvider>
-                                          <AppContent />
-                                        </GameReservationProvider>
-                                      </GameProvider>
-                                    </BudgetProvider>
-                                  </CollectionProvider>
-                                </MagazineProvider>
-                              </ReviewProvider>
-                            </SettingsProvider>
-                          </ThemeProvider>
-                        </AssistantProvider>
-                      </TaskProvider>
+                      <LocalNotificationProvider>
+                        <TaskProvider>
+                          <AssistantProvider>
+                            <ThemeProvider>
+                              <SettingsProvider>
+                                <ReviewProvider>
+                                  <MagazineProvider>
+                                    <CollectionProvider>
+                                      <BudgetProvider>
+                                        <GameProvider>
+                                          <GameReservationProvider>
+                                            <AppContent />
+                                          </GameReservationProvider>
+                                        </GameProvider>
+                                      </BudgetProvider>
+                                    </CollectionProvider>
+                                  </MagazineProvider>
+                                </ReviewProvider>
+                              </SettingsProvider>
+                            </ThemeProvider>
+                          </AssistantProvider>
+                        </TaskProvider>
+                      </LocalNotificationProvider>
                     </BookProvider>
                   </GoalsProvider>
                 </EventProvider>

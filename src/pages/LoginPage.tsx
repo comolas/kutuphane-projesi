@@ -44,10 +44,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
     
     try {
       console.log('Attempting login with email:', email);
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       console.log('Login successful');
-      if (email === 'datakolejikutuphane@gmail.com') {
+      
+      // Get user role from Firestore
+      const userDoc = await import('firebase/firestore').then(m => m.getDoc(m.doc(db, 'users', user.uid)));
+      const userData = userDoc.data();
+      const userRole = userData?.role || 'user';
+      
+      // Navigate based on role
+      if (userRole === 'admin') {
         navigate('/admin');
+      } else if (userRole === 'teacher') {
+        navigate('/teacher-dashboard');
       } else {
         navigate('/dashboard');
       }
@@ -246,16 +256,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
   
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50'}`}>
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0">
         {/* Form Section */}
-        <div className="flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12 animate-fade-in relative overflow-hidden">
+        <div className="flex flex-col justify-center items-center p-4 sm:p-8 lg:p-12 animate-fade-in relative overflow-hidden min-h-screen lg:min-h-0">
           {/* Animated Background Elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute w-72 h-72 bg-indigo-200/30 rounded-full blur-3xl animate-blob -top-20 -left-20"></div>
             <div className="absolute w-72 h-72 bg-purple-200/30 rounded-full blur-3xl animate-blob animation-delay-2000 top-40 -right-20"></div>
             <div className="absolute w-72 h-72 bg-pink-200/30 rounded-full blur-3xl animate-blob animation-delay-4000 -bottom-20 left-40"></div>
           </div>
-          <div className="relative z-10 w-full max-w-md">
+          <div className="relative z-10 w-full max-w-md px-2 sm:px-0">
           {error && (
             <div className="w-full mb-4 p-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm shadow-lg animate-fade-in">
               {error}

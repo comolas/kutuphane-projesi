@@ -7,17 +7,22 @@ interface UserData {
   uid: string;
   email: string;
   displayName?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'teacher';
   createdAt: Date;
   lastLogin: Date;
   studentClass: string;
   studentNumber: string;
   hasCompletedOnboarding?: boolean;
+  teacherData?: {
+    assignedClass: string;
+    subject?: string;
+  };
 }
 
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
+  isTeacher: boolean;
   loading: boolean;
   userData: UserData | null;
 }
@@ -25,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAdmin: false,
+  isTeacher: false,
   loading: true,
   userData: null,
 });
@@ -34,6 +40,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isTeacher, setIsTeacher] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
 
@@ -78,10 +85,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } as UserData;
         }
         setUserData(currentUserData);
-        setIsAdmin(currentUserData.role === 'admin'); // Determine admin status from Firestore role
+        setIsAdmin(currentUserData.role === 'admin');
+        setIsTeacher(currentUserData.role === 'teacher');
       } else {
         setUserData(null);
         setIsAdmin(false);
+        setIsTeacher(false);
       }
       
       setLoading(false);
@@ -93,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     isAdmin,
+    isTeacher,
     loading,
     userData,
   };

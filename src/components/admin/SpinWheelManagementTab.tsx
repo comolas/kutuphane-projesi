@@ -365,20 +365,20 @@ const SpinWheelManagementTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex-1">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3 flex items-center gap-3">
-              <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-3 rounded-xl">
-                <Settings className="w-7 h-7 text-white" />
+            <h2 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 md:mb-3 flex items-center gap-2 md:gap-3">
+              <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-2 md:p-3 rounded-xl">
+                <Settings className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               Çark Yönetimi
             </h2>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-4">
               <select
                 value={selectedWheelId}
                 onChange={(e) => handleSwitchWheel(e.target.value)}
-                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-semibold"
+                className="w-full sm:w-auto px-3 md:px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-semibold text-sm md:text-base"
               >
                 {allWheels.map(wheel => (
                   <option key={wheel.id} value={wheel.id}>
@@ -388,68 +388,68 @@ const SpinWheelManagementTab: React.FC = () => {
               </select>
               <button
                 onClick={() => setShowCreateWheelModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                className="w-full sm:w-auto px-3 md:px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm md:text-base"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 Yeni Çark
               </button>
             </div>
           </div>
           <button
             onClick={toggleWheelActive}
-            className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
+            className={`w-full lg:w-auto px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm md:text-base ${
               settings.isActive
                 ? 'bg-green-100 text-green-700 hover:bg-green-200'
                 : 'bg-red-100 text-red-700 hover:bg-red-200'
             }`}
           >
-            <Power className="w-5 h-5" />
+            <Power className="w-4 h-4 md:w-5 md:h-5" />
             Çark {activeSettings.isActive ? 'Aktif' : 'Pasif'}
           </button>
         </div>
       </div>
 
       {/* İstatistikler */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-lg text-white">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Aktif Kuponlar</p>
-              <p className="text-3xl font-bold mt-2">{allCoupons.length}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Aktif Kuponlar</p>
+              <p className="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{allCoupons.length}</p>
             </div>
-            <Ticket className="w-8 h-8 text-white/80" />
+            <Ticket className="w-6 h-6 md:w-8 md:h-8 text-white/80" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg text-white">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Aktif Ödüller</p>
-              <p className="text-3xl font-bold mt-2">{activeSettings.rewards?.filter(r => r.isActive).length || 0}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Aktif Ödüller</p>
+              <p className="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{activeSettings.rewards?.filter(r => r.isActive).length || 0}</p>
             </div>
-            <BarChart3 className="w-8 h-8 text-white/80" />
+            <BarChart3 className="w-6 h-6 md:w-8 md:h-8 text-white/80" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg text-white">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Kupon Sahibi</p>
-              <p className="text-3xl font-bold mt-2">{new Set(allCoupons.map(c => c.userId)).size}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Kupon Sahibi</p>
+              <p className="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{new Set(allCoupons.map(c => c.userId)).size}</p>
             </div>
-            <Users className="w-8 h-8 text-white/80" />
+            <Users className="w-6 h-6 md:w-8 md:h-8 text-white/80" />
           </div>
         </div>
       </div>
 
       {/* Ödül Dağılımı */}
-      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-purple-600" />
+      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-0 mb-4 md:mb-6">
+          <h3 className="text-lg md:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
             Ödül Dağılımı Ayarları
           </h3>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3 w-full sm:w-auto">
             <div className={`px-4 py-2 rounded-lg font-bold ${
               Math.abs(totalProbability - 100) < 0.1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
             }`}>
@@ -457,16 +457,16 @@ const SpinWheelManagementTab: React.FC = () => {
             </div>
             <button
               onClick={() => setShowAddRewardModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+              className="w-full sm:w-auto px-3 md:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm md:text-base"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4 md:w-5 md:h-5" />
               Yeni Ödül
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-4 md:mx-0">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b-2 border-gray-200">
                 <th className="text-left py-3 px-4 font-bold text-gray-700">Ödül</th>
@@ -552,15 +552,15 @@ const SpinWheelManagementTab: React.FC = () => {
       </div>
 
       {/* Aktif Kuponlar */}
-      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Ticket className="w-6 h-6 text-purple-600" />
+      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
+          <h3 className="text-lg md:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Ticket className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
             Aktif Kuponlar ({filteredCoupons.length})
           </h3>
           <button
             onClick={exportToCSV}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all flex items-center gap-2"
+            className="w-full sm:w-auto px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all flex items-center justify-center gap-2 text-sm md:text-base"
           >
             <Download className="w-4 h-4" />
             CSV İndir
@@ -568,7 +568,7 @@ const SpinWheelManagementTab: React.FC = () => {
         </div>
 
         {/* Filtreler */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -597,8 +597,8 @@ const SpinWheelManagementTab: React.FC = () => {
             <p className="text-gray-500 text-lg">Kupon bulunamadı</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <table className="w-full min-w-[640px]">
               <thead>
                 <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-3 px-4 font-bold text-gray-700">Kullanıcı</th>

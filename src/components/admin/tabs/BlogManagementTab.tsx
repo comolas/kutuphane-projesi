@@ -478,60 +478,60 @@ const BlogManagementTab: React.FC = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeIn">
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8 animate-fadeIn">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Yazı</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.total}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Yazı</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.total}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <FileText className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <FileText className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Bekleyen</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.pending}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Bekleyen</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.pending}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Clock className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Clock className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Onaylanan</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.approved}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Onaylanan</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.approved}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <ThumbsUp className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <ThumbsUp className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-red-500 to-pink-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Reddedilen</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.rejected}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Reddedilen</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.rejected}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <XCircle className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <XCircle className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content with Sidebar */}
-      <div className="flex gap-6 animate-fadeIn">
+      <div className="flex flex-col lg:flex-row gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <div className="w-80 flex-shrink-0">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 sticky top-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -549,9 +549,9 @@ const BlogManagementTab: React.FC = () => {
             <div className="space-y-6">
               {/* Search */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Arama</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Arama</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 sm:w-4 h-3 sm:h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Başlık, yazar, etiket ara..."
@@ -600,7 +600,7 @@ const BlogManagementTab: React.FC = () => {
 
               {/* Category Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Kategori</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Kategori</label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
@@ -613,7 +613,7 @@ const BlogManagementTab: React.FC = () => {
 
               {/* Author Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Yazar</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Yazar</label>
                 <select
                   value={authorFilter}
                   onChange={(e) => { setAuthorFilter(e.target.value); setCurrentPage(1); }}
@@ -626,7 +626,7 @@ const BlogManagementTab: React.FC = () => {
 
               {/* Date Range */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Tarih Aralığı</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Tarih Aralığı</label>
                 <div className="space-y-2">
                   <input
                     type="date"
@@ -649,7 +649,7 @@ const BlogManagementTab: React.FC = () => {
 
               {/* Sort */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Sıralama</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Sıralama</label>
                 <div className="space-y-2">
                   <select
                     value={sortBy}
@@ -671,7 +671,7 @@ const BlogManagementTab: React.FC = () => {
 
               {/* Items Per Page */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
@@ -911,47 +911,51 @@ const BlogManagementTab: React.FC = () => {
 
         {/* Bulk Actions */}
         {paginatedPosts.length > 0 && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
+          <div className="mb-6 p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <button
                   onClick={toggleSelectAll}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-sm text-gray-700"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-xs sm:text-sm text-gray-700 min-h-[40px] touch-manipulation"
                 >
                   {selectedPosts.length === paginatedPosts.length ? (
-                    <CheckSquare className="w-5 h-5 text-indigo-600" />
+                    <CheckSquare className="w-4 sm:w-5 h-4 sm:h-5 text-indigo-600" />
                   ) : (
-                    <Square className="w-5 h-5 text-gray-400" />
+                    <Square className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
                   )}
-                  {selectedPosts.length === paginatedPosts.length ? 'Tümünü Kaldır' : 'Tümünü Seç'}
+                  <span className="hidden sm:inline">{selectedPosts.length === paginatedPosts.length ? 'Tümünü Kaldır' : 'Tümünü Seç'}</span>
+                  <span className="sm:hidden">{selectedPosts.length === paginatedPosts.length ? 'Kaldır' : 'Seç'}</span>
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-xs sm:text-sm text-gray-600">
                   {selectedPosts.length} / {paginatedPosts.length} yazı seçildi
                 </span>
               </div>
               
               {selectedPosts.length > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                   <button
                     onClick={() => handleBulkAction('approve')}
-                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                   >
-                    <CheckCircle className="w-4 h-4" />
-                    Toplu Onayla
+                    <CheckCircle className="w-3 sm:w-4 h-3 sm:h-4" />
+                    <span className="hidden sm:inline">Toplu Onayla</span>
+                    <span className="sm:hidden">Onayla</span>
                   </button>
                   <button
                     onClick={() => handleBulkAction('reject')}
-                    className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                   >
-                    <XCircle className="w-4 h-4" />
-                    Toplu Reddet
+                    <XCircle className="w-3 sm:w-4 h-3 sm:h-4" />
+                    <span className="hidden sm:inline">Toplu Reddet</span>
+                    <span className="sm:hidden">Reddet</span>
                   </button>
                   <button
                     onClick={() => handleBulkAction('delete')}
-                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    Toplu Sil
+                    <Trash2 className="w-3 sm:w-4 h-3 sm:h-4" />
+                    <span className="hidden sm:inline">Toplu Sil</span>
+                    <span className="sm:hidden">Sil</span>
                   </button>
                 </div>
               )}

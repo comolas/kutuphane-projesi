@@ -46,34 +46,34 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-900">{getTitle()}</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[95vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 pr-2">{getTitle()}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            className="text-gray-400 hover:text-gray-500 flex-shrink-0"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {item.coverImage && (
             <img
               src={item.coverImage}
               alt={getTitle()}
-              className="w-full h-48 object-cover rounded-lg mb-4"
+              className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
             />
           )}
           {getContent()}
-          <div className="mt-4 text-sm text-gray-500">
+          <div className="mt-4 text-xs sm:text-sm text-gray-500">
             {getFooterInfo()}
           </div>
         </div>
-        <div className="p-6 border-t border-gray-200 flex justify-end">
+        <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-4 py-2 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
             Kapat
           </button>

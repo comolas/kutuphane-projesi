@@ -240,8 +240,8 @@ const CatalogPage: React.FC = () => {
           />
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Kitap Kataloğu</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Kitap Kataloğu</h1>
           <p className="mt-2 text-gray-600">
             Kütüphanemizdeki tüm kitapları keşfedin ve arayın.
           </p>
@@ -269,10 +269,10 @@ const CatalogPage: React.FC = () => {
 
         <div className="flex gap-6">
           {/* Sidebar */}
-          <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 z-50 transition-transform duration-300 ${
+          <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           } lg:flex-shrink-0 border border-white/20`}>
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h2 className="text-lg font-semibold flex items-center">
                   <Filter className="w-5 h-5 mr-2 text-indigo-600" />
                   Filtreler
@@ -294,7 +294,7 @@ const CatalogPage: React.FC = () => {
               </div>
 
               {/* Search Bar */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <div className="relative">
                   <input
                     type="text"
@@ -307,7 +307,7 @@ const CatalogPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Tag Search */}
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Etiket Ara</h3>
@@ -458,7 +458,7 @@ const CatalogPage: React.FC = () => {
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden animate-pulse border border-white/20">
                     <div className="w-full aspect-[2/3] bg-gradient-to-br from-gray-200 to-gray-300"></div>
@@ -485,7 +485,7 @@ const CatalogPage: React.FC = () => {
                 <p className="text-gray-500">Aradığınız kriterlere uygun kitap bulunmuyor.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 {paginatedBooks.map((book, index) => {
                   const bookStatus = getBookStatus(book.id);
                   const hasPendingRequest = borrowMessages.some(m => 
@@ -579,21 +579,21 @@ const CatalogPage: React.FC = () => {
             )}
 
             {totalPages > 1 && (
-              <div className="mt-8 flex justify-center items-center space-x-4">
+              <div className="mt-6 sm:mt-8 flex justify-center items-center space-x-2 sm:space-x-4">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
                 >
                   Önceki
                 </button>
-                <span className="px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-gray-700 font-semibold shadow-lg">
+                <span className="px-3 sm:px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-sm sm:text-base text-gray-700 font-semibold shadow-lg">
                   Sayfa {currentPage} / {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
                 >
                   Sonraki
                 </button>
@@ -606,7 +606,7 @@ const CatalogPage: React.FC = () => {
       {/* Book Details Modal */}
       {showBookDetails && selectedBook && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-0 md:p-4">
-          <div className="bg-white w-full h-full md:h-[95vh] md:rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-white w-full h-full md:max-w-6xl md:h-[95vh] md:rounded-2xl shadow-2xl overflow-hidden">
             <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-6 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-white flex items-center">
                 <BookOpen className="w-6 h-6 mr-2" />
@@ -622,12 +622,12 @@ const CatalogPage: React.FC = () => {
             
             <div className="flex flex-col md:flex-row h-[calc(100%-80px)]">
               {/* Left Side */}
-              <div className="md:w-2/5 bg-gradient-to-br from-gray-100 to-gray-200 p-8 flex flex-col items-center justify-center">
-                <div className="relative mb-6">
+              <div className="md:w-2/5 bg-gradient-to-br from-gray-100 to-gray-200 p-4 sm:p-8 flex flex-col items-center justify-center">
+                <div className="relative mb-4 sm:mb-6">
                   <img
                     src={selectedBook.coverImage}
                     alt={selectedBook.title}
-                    className="w-64 h-96 object-cover rounded-2xl shadow-2xl"
+                    className="w-48 h-72 sm:w-64 sm:h-96 object-cover rounded-2xl shadow-2xl"
                   />
                   <div className="absolute top-3 right-3">
                     <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg backdrop-blur-sm ${
@@ -674,15 +674,15 @@ const CatalogPage: React.FC = () => {
               </div>
 
               {/* Right Side */}
-              <div className="md:w-3/5 overflow-y-auto p-8 space-y-8">
+              <div className="md:w-3/5 overflow-y-auto p-4 sm:p-8 space-y-4 sm:space-y-8">
                 <div>
-                  <h3 className="text-4xl font-bold text-gray-900 mb-2">{selectedBook.title}</h3>
-                  <p className="text-xl text-gray-600 mb-1">{selectedBook.author}</p>
+                  <h3 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">{selectedBook.title}</h3>
+                  <p className="text-lg sm:text-xl text-gray-600 mb-1">{selectedBook.author}</p>
                   <p className="text-sm text-gray-500">{selectedBook.publisher}</p>
                 </div>
 
                 <div>
-                  <h4 className="text-2xl font-bold text-gray-900 mb-4">Hakkında</h4>
+                  <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Hakkında</h4>
                   <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6">
                     <p className="text-gray-700 leading-relaxed">
                       {selectedBook.backCover}
@@ -691,11 +691,11 @@ const CatalogPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                  <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                     <Ruler className="w-6 h-6 mr-2 text-indigo-600" />
                     Fiziksel Özellikler
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                       <p className="text-sm text-gray-500 mb-1">Sayfa Sayısı</p>
                       <p className="text-lg font-semibold text-gray-900">{selectedBook.pageCount}</p>
@@ -717,11 +717,11 @@ const CatalogPage: React.FC = () => {
 
                 {recommendedBooksForModal.length > 0 && (
                   <div>
-                    <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                    <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                       <BookOpen className="w-6 h-6 mr-2 text-indigo-600" />
                       Benzer Kitaplar
                     </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                       {recommendedBooksForModal.slice(0, 6).map(book => (
                         <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-lg transition-all hover:scale-105">
                           <div className="relative aspect-[2/3]">
@@ -745,7 +745,7 @@ const CatalogPage: React.FC = () => {
 
                 {selectedBook.tags && selectedBook.tags.length > 0 && (
                   <div>
-                    <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                    <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                       <Tag className="w-6 h-6 mr-2 text-indigo-600" />
                       Etiketler
                     </h4>

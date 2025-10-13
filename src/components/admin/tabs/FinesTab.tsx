@@ -472,52 +472,52 @@ const FinesTab: React.FC = () => {
         onApply={handleDiscountApplied}
       />
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Ceza</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{fineStats.totalFines} TL</p>
+              <p className="text-red-100 text-xs sm:text-sm font-medium">Toplam Ceza</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{fineStats.totalFines} TL</p>
             </div>
-            <div className="p-3 bg-red-100 rounded-full">
-              <DollarSign className="w-6 h-6 text-red-600" />
+            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+              <DollarSign className="w-5 h-5 sm:w-8 sm:h-8" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-medium text-gray-600">Ödenmemiş Ceza</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{fineStats.unpaidFines}</p>
+              <p className="text-orange-100 text-xs sm:text-sm font-medium">Ödenmemiş Ceza</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{fineStats.unpaidFines}</p>
             </div>
-            <div className="p-3 bg-orange-100 rounded-full">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+              <svg className="w-5 h-5 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-medium text-gray-600">Bugün Ödenen</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{fineStats.paidToday}</p>
+              <p className="text-green-100 text-xs sm:text-sm font-medium">Bugün Ödenen</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{fineStats.paidToday}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+              <svg className="w-5 h-5 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-medium text-gray-600">Ort. Gecikme</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{fineStats.avgDelay} gün</p>
+              <p className="text-blue-100 text-xs sm:text-sm font-medium">Ort. Gecikme</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{fineStats.avgDelay} gün</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+              <svg className="w-5 h-5 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -616,126 +616,126 @@ const FinesTab: React.FC = () => {
         </div>
 
         <div className="p-6">
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Sidebar */}
-            <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold flex items-center">
-                  <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+            <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                  <Filter className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-indigo-600" />
                   Filtreler
                 </h2>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Kullanıcı veya kitap ara..."
                     value={finesSearchQuery}
                     onChange={(e) => setFinesSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                  <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sınıf</h3>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Sınıf</h3>
+                  <div className="space-y-1 sm:space-y-2 max-h-48 overflow-y-auto">
                     {uniqueClasses.map(c => (
-                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                         <input
                           type="radio"
                           name="class"
                           checked={classFilter === c}
                           onChange={() => setClassFilter(c)}
-                          className="mr-2"
+                          className="mr-2 w-4 h-4"
                         />
-                        <span className="text-sm">{c === 'all' ? 'Tümü' : c}</span>
+                        <span className="text-xs sm:text-sm">{c === 'all' ? 'Tümü' : c}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Ödeme Durumu</h3>
-                  <div className="space-y-2">
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Ödeme Durumu</h3>
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                       <input
                         type="radio"
                         name="status"
                         checked={finesStatusFilter === 'all'}
                         onChange={() => setFinesStatusFilter('all')}
-                        className="mr-2"
+                        className="mr-2 w-4 h-4"
                       />
-                      <span className="text-sm">Tümü</span>
+                      <span className="text-xs sm:text-sm">Tümü</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                       <input
                         type="radio"
                         name="status"
                         checked={finesStatusFilter === 'unpaid'}
                         onChange={() => setFinesStatusFilter('unpaid')}
-                        className="mr-2"
+                        className="mr-2 w-4 h-4"
                       />
-                      <span className="text-sm text-red-600">● Ödenmemiş</span>
+                      <span className="text-xs sm:text-sm text-red-600">● Ödenmemiş</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                       <input
                         type="radio"
                         name="status"
                         checked={finesStatusFilter === 'paid'}
                         onChange={() => setFinesStatusFilter('paid')}
-                        className="mr-2"
+                        className="mr-2 w-4 h-4"
                       />
-                      <span className="text-sm text-green-600">● Ödenmiş</span>
+                      <span className="text-xs sm:text-sm text-green-600">● Ödenmiş</span>
                     </label>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
-                  <div className="space-y-2">
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Sıralama</h3>
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                       <input
                         type="radio"
                         name="sort"
                         checked={finesSortBy === 'dueDate' && finesSortOrder === 'desc'}
                         onChange={() => { setFinesSortBy('dueDate'); setFinesSortOrder('desc'); }}
-                        className="mr-2"
+                        className="mr-2 w-4 h-4"
                       />
-                      <span className="text-sm">En Geç İade</span>
+                      <span className="text-xs sm:text-sm">En Geç İade</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                       <input
                         type="radio"
                         name="sort"
                         checked={finesSortBy === 'dueDate' && finesSortOrder === 'asc'}
                         onChange={() => { setFinesSortBy('dueDate'); setFinesSortOrder('asc'); }}
-                        className="mr-2"
+                        className="mr-2 w-4 h-4"
                       />
-                      <span className="text-sm">En Erken İade</span>
+                      <span className="text-xs sm:text-sm">En Erken İade</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                       <input
                         type="radio"
                         name="sort"
                         checked={finesSortBy === 'amount' && finesSortOrder === 'desc'}
                         onChange={() => { setFinesSortBy('amount'); setFinesSortOrder('desc'); }}
-                        className="mr-2"
+                        className="mr-2 w-4 h-4"
                       />
-                      <span className="text-sm">En Yüksek Ceza</span>
+                      <span className="text-xs sm:text-sm">En Yüksek Ceza</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                       <input
                         type="radio"
                         name="sort"
                         checked={finesSortBy === 'amount' && finesSortOrder === 'asc'}
                         onChange={() => { setFinesSortBy('amount'); setFinesSortOrder('asc'); }}
-                        className="mr-2"
+                        className="mr-2 w-4 h-4"
                       />
-                      <span className="text-sm">En Düşük Ceza</span>
+                      <span className="text-xs sm:text-sm">En Düşük Ceza</span>
                     </label>
                   </div>
                 </div>
@@ -743,27 +743,27 @@ const FinesTab: React.FC = () => {
             </aside>
 
             <div className="flex-1">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex gap-2">
-                  <button onClick={() => setViewMode('table')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  <button onClick={() => setViewMode('table')} className={`p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
-                  <button onClick={() => setViewMode('card')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                  <button onClick={() => setViewMode('card')} className={`p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 6v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                   </button>
                 </div>
-                <p className="text-sm text-gray-600">{filteredOverdueBooks.length} ceza bulundu</p>
+                <p className="text-xs sm:text-sm text-gray-600">{filteredOverdueBooks.length} ceza bulundu</p>
               </div>
 
               {selectedFines.length > 0 && (
-                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-indigo-700">
+                <div className="p-3 sm:p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                  <span className="text-xs sm:text-sm font-medium text-indigo-700">
                     {selectedFines.length} ceza seçildi.
                   </span>
                   <button
                     onClick={handleBulkPaymentReceived}
                     disabled={isBulkPaying}
-                    className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors"
+                    className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors min-h-[40px] touch-manipulation"
                   >
                     {isBulkPaying ? 'İşleniyor...' : 'Seçili Olanları Öde'}
                   </button>

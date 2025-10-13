@@ -269,16 +269,16 @@ const RequestsPage: React.FC = () => {
           />
         </div>
 
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Taleplerim</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Taleplerim</h1>
             <p className="mt-2 text-gray-600">
               Kütüphane yönetimine iletmek istediğiniz talepleri buradan yönetebilirsiniz.
             </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
+            className="w-full sm:w-auto flex items-center justify-center px-4 sm:px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium text-sm sm:text-base"
           >
             <Plus className="w-5 h-5 mr-2" />
             Yeni Talep
@@ -286,48 +286,48 @@ const RequestsPage: React.FC = () => {
         </div>
 
         {/* İstatistik Kartları */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <MessageSquare className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
+                <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Toplam Talep</p>
-              <p className="text-4xl font-bold text-white">{requests.length}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Talep</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{requests.length}</p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <AlertCircle className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
+                <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Bekleyen</p>
-              <p className="text-4xl font-bold text-white">{requests.filter(r => r.status === 'pending').length}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Bekleyen</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{requests.filter(r => r.status === 'pending').length}</p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <CheckCircle className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
+                <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Tamamlandı</p>
-              <p className="text-4xl font-bold text-white">{requests.filter(r => r.status === 'completed').length}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Tamamlandı</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{requests.filter(r => r.status === 'completed').length}</p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <ShieldQuestion className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
+                <ShieldQuestion className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">İşleniyor</p>
-              <p className="text-4xl font-bold text-white">{requests.filter(r => r.status === 'in-progress').length}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">İşleniyor</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{requests.filter(r => r.status === 'in-progress').length}</p>
             </div>
           </div>
         </div>
@@ -357,7 +357,7 @@ const RequestsPage: React.FC = () => {
 
           {showFilters && (
             <div className="mt-4 bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-white/20">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Durum

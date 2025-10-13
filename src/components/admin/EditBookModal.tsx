@@ -203,19 +203,19 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 md:p-4">
       <div className="bg-white rounded-xl shadow-lg max-w-8xl w-full max-h-[100vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-900">Kitap Düzenle</h3>
+        <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+          <h3 className="text-base md:text-lg font-medium text-gray-900">Kitap Düzenle</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         </div>
         {isScanning && (
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-2">QR Kod Tarama İpuçları:</h4>
               <ul className="text-sm text-blue-800 space-y-1">
@@ -245,8 +245,8 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
             </div>
           </div>
         )}
-        <form onSubmit={handleSubmit} className={`p-6 grid grid-cols-1 md:grid-cols-2 gap-4 ${isScanning ? 'hidden' : ''}`}>
-          {apiMessage && <div className="md:col-span-2 text-center p-2 rounded-md bg-blue-100 text-blue-800">{apiMessage}</div>}
+        <form onSubmit={handleSubmit} className={`p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 ${isScanning ? 'hidden' : ''}`}>
+          {apiMessage && <div className="md:col-span-2 text-center p-2 rounded-md bg-blue-100 text-blue-800 text-xs md:text-sm">{apiMessage}</div>}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">Kitap Adı</label>
             <input
@@ -466,17 +466,17 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
-          <div className="md:col-span-2 flex justify-end space-x-3">
+          <div className="md:col-span-2 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 sticky bottom-0 bg-white pt-4 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="w-full sm:w-auto px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm md:text-base"
             >
               İptal
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm md:text-base"
             >
               Kaydet
             </button>

@@ -325,34 +325,35 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
-      <div className="mb-8 animate-fadeIn">
-        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
+      <div className="mb-4 md:mb-8 animate-fadeIn">
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 flex items-center">
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-xl mr-3">
-                  <PieChart className="w-7 h-7 text-white" />
+              <h2 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 md:mb-3 flex items-center">
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 md:p-3 rounded-xl mr-2 md:mr-3">
+                  <PieChart className="w-5 h-5 md:w-7 md:h-7 text-white" />
                 </div>
                 Eser Dağılım Analizi
               </h2>
-              <p className="text-gray-600 text-lg">
+              <p className="text-gray-600 text-sm md:text-lg">
                 Kütüphane koleksiyonunun kategorilere göre detaylı dökümünü inceleyin.
               </p>
             </div>
             <button
               onClick={exportToPDF}
               disabled={isExporting}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-semibold"
+              className="w-full lg:w-auto px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-semibold text-sm md:text-base"
             >
               {isExporting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Oluşturuluyor...
+                  <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white"></div>
+                  <span className="hidden sm:inline">Oluşturuluyor...</span>
                 </>
               ) : (
                 <>
-                  <Download className="w-5 h-5" />
-                  PDF İndir
+                  <Download className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">PDF İndir</span>
+                  <span className="sm:hidden">PDF</span>
                 </>
               )}
             </button>
@@ -363,53 +364,53 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
       <div ref={reportRef}>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeIn">
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8 animate-fadeIn">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Eser</p>
-              <p className="text-3xl font-bold text-white mt-2">{totalBooks}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Toplam Eser</p>
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">{totalBooks}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <BookOpen className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <BookOpen className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Kategori Sayısı</p>
-              <p className="text-3xl font-bold text-white mt-2">{distributionData.length}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Kategori Sayısı</p>
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">{distributionData.length}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Package className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <Package className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">En Büyük Kategori</p>
-              <p className="text-xl font-bold text-white mt-2 truncate">{largestCategory?.name || '-'}</p>
-              <p className="text-sm text-white/80">{largestCategory?.count || 0} kitap</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">En Büyük Kategori</p>
+              <p className="text-sm md:text-xl font-bold text-white mt-1 md:mt-2 truncate">{largestCategory?.name || '-'}</p>
+              <p className="text-xs md:text-sm text-white/80">{largestCategory?.count || 0} kitap</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <TrendingUp className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <TrendingUp className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-red-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Ortalama</p>
-              <p className="text-3xl font-bold text-white mt-2">{avgBooksPerCategory.toFixed(0)}</p>
-              <p className="text-sm text-white/80">kitap/kategori</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Ortalama</p>
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">{avgBooksPerCategory.toFixed(0)}</p>
+              <p className="text-xs md:text-sm text-white/80">kitap/kategori</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Tag className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <Tag className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
@@ -475,8 +476,8 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
 
       {/* Trend Analysis Content */}
       {showTrendAnalysis && distributionCriterion === 'category' && (
-        <div className="mb-8 animate-fadeIn">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="mb-4 md:mb-8 animate-fadeIn">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Trend Chart */}
             <div className="lg:col-span-2 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
               <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4">Kategori Büyüme Trendi (Son 6 Ay)</h3>
@@ -572,26 +573,26 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
       )}
 
       {!showTrendAnalysis && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 animate-fadeIn">
         {/* Left Column: Chart */}
-        <div className="lg:col-span-2 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kategori Görselleştirmesi</h2>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
+        <div className="lg:col-span-2 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4 mb-4 md:mb-6">
+            <h2 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kategori Görselleştirmesi</h2>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-1 md:gap-2 p-1 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
                 <button
                   onClick={() => setChartType('pie')}
-                  className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${chartType === 'pie' ? 'bg-white shadow-md text-indigo-600 scale-105' : 'text-gray-600 hover:bg-white/50'}`}
+                  className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all duration-200 ${chartType === 'pie' ? 'bg-white shadow-md text-indigo-600 scale-105' : 'text-gray-600 hover:bg-white/50'}`}
                 >
-                  <PieChart className="w-5 h-5 inline-block mr-1" />
-                  Pasta
+                  <PieChart className="w-4 h-4 md:w-5 md:h-5 inline-block mr-1" />
+                  <span className="hidden sm:inline">Pasta</span>
                 </button>
                 <button
                   onClick={() => setChartType('bar')}
-                  className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${chartType === 'bar' ? 'bg-white shadow-md text-indigo-600 scale-105' : 'text-gray-600 hover:bg-white/50'}`}
+                  className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all duration-200 ${chartType === 'bar' ? 'bg-white shadow-md text-indigo-600 scale-105' : 'text-gray-600 hover:bg-white/50'}`}
                 >
-                  <BarChart className="w-5 h-5 inline-block mr-1" />
-                  Çubuk
+                  <BarChart className="w-4 h-4 md:w-5 md:h-5 inline-block mr-1" />
+                  <span className="hidden sm:inline">Çubuk</span>
                 </button>
               </div>
               {distributionCriterion === 'category' && !comparisonMode && (
@@ -674,7 +675,7 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
               </>
             )}
           </div>
-          <div className="relative h-[32rem] bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl p-4">
+          <div className="relative h-64 md:h-96 lg:h-[32rem] bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl p-2 md:p-4">
             {visualizationType === 'stacked' && distributionCriterion === 'category' && !comparisonMode ? (
               <Bar
                 data={{
@@ -871,12 +872,12 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
         </div>
 
         {/* Right Column: Category Details */}
-        <div className="lg:col-span-1 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Detaylar</h2>
-            <span className="px-3 py-1 text-sm font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-md">{totalBooks} Eser</span>
+        <div className="lg:col-span-1 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-4 md:p-6">
+          <div className="flex justify-between items-center mb-4 md:mb-6">
+            <h2 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Detaylar</h2>
+            <span className="px-2 md:px-3 py-1 text-xs md:text-sm font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-md">{totalBooks} Eser</span>
           </div>
-          <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2 md:space-y-3 max-h-64 md:max-h-96 lg:max-h-[32rem] overflow-y-auto pr-2 custom-scrollbar">
             {distributionData.map((item, index) => {
               const percentage = totalBooks > 0 ? (item.count / totalBooks) * 100 : 0;
               const color = colors[index % colors.length];

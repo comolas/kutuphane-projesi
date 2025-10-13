@@ -233,15 +233,15 @@ const AdminGameReservationsTab = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
       {/* Header */}
-      <div className="mb-8 animate-fadeIn">
-        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 flex items-center">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-xl mr-3">
-              <Gamepad2 className="w-7 h-7 text-white" />
+      <div className="mb-4 md:mb-8 animate-fadeIn">
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6">
+          <h2 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 md:mb-3 flex items-center">
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 md:p-3 rounded-xl mr-2 md:mr-3">
+              <Gamepad2 className="w-5 h-5 md:w-7 md:h-7 text-white" />
             </div>
             Oyun Randevu Yönetimi
           </h2>
-          <p className="text-gray-600 text-lg">Tüm oyun randevularını görüntüleyin ve yönetin.</p>
+          <p className="text-gray-600 text-sm md:text-lg">Tüm oyun randevularını görüntüleyin ve yönetin.</p>
         </div>
       </div>
 
@@ -414,65 +414,65 @@ const AdminGameReservationsTab = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeIn">
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8 animate-fadeIn">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Randevu</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.total}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Toplam Randevu</p>
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.total}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Calendar className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <Calendar className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Aktif Randevu</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.active}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Aktif Randevu</p>
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.active}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <CheckCircle className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <CheckCircle className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Tamamlanan</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.completed}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">Tamamlanan</p>
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.completed}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Clock className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <Clock className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-500 to-orange-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-red-500 to-orange-600 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">İptal Edilen</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.cancelled}</p>
+              <p className="text-xs md:text-sm font-medium text-white/90">İptal Edilen</p>
+              <p className="text-xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.cancelled}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <XCircle className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 md:p-4">
+              <XCircle className="w-5 h-5 md:w-8 md:h-8 text-white" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content with Sidebar */}
-      <div className="flex gap-6 animate-fadeIn">
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <div className="w-80 flex-shrink-0">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 sticky top-6">
-            <div className="flex items-center justify-between mb-6">
+        <div className="w-full lg:w-80 flex-shrink-0">
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6 lg:sticky lg:top-6">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
               <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-lg font-bold text-gray-900">Filtreler</h3>
+                <Filter className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
+                <h3 className="text-base md:text-lg font-bold text-gray-900">Filtreler</h3>
               </div>
               <button
                 onClick={clearFilters}
@@ -482,7 +482,7 @@ const AdminGameReservationsTab = () => {
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Search */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Arama</label>
@@ -569,10 +569,10 @@ const AdminGameReservationsTab = () => {
 
         {/* Reservations List */}
         <div className="flex-1">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
+              <div className="flex items-center gap-2 md:gap-4">
+                <h3 className="text-lg md:text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   Randevular ({sortedAndFilteredReservations.length})
                 </h3>
                 {selectedReservations.length > 0 && (
@@ -588,7 +588,7 @@ const AdminGameReservationsTab = () => {
 
             {/* Bulk Actions */}
             {paginatedReservations.length > 0 && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
+              <div className="mb-4 md:mb-6 p-3 md:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div className="flex items-center gap-3">
                     <button
@@ -621,7 +621,7 @@ const AdminGameReservationsTab = () => {
             )}
 
             {paginatedReservations.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {paginatedReservations.map(res => {
                   const now = new Date();
                   const isActive = res.endTime.toDate() > now && res.status === 'confirmed';
@@ -629,7 +629,7 @@ const AdminGameReservationsTab = () => {
                   const isCancelled = res.status.startsWith('cancelled');
                   
                   return (
-                    <div key={res.id} className={`bg-gradient-to-r from-white to-indigo-50/30 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 ${
+                    <div key={res.id} className={`bg-gradient-to-r from-white to-indigo-50/30 p-4 md:p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 ${
                       selectedReservations.includes(res.id) ? 'border-indigo-500 bg-indigo-50/50' : 'border-transparent hover:border-indigo-200'
                     }`}>
                       <div className="flex items-start justify-between gap-6">
@@ -647,29 +647,29 @@ const AdminGameReservationsTab = () => {
                           </button>
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <Gamepad2 className="w-5 h-5 text-indigo-600" />
-                                <h3 className="text-xl font-bold text-gray-900">{res.gameName}</h3>
+                          <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-3">
+                            <div className="flex-1 w-full">
+                              <div className="flex items-center gap-2 md:gap-3 mb-2">
+                                <Gamepad2 className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
+                                <h3 className="text-lg md:text-xl font-bold text-gray-900">{res.gameName}</h3>
                               </div>
-                              <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                              <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600 mb-2">
                                 <div className="flex items-center gap-1">
-                                  <User className="w-4 h-4 text-indigo-600" />
+                                  <User className="w-3 h-3 md:w-4 md:h-4 text-indigo-600" />
                                   <span className="font-medium">{users[res.userId] || res.userId}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4 text-indigo-600" />
+                                  <Calendar className="w-3 h-3 md:w-4 md:h-4 text-indigo-600" />
                                   <span>{res.startTime.toDate().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4 text-indigo-600" />
+                                  <Clock className="w-3 h-3 md:w-4 md:h-4 text-indigo-600" />
                                   <span className="font-semibold">{res.startTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} - {res.endTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                               </div>
                             </div>
                             
-                            <span className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${
+                            <span className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold whitespace-nowrap ${
                               isActive ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' : 
                               isPast ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white' : 
                               'bg-gradient-to-r from-red-500 to-orange-600 text-white'

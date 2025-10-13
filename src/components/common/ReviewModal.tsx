@@ -36,68 +36,85 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ bookId, bookTitle, onClose })
   }, [reviews, sortBy]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">"{bookTitle}" Kitabı Yorumları</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-2 sm:p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 pr-2">"{bookTitle}" Yorumları</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            className="text-gray-400 hover:text-gray-500 flex-shrink-0"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <div className="p-6 flex items-center justify-end space-x-4 border-b border-gray-200">
-          <span className="text-sm font-medium text-gray-700">Sırala:</span>
-          <button 
-            onClick={() => setSortBy('recent')}
-            className={`px-3 py-1 text-sm rounded-full ${sortBy === 'recent' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
-            En Yeni
-          </button>
-          <button 
-            onClick={() => setSortBy('helpful')}
-            className={`px-3 py-1 text-sm rounded-full ${sortBy === 'helpful' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
-            En Faydalı
-          </button>
+        <div className="p-4 sm:p-6 flex items-center justify-between border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center">
+            <div className="flex items-center">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} className={`w-4 h-4 sm:w-5 sm:h-5 ${sortedReviews.length > 0 && (sortedReviews.reduce((acc, r) => acc + r.rating, 0) / sortedReviews.length) >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+              ))}
+            </div>
+            <span className="ml-2 text-xs sm:text-sm text-gray-600">
+              {sortedReviews.length > 0 ? (sortedReviews.reduce((acc, r) => acc + r.rating, 0) / sortedReviews.length).toFixed(1) : '0.0'} ({sortedReviews.length} değerlendirme)
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs sm:text-sm font-medium text-gray-700">Sırala:</span>
+            <button 
+              onClick={() => setSortBy('recent')}
+              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-lg transition-all ${sortBy === 'recent' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} touch-manipulation`}>
+              En Yeni
+            </button>
+            <button 
+              onClick={() => setSortBy('helpful')}
+              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-lg transition-all ${sortBy === 'helpful' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} touch-manipulation`}>
+              En Faydalı
+            </button>
+          </div>
         </div>
         
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {sortedReviews.length === 0 ? (
-            <p className="text-gray-600 text-center">Bu kitap için henüz onaylanmış yorum bulunmamaktadır.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Star className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-sm sm:text-base text-gray-600">Bu kitap için henüz onaylanmış yorum bulunmamaktadır.</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-2">İlk yorumu yapan siz olun!</p>
+            </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {sortedReviews.map((review: Review) => (
-                <div key={review.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                  <div className="flex items-center mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-4 h-4 ${
-                          review.rating >= star ? 'text-yellow-400' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="ml-2 text-sm font-medium text-gray-800">{review.rating.toFixed(1)}</span>
-                  </div>
-                  <p className="text-gray-700 mb-3">{review.reviewText}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <p>
-                      Yazan: <span className="font-medium">{review.userDisplayName}</span> - {' '}
-                      {new Date(review.createdAt.toDate()).toLocaleDateString('tr-TR')}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => handleHelpfulClick(review.id)}
-                        className={`flex items-center space-x-1 p-1 rounded-md transition-colors ${user && review.helpfulVotes?.includes(user.uid) 
-                          ? 'text-blue-600 bg-blue-100' 
-                          : 'text-gray-500 hover:bg-gray-200'}`}>
-                        <ThumbsUp className="w-4 h-4" />
-                        <span className="text-xs font-medium">Faydalı Buldum</span>
-                      </button>
-                      <span className="text-xs text-gray-500 font-medium">
-                        {review.helpfulVotes?.length || 0}
-                      </span>
+                <div key={review.id} className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-600">
+                      {review.userDisplayName.charAt(0)}
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-800 text-sm sm:text-base truncate">{review.userDisplayName}</p>
+                          <p className="text-xs text-gray-500">{new Date(review.createdAt.toDate()).toLocaleDateString('tr-TR')}</p>
+                        </div>
+                        <div className="flex items-center flex-shrink-0">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star key={star} className={`w-3 h-3 sm:w-4 sm:h-4 ${review.rating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-gray-700 text-sm mb-3">{review.reviewText}</p>
+                      <div className="flex items-center">
+                        <button 
+                          onClick={() => handleHelpfulClick(review.id)}
+                          disabled={!user || review.helpfulVotes?.includes(user.uid)}
+                          className={`flex items-center text-xs sm:text-sm transition-colors touch-manipulation ${user && review.helpfulVotes?.includes(user.uid) 
+                            ? 'text-indigo-600' 
+                            : 'text-gray-500 hover:text-indigo-600'} disabled:cursor-not-allowed`}>
+                          <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                          Faydalı buldum ({review.helpfulVotes?.length || 0})
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -288,15 +288,15 @@ const QuoteManagementTab: React.FC = () => {
             <p className="mt-4 text-gray-600">Yükleniyor...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {paginatedQuotes.map((quote, index) => (
               <div 
                 key={quote.id} 
-                className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6"
+                className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 md:p-6"
                 style={{ animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both` }}
               >
-                <div className="mb-4">
-                  <p className="text-gray-700 italic text-lg leading-relaxed">"{quote.text}"</p>
+                <div className="mb-3 md:mb-4">
+                  <p className="text-gray-700 italic text-base md:text-lg leading-relaxed">"{quote.text}"</p>
                 </div>
                 
                 <div className="border-t border-gray-200 pt-4 space-y-2">
@@ -310,20 +310,20 @@ const QuoteManagementTab: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2 mt-3 md:mt-4">
                   <button 
                     onClick={() => handleOpenModal(quote)} 
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center"
+                    className="flex-1 px-3 md:px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center text-sm md:text-base"
                   >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Düzenle
+                    <Edit className="w-4 h-4 mr-1 md:mr-2" />
+                    <span className="hidden sm:inline">Düzenle</span>
                   </button>
                   <button 
                     onClick={() => handleDelete(quote.id)} 
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center"
+                    className="flex-1 px-3 md:px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center text-sm md:text-base"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Sil
+                    <Trash2 className="w-4 h-4 mr-1 md:mr-2" />
+                    <span className="hidden sm:inline">Sil</span>
                   </button>
                 </div>
               </div>
@@ -331,24 +331,24 @@ const QuoteManagementTab: React.FC = () => {
           </div>
         )}
 
-        <div className="mt-6 flex justify-between items-center">
+        <div className="mt-4 md:mt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <p className="text-sm text-gray-700">
+            <p className="text-xs md:text-sm text-gray-700">
               Toplam {filteredQuotes.length} alıntı | Sayfa <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Önceki
             </button>
             <button
               onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Sonraki
             </button>

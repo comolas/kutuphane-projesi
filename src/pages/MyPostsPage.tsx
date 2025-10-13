@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, getCountFromServer } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
-import { Edit, Trash2, Eye, Heart, MessageCircle, TrendingUp } from 'lucide-react';
+import { Edit, Trash2, Eye, Heart, MessageCircle, TrendingUp, ChevronLeft, FileText, FolderOpen } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -173,33 +173,90 @@ const MyPostsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+      <div className="mb-4">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" />
+          Geri Dön
+        </button>
+      </div>
       <h1 className="text-3xl font-bold mb-6">Yazılarım</h1>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-indigo-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Toplam Yazı</p>
-          <p className="text-2xl font-bold text-indigo-600">{stats.total}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+            </div>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yazı</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{stats.total}</p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-green-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Onaylanan</p>
-          <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+            </div>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Onaylanan</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{stats.approved}</p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-yellow-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Bekleyen</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+            </div>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Bekleyen</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{stats.pending}</p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-red-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Reddedilen</p>
-          <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+        <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <Trash2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+            </div>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Reddedilen</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{stats.rejected}</p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-pink-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Toplam Beğeni</p>
-          <p className="text-2xl font-bold text-pink-600">{stats.totalLikes}</p>
+        <div className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+            </div>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Beğeni</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{stats.totalLikes}</p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Toplam Yorum</p>
-          <p className="text-2xl font-bold text-purple-600">{stats.totalComments}</p>
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+            </div>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yorum</p>
+            <p className="text-2xl sm:text-4xl font-bold text-white">{stats.totalComments}</p>
+          </div>
         </div>
       </div>
 

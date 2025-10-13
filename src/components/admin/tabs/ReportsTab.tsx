@@ -450,39 +450,40 @@ const ReportsTab: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
     <div ref={reportContentRef} className="space-y-8">
-      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 mb-8">
+      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <BarChart className="w-6 h-6 mr-2 text-indigo-600" />
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
+            <BarChart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-indigo-600" />
             Kütüphane Raporları
           </h2>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
             <input 
                 type="month" 
                 value={reportMonth} 
                 onChange={(e) => setReportMonth(e.target.value)}
-                className="px-4 py-2 bg-white/80 backdrop-blur-sm border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="px-3 sm:px-4 py-2 bg-white/80 backdrop-blur-sm border border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-xs sm:text-sm"
             />
             <button
               onClick={() => fetchReportData(reportMonth)}
-              className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center"
+              className="px-4 sm:px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
             >
               Filtrele
             </button>
             <button
               onClick={exportToPDF}
               disabled={isExporting}
-              className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="px-4 sm:px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
             >
               {isExporting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Oluşturuluyor...
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                  <span className="hidden sm:inline">Oluşturuluyor...</span>
                 </>
               ) : (
                 <>
-                  <Download className="w-5 h-5 mr-2" />
-                  PDF Dışa Aktar
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">PDF Dışa Aktar</span>
+                  <span className="sm:hidden">PDF</span>
                 </>
               )}
             </button>
@@ -491,75 +492,75 @@ const ReportsTab: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0s' }}>
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-6">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0s' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Kullanıcı</p>
-              <p className="text-3xl font-bold text-white mt-2">{reportData.totalUsers}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Kullanıcı</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{reportData.totalUsers}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Users className="w-12 h-12 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Users className="w-6 h-6 sm:w-12 sm:h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.1s' }}>
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.1s' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Kitap</p>
-              <p className="text-3xl font-bold text-white mt-2">{reportData.totalBooks}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Kitap</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{reportData.totalBooks}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <BookOpen className="w-12 h-12 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <BookOpen className="w-6 h-6 sm:w-12 sm:h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.2s' }}>
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Ödünç Verilen</p>
-              <p className="text-3xl font-bold text-white mt-2">{reportData.borrowedBooks}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Ödünç Verilen</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{reportData.borrowedBooks}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Book className="w-12 h-12 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Book className="w-6 h-6 sm:w-12 sm:h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.3s' }}>
+        <div className="bg-gradient-to-br from-red-500 to-pink-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Gecikmiş Kitap</p>
-              <p className="text-3xl font-bold text-white mt-2">{reportData.overdueBooks}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Gecikmiş Kitap</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{reportData.overdueBooks}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <AlertTriangle className="w-12 h-12 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <AlertTriangle className="w-6 h-6 sm:w-12 sm:h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.4s' }}>
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.4s' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Ceza</p>
-              <p className="text-3xl font-bold text-white mt-2">{reportData.totalFines} ₺</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Ceza</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{reportData.totalFines} ₺</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <DollarSign className="w-12 h-12 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <DollarSign className="w-6 h-6 sm:w-12 sm:h-12 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-pink-500 to-rose-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.5s' }}>
+        <div className="bg-gradient-to-br from-pink-500 to-rose-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300" style={{ animationDelay: '0.5s' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Kumbara</p>
-              <p className="text-3xl font-bold text-white mt-2">{summary.totalBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Kumbara</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{summary.totalBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <PiggyBank className="w-12 h-12 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <PiggyBank className="w-6 h-6 sm:w-12 sm:h-12 text-white" />
             </div>
           </div>
         </div>

@@ -15,11 +15,15 @@ service cloud.firestore {
       // Check for admin role in the user's document in the 'users' collection
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+    
+    function isTeacher() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
 
     // Users collection rules
     match /users/{userId} {
-      // Allow users to read their own data, and admins to read any user data
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      // Allow users to read their own data, admins to read any user data, and teachers to read their class students
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin() || isTeacher());
       
       // Allow user creation during registration
       allow create: if request.auth.uid == userId &&
@@ -180,7 +184,7 @@ service cloud.firestore {
 
     // Borrowed books collection rules
     match /borrowedBooks/{borrowedId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && (isAdmin() || isTeacher() || isOwner(resource.data.userId));
       
       // Allow users to create their own borrow records, and admins to create for anyone
       allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || isAdmin());
