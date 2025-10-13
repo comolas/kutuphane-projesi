@@ -312,14 +312,14 @@ const FavoritesPage: React.FC = () => {
           />
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Kişisel Kütüphanem</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Kişisel Kütüphanem</h1>
           <p className="mt-2 text-gray-600">Favori kitaplarınızı raflar halinde düzenleyin ve yönetin.</p>
         </div>
 
         {/* Shelf Management UI */}
-        <div className="mb-8 p-6 bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Raflarım</h2>
+        <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
+          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 sm:mb-4">Raflarım</h2>
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <button
               onClick={() => setSelectedShelf('all')}
@@ -341,7 +341,7 @@ const FavoritesPage: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input
               type="text"
               value={newShelfName}
@@ -351,7 +351,7 @@ const FavoritesPage: React.FC = () => {
             />
             <button
               onClick={handleCreateShelf}
-              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2 font-medium"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2 font-medium whitespace-nowrap"
             >
               <PlusCircle size={18} />
               Oluştur
@@ -408,7 +408,7 @@ const FavoritesPage: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {paginatedBooks.map(book => {
                 const bookStatus = getBookStatus(book.id);
                 const hasPendingRequest = borrowMessages.some(m => 

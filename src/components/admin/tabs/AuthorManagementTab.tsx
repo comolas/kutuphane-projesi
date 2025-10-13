@@ -200,7 +200,7 @@ const AuthorManagementTab: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-6">
         {loading ? (
           <>
             {[1, 2, 3].map(i => (
@@ -217,38 +217,38 @@ const AuthorManagementTab: React.FC = () => {
           </>
         ) : (
           <>
-            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 border-l-4 border-l-indigo-500 hover:shadow-2xl hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between">
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Toplam Yazar</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                  <p className="text-indigo-100 text-xs sm:text-sm font-medium">Toplam Yazar</p>
+                  <p className="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{stats.total}</p>
                 </div>
-                <div className="bg-indigo-100 p-3 rounded-xl">
-                  <Users className="w-8 h-8 text-indigo-600" />
+                <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+                  <Users className="w-5 h-5 sm:w-8 sm:h-8" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 border-l-4 border-l-yellow-500 hover:shadow-2xl hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Ayın Yazarı</p>
-                  <p className="text-lg font-bold text-gray-900 truncate">{stats.featured}</p>
+            <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-yellow-100 text-xs sm:text-sm font-medium">Ayın Yazarı</p>
+                  <p className="text-sm sm:text-lg font-bold mt-1 sm:mt-2 truncate">{stats.featured}</p>
                 </div>
-                <div className="bg-yellow-100 p-3 rounded-xl">
-                  <Award className="w-8 h-8 text-yellow-600" />
+                <div className="bg-white/20 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <Award className="w-5 h-5 sm:w-8 sm:h-8" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 border-l-4 border-l-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between">
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Bu Ay Eklenen</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.thisMonth}</p>
+                  <p className="text-green-100 text-xs sm:text-sm font-medium">Bu Ay Eklenen</p>
+                  <p className="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{stats.thisMonth}</p>
                 </div>
-                <div className="bg-green-100 p-3 rounded-xl">
-                  <Calendar className="w-8 h-8 text-green-600" />
+                <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+                  <Calendar className="w-5 h-5 sm:w-8 sm:h-8" />
                 </div>
               </div>
             </div>
@@ -256,8 +256,8 @@ const AuthorManagementTab: React.FC = () => {
         )}
       </div>
 
-      <div className="flex gap-6">
-        <div className="w-64 flex-shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-64 flex-shrink-0">
           <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 sticky top-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Filtreler</h3>
             
@@ -355,13 +355,15 @@ const AuthorManagementTab: React.FC = () => {
                 <Grid className="w-5 h-5" />
               </button>
             </div>
-            <button onClick={() => setIsBulkModalOpen(true)} className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center">
-              <Upload className="w-5 h-5 mr-2" />
-              Toplu Yazar Ekle
+            <button onClick={() => setIsBulkModalOpen(true)} className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center text-sm sm:text-base">
+              <Upload className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Toplu Yazar Ekle</span>
+              <span className="sm:hidden">Toplu Ekle</span>
             </button>
-            <button onClick={() => handleOpenModal(null)} className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center">
-              <Plus className="w-5 h-5 mr-2" />
-              Yeni Yazar Ekle
+            <button onClick={() => handleOpenModal(null)} className="px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center text-sm sm:text-base">
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Yeni Yazar Ekle</span>
+              <span className="sm:hidden">Yeni Ekle</span>
             </button>
             </div>
           </div>
@@ -454,7 +456,7 @@ const AuthorManagementTab: React.FC = () => {
             </table>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {loading ? (
               <>
                 {[1, 2, 3, 4, 5, 6].map(i => (

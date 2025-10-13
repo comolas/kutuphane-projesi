@@ -89,32 +89,34 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
     : 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-lg max-w-3xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
-          <h3 className="text-xl font-semibold text-gray-900">{book.title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
-            <X className="w-6 h-6" />
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-2 sm:p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg max-w-3xl w-full max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 pr-2">{book.title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-500 flex-shrink-0">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
         
-        <div className="p-6 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1">
-              <img src={book.coverImage} alt={book.title} className="w-full h-auto object-cover rounded-lg shadow-md" />
+        <div className="p-4 sm:p-6 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="md:col-span-1 flex-shrink-0">
+              <div className="md:sticky md:top-0">
+                <img src={book.coverImage} alt={book.title} className="w-full h-auto object-cover rounded-lg shadow-md" />
+              </div>
             </div>
             <div className="md:col-span-2 space-y-4">
               <div>
                 <h4 className="font-bold text-gray-800">{book.author}</h4>
                 <p className="text-sm text-gray-500">{book.publisher}</p>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center flex-wrap gap-2">
                 <div className="flex items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className={`w-5 h-5 ${averageRating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                    <Star key={star} className={`w-4 h-4 sm:w-5 sm:h-5 ${averageRating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
                   ))}
                 </div>
-                <span className="ml-3 text-sm text-gray-600">
+                <span className="text-xs sm:text-sm text-gray-600">
                   {averageRating.toFixed(1)} ({reviews.length} değerlendirme)
                 </span>
               </div>
@@ -127,13 +129,13 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
           </div>
 
           {isReviewMode && (
-            <div className="mt-6 pt-6 border-t">
-              <h4 className="text-lg font-semibold text-gray-900 mb-3">Değerlendirmeni Yaz</h4>
-              <div className="flex items-center mb-4">
-                <span className="text-sm font-medium mr-4">Puanınız:</span>
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t">
+              <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Değerlendirmeni Yaz</h4>
+              <div className="flex items-center mb-4 flex-wrap gap-2">
+                <span className="text-xs sm:text-sm font-medium">Puanınız:</span>
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setRating(star)}>
-                    <Star className={`w-7 h-7 transition-colors ${rating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'} hover:text-yellow-300`} />
+                  <button key={star} onClick={() => setRating(star)} className="touch-manipulation">
+                    <Star className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors ${rating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'} hover:text-yellow-300`} />
                   </button>
                 ))}
               </div>
@@ -153,17 +155,17 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
               <button
                 onClick={() => onSubmitReview({ rating, text: reviewText })}
                 disabled={rating === 0 || reviewText.trim() === ''}
-                className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold"
+                className="mt-4 px-4 sm:px-6 py-2 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-sm sm:text-base touch-manipulation min-h-[44px]"
               >
                 Yorumu Gönder
               </button>
             </div>
           )}
 
-          <div className="mt-6 pt-6 border-t">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-lg font-semibold text-gray-900">Değerlendirmeler ({reviews.length})</h4>
-              <div className="flex items-center text-sm">
+          <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Değerlendirmeler ({reviews.length})</h4>
+              <div className="flex items-center text-xs sm:text-sm">
                 <label htmlFor="sort" className="mr-2 font-medium">Sırala:</label>
                 <select 
                   id="sort" 
@@ -176,24 +178,24 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
                 </select>
               </div>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {loadingReviews ? (
-                <p>Yorumlar yükleniyor...</p>
+                <p className="text-sm">Yorumlar yükleniyor...</p>
               ) : sortedReviews.length > 0 ? (
                 sortedReviews.map(review => (
-                  <div key={review.id} className="flex items-start space-x-4">
-                    <div className="flex-shrink-0 w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">
+                  <div key={review.id} className="flex items-start space-x-2 sm:space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 text-sm">
                       {review.userDisplayName.charAt(0)}
                     </div>
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-semibold text-gray-800">{review.userDisplayName}</p>
+                    <div className="flex-grow min-w-0">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-800 text-sm sm:text-base truncate">{review.userDisplayName}</p>
                           <p className="text-xs text-gray-500">{review.createdAt.toDate().toLocaleDateString()}</p>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-shrink-0">
                           {[...Array(5)].map((_, i) => (
-                            <Star key={i} className={`w-4 h-4 ${review.rating > i ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                            <Star key={i} className={`w-3 h-3 sm:w-4 sm:h-4 ${review.rating > i ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
                           ))}
                         </div>
                       </div>
@@ -202,9 +204,9 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
                         <button 
                           onClick={() => handleHelpfulVote(review.id)}
                           disabled={!user || review.helpfulVotes?.includes(user.uid)}
-                          className="flex items-center text-sm text-gray-500 hover:text-indigo-600 disabled:text-indigo-400 disabled:cursor-not-allowed transition-colors"
+                          className="flex items-center text-xs sm:text-sm text-gray-500 hover:text-indigo-600 disabled:text-indigo-400 disabled:cursor-not-allowed transition-colors touch-manipulation"
                         >
-                          <ThumbsUp className="w-4 h-4 mr-1" />
+                          <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           Faydalı buldum ({review.helpfulVotes?.length || 0})
                         </button>
                       </div>

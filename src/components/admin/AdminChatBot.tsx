@@ -114,15 +114,15 @@ const AdminChatBot: React.FC = () => {
       )}
 
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-[500px] h-[700px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 dark:border-gray-700">
-          <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <Shield size={24} className="text-orange-600" />
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-[500px] h-[calc(100vh-2rem)] sm:h-[700px] max-h-[700px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 dark:border-gray-700">
+          <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-3 sm:p-4 rounded-t-2xl flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                <Shield size={20} className="text-orange-600 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <h3 className="font-bold">Yönetim Asistanı</h3>
-                <p className="text-xs opacity-90">Admin Analiz & Raporlama</p>
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm sm:text-base truncate">Yönetim Asistanı</h3>
+                <p className="text-xs opacity-90 hidden sm:block">Admin Analiz & Raporlama</p>
               </div>
             </div>
             <button
@@ -159,12 +159,12 @@ const AdminChatBot: React.FC = () => {
                   }`}>
                     {msg.role === 'admin' ? <User size={18} /> : <Shield size={18} />}
                   </div>
-                  <div className={`max-w-[75%] p-3 rounded-2xl ${
+                  <div className={`max-w-[75%] p-2 sm:p-3 rounded-2xl ${
                     msg.role === 'admin'
                       ? 'bg-orange-600 text-white rounded-tr-none'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                   </div>
                 </div>
               ))
@@ -223,7 +223,7 @@ const AdminChatBot: React.FC = () => {
             </div>
           )}
 
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -232,14 +232,14 @@ const AdminChatBot: React.FC = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Sorunuzu yazın..."
                 disabled={loading}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                className="flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
               />
               <button
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
-                className="px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation min-h-[40px]"
               >
-                <Send size={20} />
+                <Send size={18} className="sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>

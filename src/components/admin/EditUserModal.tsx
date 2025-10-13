@@ -7,10 +7,14 @@ interface UserData {
   displayName: string;
   studentClass: string;
   studentNumber: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'teacher';
   createdAt: Date;
   lastLogin: Date;
   photoURL?: string;
+  teacherData?: {
+    assignedClass: string;
+    subject?: string;
+  };
 }
 
 interface EditUserModalProps {
@@ -35,6 +39,19 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
     const { name, value } = e.target;
     setEditableUser(prev => {
       if (!prev) return null;
+      
+      // Handle teacher data fields
+      if (name === 'assignedClass' || name === 'subject') {
+        return {
+          ...prev,
+          teacherData: {
+            ...prev.teacherData,
+            assignedClass: name === 'assignedClass' ? value : (prev.teacherData?.assignedClass || ''),
+            subject: name === 'subject' ? value : prev.teacherData?.subject
+          }
+        };
+      }
+      
       return { ...prev, [name]: value };
     });
   };
@@ -142,11 +159,56 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
                   required
                 >
                   <option value="user">Kullanıcı</option>
+                  <option value="teacher">Öğretmen</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
+              
+              {/* Teacher-specific fields */}
+              {editableUser.role === 'teacher' && (
+                <>
+                  <div>
+                    <label htmlFor="assignedClass" className="block text-sm font-medium text-gray-700">
+                      Sorumlu Sınıf <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="assignedClass"
+                      name="assignedClass"
+                      value={editableUser.teacherData?.assignedClass || ''}
+                      onChange={handleChange}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Örn: 9A, 10B"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                      Branş (Opsiyonel)
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={editableUser.teacherData?.subject || ''}
+                      onChange={handleChange}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Örn: Edebiyat, Matematik"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
+          
+          {/* Info Message for Teacher */}
+          {editableUser.role === 'teacher' && (
+            <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-sm text-orange-800">
+                <strong>Not:</strong> Öğretmen rolü seçildiğinde, kullanıcı öğretmen paneline yönlendirilecek ve atanan sınıfın öğrencilerini görüntüleyebilecektir.
+              </p>
+            </div>
+          )}
           
           {/* Action Buttons */}
           <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">

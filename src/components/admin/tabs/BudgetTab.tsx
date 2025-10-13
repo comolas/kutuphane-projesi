@@ -621,62 +621,62 @@ const BudgetTab: React.FC = () => {
         </div>
 
         {/* Summary Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fadeIn">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 animate-fadeIn">
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white/90">Toplam Bütçe</p>
-                <p className="text-3xl font-bold text-white mt-2">{summary.totalBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+                <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Bütçe</p>
+                <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{summary.totalBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                <Wallet className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+                <Wallet className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-red-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="bg-gradient-to-br from-red-500 to-pink-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white/90">Toplam Harcama</p>
-                <p className="text-3xl font-bold text-white mt-2">{summary.totalExpense.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+                <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Harcama</p>
+                <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{summary.totalExpense.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                <TrendingDown className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+                <TrendingDown className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white/90">Kalan Bütçe</p>
-                <p className="text-3xl font-bold text-white mt-2">{summary.remainingBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
+                <p className="text-xs sm:text-sm font-medium text-white/90">Kalan Bütçe</p>
+                <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{summary.remainingBudget.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</p>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                <TrendingUp className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+                <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Filter and Actions */}
-        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 mb-8 animate-fadeIn">
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fadeIn">
             <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-bold text-gray-900">Filtreler</h3>
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+              <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtreler</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
                 {/* Category Filter */}
                 <div>
-                    <label htmlFor="category" className="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
-                    <select id="category" name="category" value={filters.category} onChange={handleFilterChange} className="block w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium">
+                    <label htmlFor="category" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Kategori</label>
+                    <select id="category" name="category" value={filters.category} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm">
                         {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat === '' ? 'Tümü' : cat}</option>)}
                     </select>
                 </div>
                 {/* Type Filter */}
                 <div>
-                    <label htmlFor="type" className="block text-sm font-semibold text-gray-700 mb-2">İşlem Tipi</label>
-                    <select id="type" name="type" value={filters.type} onChange={handleFilterChange} className="block w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium">
+                    <label htmlFor="type" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">İşlem Tipi</label>
+                    <select id="type" name="type" value={filters.type} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm">
                         <option value="">Tümü</option>
                         <option value="income">Gelir</option>
                         <option value="expense">Gider</option>
@@ -684,18 +684,18 @@ const BudgetTab: React.FC = () => {
                 </div>
                 {/* Start Date */}
                 <div>
-                    <label htmlFor="startDate" className="block text-sm font-semibold text-gray-700 mb-2">Başlangıç Tarihi</label>
-                    <input type="date" id="startDate" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="block w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium" />
+                    <label htmlFor="startDate" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Başlangıç Tarihi</label>
+                    <input type="date" id="startDate" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm" />
                 </div>
                 {/* End Date */}
                 <div>
-                    <label htmlFor="endDate" className="block text-sm font-semibold text-gray-700 mb-2">Bitiş Tarihi</label>
-                    <input type="date" id="endDate" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="block w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium" />
+                    <label htmlFor="endDate" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Bitiş Tarihi</label>
+                    <input type="date" id="endDate" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm" />
                 </div>
                 {/* Add New Button */}
-                <div className="flex justify-end">
-                    <button onClick={handleAddNewClick} className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold">
-                        <Plus className="w-5 h-5" />
+                <div className="flex justify-end sm:col-span-2 lg:col-span-1">
+                    <button onClick={handleAddNewClick} className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                         Yeni İşlem
                     </button>
                 </div>

@@ -90,8 +90,8 @@ const MagazinesPage: React.FC = () => {
           />
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dergi Arşivi</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Dergi Arşivi</h1>
           <p className="text-gray-600">
             Bilgi ve ilham dolu bir dünyaya dalın. Aradığınız sayıyı bulun, yeni konular keşfedin ve okumaya başlayın.
           </p>
@@ -113,9 +113,9 @@ const MagazinesPage: React.FC = () => {
           />
         )}
 
-        <div className="flex gap-6">
+        <div className="flex gap-4 lg:gap-6">
           {/* Sidebar */}
-          <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 z-50 transition-transform duration-300 ${
+          <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           } lg:flex-shrink-0 border border-white/20`}>
             <div className="flex justify-between items-center mb-6">
@@ -199,7 +199,7 @@ const MagazinesPage: React.FC = () => {
           {/* Main Content */}
           <div className="flex-1">
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden animate-pulse border border-white/20">
                     <div className="w-full aspect-[3/4] bg-gradient-to-br from-gray-200 to-gray-300"></div>
@@ -222,7 +222,7 @@ const MagazinesPage: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {paginatedMagazines.map((magazine, index) => (
                     <div 
                       key={magazine.id} 
@@ -260,22 +260,22 @@ const MagazinesPage: React.FC = () => {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="mt-8 flex justify-center items-center space-x-4">
+                  <div className="mt-6 sm:mt-8 flex flex-wrap justify-center items-center gap-2 sm:gap-4">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium flex items-center"
+                      className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium flex items-center"
                     >
                       <ChevronLeft size={18} className="mr-1" />
                       Önceki
                     </button>
-                    <span className="px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-gray-700 font-semibold shadow-lg">
+                    <span className="px-3 sm:px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-sm sm:text-base text-gray-700 font-semibold shadow-lg">
                       Sayfa {currentPage} / {totalPages}
                     </span>
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium flex items-center"
+                      className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium flex items-center"
                     >
                       Sonraki
                       <ChevronRight size={18} className="ml-1" />

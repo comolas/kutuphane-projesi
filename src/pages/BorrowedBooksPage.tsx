@@ -202,8 +202,8 @@ const BorrowedBooksPage: React.FC = () => {
           />
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Ödünç Aldığım Kitaplar</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Ödünç Aldığım Kitaplar</h1>
           <p className="mt-2 text-gray-600">
             Kütüphaneden ödünç aldığınız kitapları ve okuma istatistiklerinizi buradan takip edebilirsiniz.
           </p>
@@ -323,7 +323,7 @@ const BorrowedBooksPage: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-4 sm:mt-6">
                   {currentBooks.map((book, index) => {
                     const daysRemaining = getDaysRemaining(book.dueDate);
                     const isOverdue = daysRemaining < 0;
@@ -419,13 +419,13 @@ const BorrowedBooksPage: React.FC = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="mt-8 flex justify-center">
-                    <div className="flex items-center space-x-2">
+                  <div className="mt-6 sm:mt-8 flex justify-center">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                       {/* Previous Button */}
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
+                        className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
                       >
                         <ChevronLeft className="w-4 h-4 mr-1" />
                         Önceki
@@ -440,7 +440,7 @@ const BorrowedBooksPage: React.FC = () => {
                           <button
                             key={page}
                             onClick={() => handlePageChange(page as number)}
-                            className={`px-4 py-2.5 rounded-xl border transition-all shadow-lg font-medium ${
+                            className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border transition-all shadow-lg text-sm sm:text-base font-medium ${
                               currentPage === page
                                 ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent'
                                 : 'bg-white/60 backdrop-blur-xl border-white/20 text-gray-700 hover:bg-white/80'
@@ -455,7 +455,7 @@ const BorrowedBooksPage: React.FC = () => {
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
+                        className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
                       >
                         Sonraki
                         <ChevronRight className="w-4 h-4 ml-1" />

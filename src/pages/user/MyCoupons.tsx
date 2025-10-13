@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCoupons } from '../../contexts/CouponContext';
-import { Ticket, Calendar, Tag, CheckCircle, XCircle } from 'lucide-react';
+import { Ticket, Calendar, Tag, CheckCircle, XCircle, ChevronLeft } from 'lucide-react';
 
 const MyCoupons: React.FC = () => {
   const { coupons, loading } = useCoupons();
@@ -21,32 +21,43 @@ const MyCoupons: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
+      {/* Geri Dön Butonu */}
+      <div className="mb-4">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" />
+          Geri Dön
+        </button>
+      </div>
+      
       {/* Header */}
-      <div className="mb-8">
-        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 flex items-center gap-3">
-            <Ticket className="w-8 h-8 text-indigo-600" />
+      <div className="mb-6 sm:mb-8">
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 sm:p-6">
+          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3">
+            <Ticket className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
             Kuponlarım
           </h2>
-          <p className="text-gray-600 text-lg">Çark çevirerek kazandığınız indirim kuponları</p>
+          <p className="text-gray-600 text-sm sm:text-lg">Çark çevirerek kazandığınız indirim kuponları</p>
         </div>
       </div>
 
       {/* Aktif Kuponlar */}
-      <div className="mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <CheckCircle className="w-6 h-6 text-green-600" />
+      <div className="mb-6 sm:mb-8">
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
           Aktif Kuponlar ({activeCoupons.length})
         </h3>
 
         {activeCoupons.length === 0 ? (
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-12 text-center">
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-8 sm:p-12 text-center">
             <Ticket className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-lg">Henüz aktif kuponunuz yok</p>
             <p className="text-gray-400 text-sm mt-2">Çark çevirerek kupon kazanabilirsiniz!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {activeCoupons.map(coupon => (
               <div
                 key={coupon.id}
@@ -84,12 +95,12 @@ const MyCoupons: React.FC = () => {
       {/* Kullanılmış Kuponlar */}
       {usedCoupons.length > 0 && (
         <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <XCircle className="w-6 h-6 text-gray-600" />
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+            <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
             Kullanılmış Kuponlar ({usedCoupons.length})
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {usedCoupons.map(coupon => (
               <div
                 key={coupon.id}

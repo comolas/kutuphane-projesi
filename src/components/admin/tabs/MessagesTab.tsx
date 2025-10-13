@@ -238,72 +238,72 @@ const MessagesTab: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeIn">
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8 animate-fadeIn">
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Bekleyen</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.totalPending}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Bekleyen</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.totalPending}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Mail className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Mail className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Bugün Gelen</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.todayMessages}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Bugün Gelen</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.todayMessages}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Clock className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Clock className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Ödünç Talepleri</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.borrowRequests}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Ödünç Talepleri</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.borrowRequests}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <BookOpen className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <BookOpen className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">İade Talepleri</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.returnRequests}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">İade Talepleri</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.returnRequests}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Calendar className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Calendar className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content with Sidebar */}
-      <div className="flex gap-6 animate-fadeIn">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <div className="w-80 flex-shrink-0">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 sticky top-6">
-            <div className="flex items-center justify-between mb-6">
+        <div className="w-full lg:w-80 flex-shrink-0">
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 lg:sticky lg:top-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-lg font-bold text-gray-900">Filtreler</h3>
+                <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtreler</h3>
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Search */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Arama</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Arama</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -311,19 +311,19 @@ const MessagesTab: React.FC = () => {
                     placeholder="Kullanıcı, kitap ara..."
                     value={messagesSearchQuery}
                     onChange={(e) => setMessagesSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm"
+                    className="w-full pl-9 pr-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
               {/* Type Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Talep Türü</label>
-                <div className="space-y-2">
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">Talep Türü</label>
+                <div className="space-y-1 sm:space-y-2">
                   {[{ value: 'all', label: 'Tümü', count: stats.totalPending }, 
                     { value: 'borrow', label: 'Ödünç Alma', count: stats.borrowRequests },
                     { value: 'return', label: 'İade', count: stats.returnRequests }].map(type => (
-                    <label key={type.value} className="flex items-center justify-between p-2 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors">
+                    <label key={type.value} className="flex items-center justify-between p-2 rounded-lg hover:bg-indigo-50 cursor-pointer transition-colors touch-manipulation">
                       <div className="flex items-center gap-2">
                         <input
                           type="radio"
@@ -333,7 +333,7 @@ const MessagesTab: React.FC = () => {
                           onChange={(e) => setMessageTypeFilter(e.target.value as any)}
                           className="w-4 h-4 text-indigo-600"
                         />
-                        <span className="text-sm font-medium text-gray-700">{type.label}</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">{type.label}</span>
                       </div>
                       <span className="text-xs font-bold text-gray-500">{type.count}</span>
                     </label>
@@ -343,11 +343,11 @@ const MessagesTab: React.FC = () => {
 
               {/* Items Per Page */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3">Sayfa Başına</label>
                 <select
                   value={messagesPerPage}
                   onChange={(e) => { setMessagesCurrentPage(1); }}
-                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium"
+                  className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-xs sm:text-sm font-medium"
                 >
                   <option value={10}>10 talep</option>
                   <option value={20}>20 talep</option>
@@ -379,21 +379,21 @@ const MessagesTab: React.FC = () => {
 
             {/* Bulk Actions */}
             {currentReturnableMessages.length > 0 && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                     <button
                       onClick={handleSelectAll}
-                      className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-sm text-gray-700"
+                      className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-xs sm:text-sm text-gray-700 min-h-[40px] touch-manipulation w-full sm:w-auto justify-center"
                     >
                       {selectedMessages.length === currentReturnableMessages.length ? (
-                        <CheckSquare className="w-5 h-5 text-indigo-600" />
+                        <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                       ) : (
-                        <Square className="w-5 h-5 text-gray-400" />
+                        <Square className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                       )}
                       {selectedMessages.length === currentReturnableMessages.length ? 'Tümünü Kaldır' : 'Tümünü Seç'}
                     </button>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs sm:text-sm text-gray-600">
                       {selectedMessages.length} / {currentReturnableMessages.length} iade talebi seçildi
                     </span>
                   </div>
@@ -402,7 +402,7 @@ const MessagesTab: React.FC = () => {
                     <button
                       onClick={handleBulkApproveReturn}
                       disabled={isBulkProcessing}
-                      className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm disabled:opacity-50"
+                      className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm disabled:opacity-50 min-h-[40px] touch-manipulation"
                     >
                       <Check className="w-4 h-4" />
                       {isBulkProcessing ? 'İşleniyor...' : 'Toplu Onayla'}
@@ -441,21 +441,21 @@ const MessagesTab: React.FC = () => {
                       )}
 
                       {/* Book Cover */}
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 hidden sm:block">
                         <img
                           src={message.bookData.coverImage || 'https://via.placeholder.com/96x128'}
                           alt={message.bookData.title}
-                          className="w-24 h-32 object-cover rounded-lg shadow-md"
+                          className="w-20 h-28 sm:w-24 sm:h-32 object-cover rounded-lg shadow-md"
                           onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/96x128'; }}
                         />
                       </div>
 
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <User className="w-5 h-5 text-indigo-600" />
-                              <h4 className="text-lg font-bold text-gray-900">{message.userData.displayName}</h4>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                              <User className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
+                              <h4 className="text-base sm:text-lg font-bold text-gray-900 truncate">{message.userData.displayName}</h4>
                               <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                                 message.type === 'borrow' 
                                   ? 'bg-blue-100 text-blue-700' 
@@ -464,45 +464,45 @@ const MessagesTab: React.FC = () => {
                                 {message.type === 'borrow' ? 'Ödünç Alma' : 'İade'}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 mb-2 p-2 bg-indigo-50 rounded-lg">
-                              <BookOpen className="w-4 h-4 text-indigo-600" />
-                              <div>
-                                <p className="text-sm font-bold text-gray-900">{message.bookData.title}</p>
-                                <p className="text-xs text-gray-600">Kod: {message.bookId}</p>
+                            <div className="flex items-start gap-2 mb-2 p-2 bg-indigo-50 rounded-lg">
+                              <BookOpen className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-gray-900 break-words">{message.bookData.title}</p>
+                                <p className="text-xs text-gray-600 break-all">Kod: {message.bookId}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3">
                               <div className="flex items-center gap-1">
-                                <User className="w-4 h-4 text-indigo-600" />
-                                <span>{message.userData.studentClass} - {message.userData.studentNumber}</span>
+                                <User className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600 flex-shrink-0" />
+                                <span className="truncate">{message.userData.studentClass} - {message.userData.studentNumber}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4 text-indigo-600" />
-                                <span>{new Date(message.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600 flex-shrink-0" />
+                                <span className="truncate">{new Date(message.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
                               </div>
                               {message.type === 'return' && message.bookData.borrowedAt && (
                                 <div className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4 text-indigo-600" />
-                                  <span>Ödünç: {new Date(message.bookData.borrowedAt).toLocaleDateString('tr-TR')}</span>
+                                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600 flex-shrink-0" />
+                                  <span className="truncate">Ödünç: {new Date(message.bookData.borrowedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
                                 </div>
                               )}
                             </div>
                           </div>
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           {message.type === 'borrow' ? (
                             <>
                               <button
                                 onClick={() => handleApproveBorrow(message.bookId, message.userId)}
-                                className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all duration-200 flex items-center gap-2 font-semibold text-sm"
+                                className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm min-h-[40px] touch-manipulation"
                               >
                                 <Check className="w-4 h-4" />
                                 Onayla
                               </button>
                               <button
                                 onClick={() => handleRejectBorrow(message.bookId, message.userId)}
-                                className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all duration-200 flex items-center gap-2 font-semibold text-sm"
+                                className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm min-h-[40px] touch-manipulation"
                               >
                                 <X className="w-4 h-4" />
                                 Reddet
@@ -512,7 +512,7 @@ const MessagesTab: React.FC = () => {
                             <button
                               onClick={() => handleApproveReturn(message as ReturnMessage)}
                               disabled={selectedMessages.length > 0}
-                              className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all duration-200 flex items-center gap-2 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] touch-manipulation"
                             >
                               <Check className="w-4 h-4" />
                               İade Al

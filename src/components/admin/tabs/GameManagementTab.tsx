@@ -292,48 +292,48 @@ const GameManagementTab: React.FC = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fadeIn">
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-8 animate-fadeIn">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Oyun</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.total}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Oyun</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.total}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Gamepad2 className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Gamepad2 className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Aktif Randevulu</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.withReservations}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Aktif Randevulu</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.withReservations}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Calendar className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Calendar className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">En Popüler</p>
-              <p className="text-xl font-bold text-white mt-2 truncate">{stats.popular}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">En Popüler</p>
+              <p className="text-base sm:text-xl font-bold text-white mt-1 sm:mt-2 truncate">{stats.popular}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <TrendingUp className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <TrendingUp className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content with Sidebar */}
-      <div className="flex gap-6 animate-fadeIn">
+      <div className="flex flex-col lg:flex-row gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <div className="w-80 flex-shrink-0">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 sticky top-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -351,9 +351,9 @@ const GameManagementTab: React.FC = () => {
             <div className="space-y-6">
               {/* Search */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Arama</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Arama</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 sm:w-4 h-3 sm:h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Oyun ara..."
@@ -366,7 +366,7 @@ const GameManagementTab: React.FC = () => {
 
               {/* View Mode */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Görünüm</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Görünüm</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setViewMode('grid')}
@@ -391,7 +391,7 @@ const GameManagementTab: React.FC = () => {
 
               {/* Items Per Page */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
@@ -422,7 +422,7 @@ const GameManagementTab: React.FC = () => {
             {paginatedGames.length > 0 ? (
               <>
                 {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {paginatedGames.map((game) => (
                       <div key={game.id} className="bg-gradient-to-br from-white to-indigo-50/30 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-indigo-200 group">
                         <div className="relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 overflow-hidden">

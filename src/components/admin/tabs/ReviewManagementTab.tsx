@@ -432,60 +432,60 @@ const ReviewManagementTab: React.FC = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeIn">
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8 animate-fadeIn">
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Toplam Yorum</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.total}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Yorum</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.total}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <MessageSquare className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <MessageSquare className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Bekleyen</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.pending}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Bekleyen</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.pending}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Clock className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Clock className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Onaylanan</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.approved}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Onaylanan</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.approved}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <ThumbsUp className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <ThumbsUp className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white/90">Ortalama Puan</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.avgRating}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">Ortalama Puan</p>
+              <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.avgRating}</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <Star className="w-8 h-8 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+              <Star className="w-5 sm:w-8 h-5 sm:h-8 text-white" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content with Sidebar */}
-      <div className="flex gap-6 animate-fadeIn">
+      <div className="flex flex-col lg:flex-row gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <div className="w-80 flex-shrink-0">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 sticky top-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -503,9 +503,9 @@ const ReviewManagementTab: React.FC = () => {
             <div className="space-y-6">
               {/* Search */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Arama</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Arama</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 sm:w-4 h-3 sm:h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Kullanıcı veya yorum ara..."
@@ -542,7 +542,7 @@ const ReviewManagementTab: React.FC = () => {
 
               {/* Rating Filter */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Puan</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Puan</label>
                 <select
                   value={ratingFilter}
                   onChange={(e) => { setRatingFilter(e.target.value === 'all' ? 'all' : Number(e.target.value)); setCurrentPage(1); }}
@@ -559,7 +559,7 @@ const ReviewManagementTab: React.FC = () => {
 
               {/* Items Per Page */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">Sayfa Başına</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
@@ -596,42 +596,45 @@ const ReviewManagementTab: React.FC = () => {
 
             {/* Bulk Actions */}
             {paginatedReviews.length > 0 && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
+              <div className="mb-6 p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     <button
                       onClick={toggleSelectAll}
-                      className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-sm text-gray-700"
+                      className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border-2 border-indigo-300 rounded-lg hover:bg-indigo-50 transition-all font-semibold text-xs sm:text-sm text-gray-700 min-h-[40px] touch-manipulation"
                     >
                       {paginatedReviews.every(r => selectedReviews.includes(r.id)) ? (
-                        <CheckSquare className="w-5 h-5 text-indigo-600" />
+                        <CheckSquare className="w-4 sm:w-5 h-4 sm:h-5 text-indigo-600" />
                       ) : (
-                        <Square className="w-5 h-5 text-gray-400" />
+                        <Square className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
                       )}
-                      {paginatedReviews.every(r => selectedReviews.includes(r.id)) ? 'Tümünü Kaldır' : 'Tümünü Seç'}
+                      <span className="hidden sm:inline">{paginatedReviews.every(r => selectedReviews.includes(r.id)) ? 'Tümünü Kaldır' : 'Tümünü Seç'}</span>
+                      <span className="sm:hidden">{paginatedReviews.every(r => selectedReviews.includes(r.id)) ? 'Kaldır' : 'Seç'}</span>
                     </button>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs sm:text-sm text-gray-600">
                       {selectedReviews.length} / {paginatedReviews.length} yorum seçildi
                     </span>
                   </div>
                   
                   {selectedReviews.length > 0 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       {activeTab === 'pending' && (
                         <button
                           onClick={() => handleBulkAction('approve')}
-                          className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                          className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                         >
-                          <Check className="w-4 h-4" />
-                          Toplu Onayla
+                          <Check className="w-3 sm:w-4 h-3 sm:h-4" />
+                          <span className="hidden sm:inline">Toplu Onayla</span>
+                          <span className="sm:hidden">Onayla</span>
                         </button>
                       )}
                       <button
                         onClick={() => handleBulkAction('delete')}
-                        className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-semibold text-sm"
+                        className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation"
                       >
-                        <Trash2 className="w-4 h-4" />
-                        Toplu Sil
+                        <Trash2 className="w-3 sm:w-4 h-3 sm:h-4" />
+                        <span className="hidden sm:inline">Toplu Sil</span>
+                        <span className="sm:hidden">Sil</span>
                       </button>
                     </div>
                   )}

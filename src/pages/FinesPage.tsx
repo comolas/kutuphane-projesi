@@ -85,26 +85,26 @@ const FinesPage: React.FC = () => {
           />
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Cezalarım</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Cezalarım</h1>
           <p className="mt-2 text-gray-600">
             Gecikmiş kitaplarınız ve ceza tutarlarınızı buradan takip edebilirsiniz.
           </p>
         </div>
 
         {/* İstatistik Kartları */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Ödenmemiş Ceza */}
-          <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                  <DollarSign className="w-8 h-8 text-white" />
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                  <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Ödenmemiş Ceza</p>
-              <p className="text-4xl font-bold text-white mb-4">{totalUnpaidFine} TL</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ödenmemiş Ceza</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white mb-3 sm:mb-4">{totalUnpaidFine} TL</p>
               {totalUnpaidFine > 0 && (
                 <button 
                   onClick={() => setIsModalOpen(true)}
@@ -117,30 +117,30 @@ const FinesPage: React.FC = () => {
           </div>
 
           {/* Ödenen Ceza */}
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                  <CheckCircle className="w-8 h-8 text-white" />
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                  <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Ödenen Ceza</p>
-              <p className="text-4xl font-bold text-white">{totalPaidFine} TL</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ödenen Ceza</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{totalPaidFine} TL</p>
             </div>
           </div>
 
           {/* Gecikmiş Kitap */}
-          <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                  <AlertCircle className="w-8 h-8 text-white" />
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
+                  <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Gecikmiş Kitap</p>
-              <p className="text-4xl font-bold text-white">{overdueCount}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Gecikmiş Kitap</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{overdueCount}</p>
             </div>
           </div>
         </div>
@@ -240,16 +240,17 @@ const FinesPage: React.FC = () => {
                       )}
                       {book.fineStatus === 'paid' ? (
                         <div className="mt-2">
-                          <div className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-medium inline-flex items-center shadow-lg">
-                            Ödendi
+                          <div className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-medium flex flex-col items-center shadow-lg mb-2">
+                            <span>Ödendi</span>
                             {book.paymentDate && (
-                              <div className="text-xs text-green-600 mt-1">
+                              <span className="text-xs text-white/90 mt-1">
                                 {new Date(book.paymentDate).toLocaleDateString()}
-                              </div>
+                              </span>
                             )}
                           </div>
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
                               const pageWidth = 80;
                               const tr = (text: string) => text.replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
@@ -388,7 +389,7 @@ const FinesPage: React.FC = () => {
                               
                               doc.save(`makbuz-${receiptNo}.pdf`);
                             }}
-                            className="mt-2 w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-medium hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center"
+                            className="w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-medium hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center touch-manipulation min-h-[40px]"
                           >
                             <Download className="w-3 h-3 mr-1" />
                             Makbuz İndir

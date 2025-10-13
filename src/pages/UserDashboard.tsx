@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
-import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRight as ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2 } from 'lucide-react';
+import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRight as ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart } from 'lucide-react';
 import { useSpinWheel } from '../contexts/SpinWheelContext';
 import SpinWheelModal from '../components/user/SpinWheelModal';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
@@ -25,7 +25,7 @@ import { useAlert } from '../contexts/AlertContext';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, userData, isAdmin } = useAuth();
+  const { user, userData, isAdmin, isTeacher } = useAuth();
   const { showAlert } = useAlert();
   
   const { borrowedBooks, allBooks, borrowBook, recommendedBooks, fetchRecommendedBooks, getBookStatus } = useBooks();
@@ -292,78 +292,79 @@ const UserDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 relative">
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full w-64 bg-indigo-900 text-white transform transition-transform duration-300 ease-in-out z-50 ${
+      <div className={`fixed top-0 left-0 h-full w-64 ${isTeacher ? 'bg-orange-900' : 'bg-indigo-900'} text-white transform transition-transform duration-300 ease-in-out z-50 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="p-4">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               <Book className="w-8 h-8 mr-2" />
-              <span className="text-xl font-bold">Data Koleji</span>
+              <span className="text-xl font-bold">{isTeacher ? 'Öğretmen Paneli' : 'Data Koleji'}</span>
             </div>
-            <button onClick={toggleSidebar} className="p-2 hover:bg-indigo-800 rounded-lg">
+            <button onClick={toggleSidebar} className={`p-2 ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} rounded-lg`}>
               <X className="w-6 h-6" />
             </button>
           </div>
           
           <nav className="space-y-1">
-            <Link to="/dashboard" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to={isTeacher ? "/teacher-dashboard" : "/dashboard"} className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <Home className="w-5 h-5" />
               <span>Ana Sayfa</span>
             </Link>
-            <Link to="/catalog" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            {isTeacher && (
+              <>
+                <Link to="/teacher/my-class" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
+                  <Users className="w-5 h-5" />
+                  <span>Sınıfım</span>
+                </Link>
+              </>
+            )}
+            <Link to="/catalog" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <Library className="w-5 h-5" />
               <span>Katalog</span>
             </Link>
-            <Link to="/borrowed-books" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to="/borrowed-books" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <BookIcon className="w-5 h-5" />
               <span>Ödünç Aldıklarım</span>
             </Link>
-            <Link to="/my-events" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
-              <Calendar className="w-5 h-5" />
-              <span>Etkinliklerim</span>
-            </Link>
-            <Link to="/my-appointments" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
-              <Calendar className="w-5 h-5" />
-              <span>Randevularım</span>
-            </Link>
-            <Link to="/games" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
-              <Gamepad2 className="w-5 h-5" />
-              <span>Oyunlar</span>
-            </Link>
-            <Link to="/my-posts" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to="/my-posts" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <BookIcon className="w-5 h-5" />
               <span>Blog Yazılarım</span>
             </Link>
-            
-            <Link to="/requests" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to="/requests" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <MessageSquare className="w-5 h-5" />
               <span>Taleplerim</span>
             </Link>
-            <Link to="/fines" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to="/fines" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <DollarSign className="w-5 h-5" />
               <span>Cezalarım</span>
             </Link>
-            <Link to="/my-coupons" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to="/my-coupons" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <MessageSquare className="w-5 h-5" />
               <span>Kuponlarım</span>
             </Link>
-            <Link to="/favorites" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to="/favorites" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <Heart className="w-5 h-5" />
               <span>Favorilerim</span>
             </Link>
-            <Link to="/collection-distribution" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            <Link to="/collection-distribution" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <PieChart className="w-5 h-5" />
               <span>Eser Dağılımı</span>
             </Link>
             <button
               onClick={() => setShowRules(true)}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors w-full text-left"
+              className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors w-full text-left`}
             >
               <ScrollText className="w-5 h-5" />
               <span>Kütüphane Kuralları</span>
             </button>
-            <Link to="/settings" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+            {isTeacher && (
+              <Link to="/teacher/reports" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
+                <BarChart className="w-5 h-5" />
+                <span>Raporlar</span>
+              </Link>
+            )}
+            <Link to="/settings" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <Settings className="w-5 h-5" />
               <span>Ayarlar</span>
             </Link>
@@ -373,7 +374,7 @@ const UserDashboard: React.FC = () => {
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <button 
             onClick={handleLogout}
-            className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-indigo-800 transition-colors text-red-300 hover:text-red-400"
+            className={`flex items-center space-x-3 p-3 w-full rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors text-red-300 hover:text-red-400`}
           >
             <LogOut className="w-5 h-5" />
             <span>Çıkış Yap</span>
@@ -453,18 +454,18 @@ const UserDashboard: React.FC = () => {
       )}
 
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-indigo-900 text-white py-8 relative overflow-hidden">
+        <div className={`${isTeacher ? 'bg-orange-900' : 'bg-indigo-900'} text-white py-8 relative overflow-hidden`}>
           {/* Animated Gradient Background */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-blob -top-20 -left-20"></div>
-            <div className="absolute w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-blob animation-delay-2000 top-10 right-0"></div>
-            <div className="absolute w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-blob animation-delay-4000 -bottom-20 left-40"></div>
+            <div className={`absolute w-96 h-96 ${isTeacher ? 'bg-orange-500/20' : 'bg-purple-500/20'} rounded-full blur-3xl animate-blob -top-20 -left-20`}></div>
+            <div className={`absolute w-96 h-96 ${isTeacher ? 'bg-amber-500/20' : 'bg-pink-500/20'} rounded-full blur-3xl animate-blob animation-delay-2000 top-10 right-0`}></div>
+            <div className={`absolute w-96 h-96 ${isTeacher ? 'bg-yellow-500/20' : 'bg-blue-500/20'} rounded-full blur-3xl animate-blob animation-delay-4000 -bottom-20 left-40`}></div>
           </div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={toggleSidebar}
-                className="p-2 hover:bg-indigo-800 rounded-lg transition-colors"
+                className={`p-2 ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} rounded-lg transition-colors`}
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -477,27 +478,27 @@ const UserDashboard: React.FC = () => {
                       className="w-16 h-16 rounded-full border-4 border-white/30 shadow-lg object-cover"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full border-4 border-white/30 shadow-lg bg-indigo-700 flex items-center justify-center">
+                    <div className={`w-16 h-16 rounded-full border-4 border-white/30 shadow-lg ${isTeacher ? 'bg-orange-700' : 'bg-indigo-700'} flex items-center justify-center`}>
                       <span className="text-2xl font-bold text-white">
                         {(userData?.displayName || user.displayName || user.email?.split('@')[0] || 'U')[0].toUpperCase()}
                       </span>
                     </div>
                   )}
-                  <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-indigo-900 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm border-2 border-indigo-900 shadow-lg">
+                  <div className={`absolute -bottom-1 -right-1 bg-yellow-400 ${isTeacher ? 'text-orange-900 border-orange-900' : 'text-indigo-900 border-indigo-900'} rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm border-2 shadow-lg`}>
                     {userData?.level || 1}
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg text-indigo-200 mb-1">{getGreeting()}</p>
+                  <p className={`text-lg ${isTeacher ? 'text-orange-200' : 'text-indigo-200'} mb-1`}>{getGreeting()}</p>
                   <h1 className="text-3xl font-bold">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
                   <div className="flex items-center space-x-2 mt-1">
-                    <div className="flex-1 bg-indigo-800 rounded-full h-2 w-48">
+                    <div className={`flex-1 ${isTeacher ? 'bg-orange-800' : 'bg-indigo-800'} rounded-full h-2 w-48`}>
                       <div
                         className="bg-yellow-400 h-2 rounded-full transition-all duration-500"
                         style={{ width: `${((userData?.totalXP || 0) % 100)}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs text-indigo-200 font-medium">{userData?.totalXP || 0} XP</span>
+                    <span className={`text-xs ${isTeacher ? 'text-orange-200' : 'text-indigo-200'} font-medium`}>{userData?.totalXP || 0} XP</span>
                   </div>
                 </div>
               </div>
@@ -508,7 +509,7 @@ const UserDashboard: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* At a Glance Summary Cards - Premium Minimal Gradient */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {/* Çark Butonu */}
             <button
               onClick={() => setShowSpinModal(true)}
@@ -528,7 +529,7 @@ const UserDashboard: React.FC = () => {
                 )}
               </div>
             </button>
-            <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-500 to-cyan-600 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+            <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-500 to-cyan-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm font-medium mb-2">Aktif Kitapların</p>
@@ -539,7 +540,7 @@ const UserDashboard: React.FC = () => {
                 </div>
               </div>
             </Link>
-            <Link to="/borrowed-books" className={`bg-gradient-to-br ${summaryStats.dueDateStatus === 'overdue' ? 'from-red-500 to-pink-600' : summaryStats.dueDateStatus === 'dueSoon' ? 'from-yellow-500 to-orange-600' : 'from-green-500 to-emerald-600'} p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300`}>
+            <Link to="/borrowed-books" className={`bg-gradient-to-br ${summaryStats.dueDateStatus === 'overdue' ? 'from-red-500 to-pink-600' : summaryStats.dueDateStatus === 'dueSoon' ? 'from-yellow-500 to-orange-600' : 'from-green-500 to-emerald-600'} p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm font-medium mb-2">{summaryStats.dueDateText}</p>
@@ -550,7 +551,7 @@ const UserDashboard: React.FC = () => {
                 </div>
               </div>
             </Link>
-            <Link to="/fines" className="bg-gradient-to-br from-red-500 to-pink-600 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+            <Link to="/fines" className="bg-gradient-to-br from-red-500 to-pink-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm font-medium mb-2">Ödenmemiş Ceza</p>
@@ -561,7 +562,7 @@ const UserDashboard: React.FC = () => {
                 </div>
               </div>
             </Link>
-            <Link to="/requests" className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+            <Link to="/requests" className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm font-medium mb-2">Bekleyen Talepler</p>
@@ -575,16 +576,16 @@ const UserDashboard: React.FC = () => {
           </div>
 
           {/* Bento Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
             {/* Quote - Full Width */}
-            <div className="lg:col-span-12 bg-gradient-to-r from-indigo-900 to-blue-800 rounded-xl shadow-lg p-8 text-white relative overflow-hidden">
+            <div className="lg:col-span-12 bg-gradient-to-r from-indigo-900 to-blue-800 rounded-xl shadow-lg p-4 sm:p-8 text-white relative overflow-hidden">
               <div className="absolute top-4 right-4">
                 <Quote className="w-8 h-8 text-indigo-300 opacity-50" />
               </div>
-              <h2 className="text-xl font-semibold mb-4">Günün Alıntısı</h2>
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Günün Alıntısı</h2>
               {dailyQuote ? (
                 <blockquote className="relative">
-                  <p className="text-lg font-medium italic mb-4">
+                  <p className="text-base sm:text-lg font-medium italic mb-3 sm:mb-4">
                     "{dailyQuote.text}"
                   </p>
                   <footer className="text-indigo-200">
@@ -599,8 +600,8 @@ const UserDashboard: React.FC = () => {
 
             {/* Reading Goals - Left Column */}
             <section className="lg:col-span-4 flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
                   <Target className="w-6 h-6 mr-2 text-blue-500" />
                   Okuma Hedefim
                 </h2>
@@ -678,12 +679,12 @@ const UserDashboard: React.FC = () => {
 
             {/* Recommendations - Right Column */}
             <section className="lg:col-span-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <Heart className="w-6 h-6 mr-2 text-red-500" />
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
+                <Heart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-red-500" />
                 Sana Özel Öneriler
               </h2>
               {recommendedBooks.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {recommendedBooks.slice(0, 4).map(book => (
                     <div key={book.id} className="group">
                       <div className="relative overflow-hidden rounded-lg aspect-[2/3] mb-3">
@@ -722,7 +723,9 @@ const UserDashboard: React.FC = () => {
 
             {/* Leaderboard - Full Width */}
             <section className="lg:col-span-12">
-              <Leaderboard />
+              <div className="overflow-x-auto">
+                <Leaderboard />
+              </div>
             </section>
 
             {/* Featured Author - Hero Banner Style */}
@@ -748,7 +751,7 @@ const UserDashboard: React.FC = () => {
                     </div>
 
                     {/* Author Name */}
-                    <h2 className="text-5xl md:text-6xl font-bold text-white text-center mb-6">
+                    <h2 className="text-5xl md:text-6xl font-bold text-white text-center mb-6 break-words px-4">
                       {featuredAuthor.name}
                     </h2>
 
@@ -829,8 +832,8 @@ const UserDashboard: React.FC = () => {
 
             {/* New Books - Full Width */}
             <section className="lg:col-span-12">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
                   <BookPlus className="w-6 h-6 mr-2 text-green-500" />
                   Yeni Eklenen Kitaplar
                 </h2>
@@ -939,18 +942,18 @@ const UserDashboard: React.FC = () => {
 
             {/* Events - Full Width */}
             <section className="lg:col-span-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
                 <Calendar className="w-6 h-6 mr-2 text-purple-500" />
                 Etkinlikler, Anketler ve Duyurular
               </h2>
               
               {/* Tabs */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="border-b border-gray-200">
-                  <nav className="flex space-x-1 p-2" aria-label="Tabs">
+                <div className="border-b border-gray-200 overflow-x-auto">
+                  <nav className="flex space-x-1 p-2 min-w-max" aria-label="Tabs">
                     <button
                       onClick={() => setActiveTab('all')}
-                      className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                      className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                         activeTab === 'all'
                           ? 'bg-purple-100 text-purple-700'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -960,7 +963,7 @@ const UserDashboard: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setActiveTab('events')}
-                      className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                      className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                         activeTab === 'events'
                           ? 'bg-blue-100 text-blue-700'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -970,7 +973,7 @@ const UserDashboard: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setActiveTab('surveys')}
-                      className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                      className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                         activeTab === 'surveys'
                           ? 'bg-green-100 text-green-700'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -980,7 +983,7 @@ const UserDashboard: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setActiveTab('announcements')}
-                      className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                      className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                         activeTab === 'announcements'
                           ? 'bg-orange-100 text-orange-700'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'

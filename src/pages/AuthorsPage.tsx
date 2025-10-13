@@ -49,7 +49,7 @@ const AuthorsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center">
+        <div className="mb-6 sm:mb-8 text-center">
           <div style={{ height: '400px', display: 'flex', justifyContent: 'center' }}>
             <DotLottieReact
               src="https://lottie.host/d6f2fedf-cff9-4c9a-a5d2-0d8c55ca0cdc/ZjUB9ZbTso.json"
@@ -58,20 +58,20 @@ const AuthorsPage: React.FC = () => {
               backgroundColor="transparent"
             />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900">Yazarlarımız</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Yazarlarımız</h1>
           <p className="mt-2 text-lg text-gray-600">
             Kütüphanemize değer katan yazarları keşfedin.
           </p>
         </div>
 
         {/* Author Calendar Section */}
-        <div className="my-12 p-6 bg-white rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Yazar Takvimi</h2>
+        <div className="my-8 sm:my-12 p-4 sm:p-6 bg-white rounded-xl shadow-lg">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Yazar Takvimi</h2>
             <p className="text-gray-600 mb-6">Takvim üzerinden yazarlarımızın doğum ve vefat yıl dönümlerini takip edin. Yeşil renk doğum günlerini, kırmızı renk vefat günlerini gösterir. Önemli yıl dönümleri sarı ile vurgulanmıştır.</p>
             <AuthorCalendar />
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex flex-col md:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="flex-1 relative">
             <input
               type="text"
@@ -111,29 +111,29 @@ const AuthorsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {paginatedAuthors.map(author => (
             <AuthorCard key={author.id} author={author} />
           ))}
         </div>
 
         {totalPages > 1 && (
-          <div className="mt-8 flex justify-between items-center">
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
             <p className="text-sm text-gray-600">
               Sayfa {currentPage} / {totalPages}
             </p>
-            <div className="flex space-x-2">
+            <div className="flex gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 Önceki
               </button>
               <button
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 Sonraki
               </button>

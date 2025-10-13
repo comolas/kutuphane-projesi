@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useNavigate } from 'react-router-dom';
-import { User, AlertTriangle, Search, Library, Book as BookIcon, ArrowDownUp, Users as UsersIcon } from 'lucide-react';
+import { User, AlertTriangle, Search, Library, Book as BookIcon, ArrowDownUp, Users as UsersIcon, Filter } from 'lucide-react';
 
 // Interfaces
 interface UserData {
@@ -239,15 +239,15 @@ const BorrowedBooksTab: React.FC = () => {
 
             <div className="p-6">
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-                        <div className="flex items-center justify-between">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 sm:p-6 text-white shadow-lg">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                             <div>
-                                <p className="text-blue-100 text-sm font-medium">Toplam Kullanıcı</p>
-                                <p className="text-3xl font-bold mt-2">{statistics.totalUsers}</p>
+                                <p className="text-blue-100 text-xs sm:text-sm font-medium">Toplam Kullanıcı</p>
+                                <p className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">{statistics.totalUsers}</p>
                             </div>
-                            <div className="bg-white/20 p-3 rounded-lg">
-                                <UsersIcon className="w-8 h-8" />
+                            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+                                <UsersIcon className="w-5 h-5 sm:w-8 sm:h-8" />
                             </div>
                         </div>
                     </div>
@@ -291,37 +291,35 @@ const BorrowedBooksTab: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-6">
+                <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                     {/* Sidebar */}
-                    <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold flex items-center">
-                                <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                </svg>
+                    <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20">
+                        <div className="flex justify-between items-center mb-4 sm:mb-6">
+                            <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                                <Filter className="w-5 h-5 mr-2 text-indigo-600" />
                                 Filtreler
                             </h2>
                         </div>
 
-                        <div className="mb-6">
+                        <div className="mb-4 sm:mb-6">
                             <div className="relative">
                                 <input
                                     type="text"
                                     placeholder="Kullanıcı veya kitap ara..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                 />
-                                <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                                <Search className="absolute left-2.5 sm:left-3 top-2.5 text-gray-400" size={14} />
                             </div>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6">
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sınıf</h3>
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Sınıf</h3>
+                                <div className="space-y-1 sm:space-y-2 max-h-48 overflow-y-auto">
                                     {uniqueClasses.map(c => (
-                                        <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                        <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-1.5 sm:p-2 rounded touch-manipulation">
                                             <input
                                                 type="radio"
                                                 name="class"
@@ -329,104 +327,63 @@ const BorrowedBooksTab: React.FC = () => {
                                                 onChange={() => setClassFilter(c)}
                                                 className="mr-2"
                                             />
-                                            <span className="text-sm">{c === 'all' ? 'Tümü' : c}</span>
+                                            <span className="text-xs sm:text-sm">{c === 'all' ? 'Tümü' : c}</span>
                                         </label>
                                     ))}
                                 </div>
                             </div>
 
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
-                                <div className="space-y-2">
-                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
-                                        <input
-                                            type="radio"
-                                            name="sort"
-                                            checked={sortOption === 'due-date-asc'}
-                                            onChange={() => setSortOption('due-date-asc')}
-                                            className="mr-2"
-                                        />
-                                        <span className="text-sm">En Yakın Teslim</span>
-                                    </label>
-                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
-                                        <input
-                                            type="radio"
-                                            name="sort"
-                                            checked={sortOption === 'name-asc'}
-                                            onChange={() => setSortOption('name-asc')}
-                                            className="mr-2"
-                                        />
-                                        <span className="text-sm">İsim (A-Z)</span>
-                                    </label>
-                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
-                                        <input
-                                            type="radio"
-                                            name="sort"
-                                            checked={sortOption === 'name-desc'}
-                                            onChange={() => setSortOption('name-desc')}
-                                            className="mr-2"
-                                        />
-                                        <span className="text-sm">İsim (Z-A)</span>
-                                    </label>
-                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
-                                        <input
-                                            type="radio"
-                                            name="sort"
-                                            checked={sortOption === 'book-count-desc'}
-                                            onChange={() => setSortOption('book-count-desc')}
-                                            className="mr-2"
-                                        />
-                                        <span className="text-sm">En Çok Kitap</span>
-                                    </label>
-                                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
-                                        <input
-                                            type="radio"
-                                            name="sort"
-                                            checked={sortOption === 'book-count-asc'}
-                                            onChange={() => setSortOption('book-count-asc')}
-                                            className="mr-2"
-                                        />
-                                        <span className="text-sm">En Az Kitap</span>
-                                    </label>
-                                </div>
+                                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Sıralama</h3>
+                                <select
+                                    value={sortOption}
+                                    onChange={(e) => setSortOption(e.target.value)}
+                                    className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                >
+                                    <option value="due-date-asc">En Yakın Teslim</option>
+                                    <option value="name-asc">İsim (A-Z)</option>
+                                    <option value="name-desc">İsim (Z-A)</option>
+                                    <option value="book-count-desc">En Çok Kitap</option>
+                                    <option value="book-count-asc">En Az Kitap</option>
+                                </select>
                             </div>
 
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-900 mb-3">Durum</h3>
-                                <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Durum</h3>
+                                <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded touch-manipulation">
                                     <input
                                         type="checkbox"
                                         checked={showOnlyOverdue}
                                         onChange={(e) => setShowOnlyOverdue(e.target.checked)}
                                         className="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                                     />
-                                    <span className="text-sm text-red-600">● Sadece Gecikenler</span>
+                                    <span className="text-xs sm:text-sm text-red-600">● Sadece Gecikenler</span>
                                 </label>
                             </div>
                         </div>
                     </aside>
 
                     <div className="flex-1">
-                        <div className="mb-4 flex items-center justify-between">
+                        <div className="mb-3 sm:mb-4 flex items-center justify-between">
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setViewMode('grid')}
-                                    className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                 >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                                     </svg>
                                 </button>
                                 <button
                                     onClick={() => setViewMode('list')}
-                                    className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                 >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                     </svg>
                                 </button>
                             </div>
-                            <p className="text-sm text-gray-600">{sortedAndFilteredUsers.length} kullanıcı bulundu</p>
+                            <p className="text-xs sm:text-sm text-gray-600">{sortedAndFilteredUsers.length} kullanıcı bulundu</p>
                         </div>
 
             {sortedAndFilteredUsers.length === 0 ? (
@@ -461,8 +418,8 @@ const BorrowedBooksTab: React.FC = () => {
             ) : (
                 <>
                 <div className={viewMode === 'grid' 
-                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 p-4" 
-                    : "flex flex-col gap-3 p-4"}>
+                    ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 p-2 sm:p-4" 
+                    : "flex flex-col gap-2 sm:gap-3 p-2 sm:p-4"}>
                 {paginatedUsers.map((user, index) => (
                     viewMode === 'grid' ? (
                         <div

@@ -200,7 +200,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const fetchAllBorrowedBooks = async (allBooksData: Book[]) => {
-        if (!userData || userData.role !== 'admin') return;
+        if (!userData || (userData.role !== 'admin' && userData.role !== 'teacher')) return;
         try {
           const borrowedBooksRef = collection(db, "borrowedBooks");
           const querySnapshot = await getDocs(borrowedBooksRef);
@@ -277,7 +277,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       fetchBookStatuses();
       fetchBorrowMessages();
       fetchBorrowedBooks(allBooksData);
-      if (userData?.role === "admin") {
+      if (userData?.role === "admin" || userData?.role === "teacher") {
         fetchAllBorrowedBooks(allBooksData);
       }
     };

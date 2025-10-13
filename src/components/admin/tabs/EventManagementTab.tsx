@@ -170,30 +170,30 @@ const EventManagementTab: React.FC = () => {
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold">Etkinlik ve Anket Yönetimi</h2>
-          <div className="mt-4 flex space-x-4 border-b">
+        <div className="p-3 sm:p-6 border-b">
+          <h2 className="text-lg sm:text-xl font-semibold">Etkinlik ve Anket Yönetimi</h2>
+          <div className="mt-4 flex space-x-2 sm:space-x-4 border-b overflow-x-auto">
             <button
               onClick={() => setActiveEventSubTab('events')}
-              className={`py-2 px-4 text-sm font-medium ${activeEventSubTab === 'events' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`py-2 px-3 sm:px-4 text-xs sm:text-sm font-medium whitespace-nowrap ${activeEventSubTab === 'events' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Etkinlikler
             </button>
             <button
               onClick={() => setActiveEventSubTab('surveys')}
-              className={`py-2 px-4 text-sm font-medium ${activeEventSubTab === 'surveys' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`py-2 px-3 sm:px-4 text-xs sm:text-sm font-medium whitespace-nowrap ${activeEventSubTab === 'surveys' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Anketler
             </button>
             <button
               onClick={() => setActiveEventSubTab('announcements')}
-              className={`py-2 px-4 text-sm font-medium ${activeEventSubTab === 'announcements' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`py-2 px-3 sm:px-4 text-xs sm:text-sm font-medium whitespace-nowrap ${activeEventSubTab === 'announcements' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Duyurular
             </button>
           </div>
         </div>
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {activeEventSubTab === 'events' && (
             <div>
               <button
@@ -201,7 +201,7 @@ const EventManagementTab: React.FC = () => {
                   setSelectedEvent({ id: '', title: '', content: '', date: new Date().toISOString().slice(0, 16), location: '', imageUrl: '', type: 'event' });
                   setShowEventModal(true);
                 }}
-                className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="mb-4 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm min-h-[40px] touch-manipulation"
               >
                 Yeni Etkinlik Ekle
               </button>
@@ -209,42 +209,42 @@ const EventManagementTab: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Etkinlik Adı</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Etkinlik Adı</th>
+                      <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
+                      <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
+                      <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {allItems.filter(e => e.type === 'event').map(event => (
                       <tr key={event.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{event.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(event.date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 whitespace-normal text-sm text-gray-500 max-w-xs truncate">{event.description}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{event.name}</td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(event.date).toLocaleDateString()}</td>
+                        <td className="hidden md:table-cell px-6 py-4 whitespace-normal text-sm text-gray-500 max-w-xs truncate">{event.description}</td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => {
                               setSelectedEvent(event);
                               setShowEventModal(true);
                             }}
-                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                            className="text-indigo-600 hover:text-indigo-900 mr-2 sm:mr-4 min-h-[40px] min-w-[40px] inline-flex items-center justify-center touch-manipulation"
                           >
-                            <Edit className="w-5 h-5" />
+                            <Edit className="w-4 sm:w-5 h-4 sm:h-5" />
                           </button>
                           <button
                             onClick={() => {
                               setSelectedEventForParticipants(event);
                               setShowParticipantsModal(true);
                             }}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            className="text-blue-600 hover:text-blue-900 mr-2 sm:mr-4 min-h-[40px] min-w-[40px] inline-flex items-center justify-center touch-manipulation"
                           >
-                            <Users className="w-5 h-5" />
+                            <Users className="w-4 sm:w-5 h-4 sm:h-5" />
                           </button>
                           <button
                             onClick={() => deleteEvent(event.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 min-h-[40px] min-w-[40px] inline-flex items-center justify-center touch-manipulation"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 sm:w-5 h-4 sm:h-5" />
                           </button>
                         </td>
                       </tr>
@@ -261,7 +261,7 @@ const EventManagementTab: React.FC = () => {
                   setSelectedSurvey(null);
                   setShowSurveyModal(true);
                 }}
-                className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="mb-4 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm min-h-[40px] touch-manipulation"
               >
                 Yeni Anket Ekle
               </button>
@@ -269,33 +269,33 @@ const EventManagementTab: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Anket Adı</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Anket Adı</th>
+                      <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
+                      <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
+                      <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {allItems.filter(e => e.type === 'survey').map(survey => (
                       <tr key={survey.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{survey.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(survey.date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 whitespace-normal text-sm text-gray-500 max-w-xs truncate">{survey.description}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{survey.name}</td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(survey.date).toLocaleDateString()}</td>
+                        <td className="hidden md:table-cell px-6 py-4 whitespace-normal text-sm text-gray-500 max-w-xs truncate">{survey.description}</td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => {
                               setSelectedSurvey(survey);
                               setShowSurveyModal(true);
                             }}
-                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                            className="text-indigo-600 hover:text-indigo-900 mr-2 sm:mr-4 min-h-[40px] min-w-[40px] inline-flex items-center justify-center touch-manipulation"
                           >
-                            <Edit className="w-5 h-5" />
+                            <Edit className="w-4 sm:w-5 h-4 sm:h-5" />
                           </button>
                           <button
                             onClick={() => deleteEvent(survey.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 min-h-[40px] min-w-[40px] inline-flex items-center justify-center touch-manipulation"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 sm:w-5 h-4 sm:h-5" />
                           </button>
                         </td>
                       </tr>
@@ -312,7 +312,7 @@ const EventManagementTab: React.FC = () => {
                   setSelectedAnnouncement(null);
                   setShowAnnouncementModal(true);
                 }}
-                className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="mb-4 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm min-h-[40px] touch-manipulation"
               >
                 Yeni Duyuru Ekle
               </button>
@@ -320,33 +320,33 @@ const EventManagementTab: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duyuru Adı</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duyuru Adı</th>
+                      <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
+                      <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
+                      <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {allItems.filter(e => e.type === 'announcement').map(announcement => (
                       <tr key={announcement.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{announcement.title}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(announcement.date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 whitespace-normal text-sm text-gray-500 max-w-xs truncate">{announcement.description}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{announcement.title}</td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(announcement.date).toLocaleDateString()}</td>
+                        <td className="hidden md:table-cell px-6 py-4 whitespace-normal text-sm text-gray-500 max-w-xs truncate">{announcement.description}</td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => {
                               setSelectedAnnouncement(announcement);
                               setShowAnnouncementModal(true);
                             }}
-                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                            className="text-indigo-600 hover:text-indigo-900 mr-2 sm:mr-4 min-h-[40px] min-w-[40px] inline-flex items-center justify-center touch-manipulation"
                           >
-                            <Edit className="w-5 h-5" />
+                            <Edit className="w-4 sm:w-5 h-4 sm:h-5" />
                           </button>
                           <button
                             onClick={() => deleteEvent(announcement.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 min-h-[40px] min-w-[40px] inline-flex items-center justify-center touch-manipulation"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 sm:w-5 h-4 sm:h-5" />
                           </button>
                         </td>
                       </tr>
@@ -360,18 +360,18 @@ const EventManagementTab: React.FC = () => {
       </div>
 
       {showEventModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 w-full max-w-2xl">
-            <h2 className="text-2xl font-bold mb-6">{selectedEvent.id ? 'Etkinliği Düzenle' : 'Yeni Etkinlik Ekle'}</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">{selectedEvent.id ? 'Etkinliği Düzenle' : 'Yeni Etkinlik Ekle'}</h2>
             <form onSubmit={handleEventSubmit} className="space-y-4">
-              <input type="text" name="title" value={selectedEvent.title} onChange={handleEventFormChange} placeholder="Etkinlik Başlığı" className="w-full p-2 border rounded" />
-              <textarea name="content" value={selectedEvent.content} onChange={handleEventFormChange} placeholder="Etkinlik Açıklaması" className="w-full p-2 border rounded"></textarea>
-              <input type="datetime-local" name="date" value={selectedEvent.date} onChange={handleEventFormChange} className="w-full p-2 border rounded" />
-              <input type="text" name="location" value={selectedEvent.location} onChange={handleEventFormChange} placeholder="Etkinlik Yeri" className="w-full p-2 border rounded" />
-              <input type="text" name="imageUrl" value={selectedEvent.imageUrl} onChange={handleEventFormChange} placeholder="Görsel URL" className="w-full p-2 border rounded" />
-              <div className="flex justify-end space-x-4">
-                <button type="button" onClick={() => setShowEventModal(false)} className="px-4 py-2 bg-gray-200 rounded-lg">İptal</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Kaydet</button>
+              <input type="text" name="title" value={selectedEvent.title} onChange={handleEventFormChange} placeholder="Etkinlik Başlığı" className="w-full p-2 border rounded text-sm" />
+              <textarea name="content" value={selectedEvent.content} onChange={handleEventFormChange} placeholder="Etkinlik Açıklaması" className="w-full p-2 border rounded text-sm"></textarea>
+              <input type="datetime-local" name="date" value={selectedEvent.date} onChange={handleEventFormChange} className="w-full p-2 border rounded text-sm" />
+              <input type="text" name="location" value={selectedEvent.location} onChange={handleEventFormChange} placeholder="Etkinlik Yeri" className="w-full p-2 border rounded text-sm" />
+              <input type="text" name="imageUrl" value={selectedEvent.imageUrl} onChange={handleEventFormChange} placeholder="Görsel URL" className="w-full p-2 border rounded text-sm" />
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+                <button type="button" onClick={() => setShowEventModal(false)} className="px-4 py-2 bg-gray-200 rounded-lg text-sm min-h-[40px] touch-manipulation">İptal</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm min-h-[40px] touch-manipulation">Kaydet</button>
               </div>
             </form>
           </div>

@@ -189,19 +189,19 @@ const UserBorrowsDetailPage: React.FC = () => {
   const historyTotalPages = Math.ceil(historicalBorrows.length / itemsPerPage);
 
   const renderTabs = () => (
-    <div className="mb-6 border-b border-gray-200">
-        <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+    <div className="mb-4 sm:mb-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-4 sm:space-x-6" aria-label="Tabs">
             <button
                 onClick={() => setActiveTab('current')}
-                className={`${activeTab === 'current' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                className={`${activeTab === 'current' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center touch-manipulation`}
             >
-                <Book className="w-5 h-5 mr-2" /> Mevcut Kitaplar ({currentBorrows.length})
+                <Book className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Mevcut Kitaplar</span><span className="sm:hidden">Mevcut</span> ({currentBorrows.length})
             </button>
             <button
                 onClick={() => setActiveTab('history')}
-                className={`${activeTab === 'history' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                className={`${activeTab === 'history' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center touch-manipulation`}
             >
-                <History className="w-5 h-5 mr-2" /> Okuma Geçmişi ({historicalBorrows.length})
+                <History className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Okuma Geçmişi</span><span className="sm:hidden">Geçmiş</span> ({historicalBorrows.length})
             </button>
         </nav>
     </div>
@@ -209,21 +209,21 @@ const UserBorrowsDetailPage: React.FC = () => {
 
   const renderCurrentBorrows = () => (
     <div>
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-3 sm:mb-4">
             <div className="flex gap-2">
                 <button
                     onClick={() => setViewMode('card')}
-                    className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
                 </button>
                 <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
@@ -250,12 +250,12 @@ const UserBorrowsDetailPage: React.FC = () => {
                                         <span>İade: {new Date(item.dueDate.seconds * 1000).toLocaleDateString()}</span>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <button onClick={() => handleReturnBook(item.id, item.bookId)} className="w-full px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium transition-colors">
+                                        <button onClick={() => handleReturnBook(item.id, item.bookId)} className="w-full px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm font-medium transition-colors touch-manipulation min-h-[40px]">
                                             İade Al
                                         </button>
                                         <button 
                                             onClick={() => handleExtendDueDate(item.id, item.dueDate, item.extended)}
-                                            className="w-full px-3 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                            className="w-full px-3 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[40px]"
                                             disabled={item.extended}
                                         >
                                             {item.extended ? 'Süre Uzatıldı' : 'Süre Uzat'}
@@ -289,12 +289,12 @@ const UserBorrowsDetailPage: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
-                                                <button onClick={() => handleReturnBook(item.id, item.bookId)} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium transition-colors">
+                                                <button onClick={() => handleReturnBook(item.id, item.bookId)} className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm font-medium transition-colors touch-manipulation min-h-[40px]">
                                                     İade Al
                                                 </button>
                                                 <button 
                                                     onClick={() => handleExtendDueDate(item.id, item.dueDate, item.extended)}
-                                                    className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                                    className="px-3 sm:px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[40px]"
                                                     disabled={item.extended}
                                                 >
                                                     {item.extended ? 'Süre Uzatıldı' : 'Süre Uzat'}
@@ -309,16 +309,16 @@ const UserBorrowsDetailPage: React.FC = () => {
                 </div>
             )
         ) : (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
-                <Book className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">Bu kullanıcının ödünç aldığı kitap bulunmuyor.</p>
+            <div className="bg-white rounded-lg shadow p-8 sm:p-12 text-center">
+                <Book className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-sm sm:text-lg">Bu kullanıcının ödünç aldığı kitap bulunmuyor.</p>
             </div>
         )}
         {currentBorrows.length > 0 && currentTotalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Önceki</button>
-                <span className="text-sm text-gray-600 px-4">Sayfa {currentPage} / {currentTotalPages}</span>
-                <button onClick={() => setCurrentPage(p => Math.min(currentTotalPages, p + 1))} disabled={currentPage === currentTotalPages} className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Sonraki</button>
+            <div className="flex items-center justify-center gap-2 mt-4 sm:mt-6">
+                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 sm:px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm touch-manipulation">Önceki</button>
+                <span className="text-xs sm:text-sm text-gray-600 px-2 sm:px-4">Sayfa {currentPage} / {currentTotalPages}</span>
+                <button onClick={() => setCurrentPage(p => Math.min(currentTotalPages, p + 1))} disabled={currentPage === currentTotalPages} className="px-3 sm:px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm touch-manipulation">Sonraki</button>
             </div>
         )}
     </div>
@@ -377,16 +377,16 @@ const UserBorrowsDetailPage: React.FC = () => {
                 </div>
             )
         ) : (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
-                <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">Kullanıcının okuma geçmişi bulunmuyor.</p>
+            <div className="bg-white rounded-lg shadow p-8 sm:p-12 text-center">
+                <History className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-sm sm:text-lg">Kullanıcının okuma geçmişi bulunmuyor.</p>
             </div>
         )}
         {historicalBorrows.length > 0 && historyTotalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-                <button onClick={() => setHistoryPage(p => Math.max(1, p - 1))} disabled={historyPage === 1} className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Önceki</button>
-                <span className="text-sm text-gray-600 px-4">Sayfa {historyPage} / {historyTotalPages}</span>
-                <button onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))} disabled={historyPage === historyTotalPages} className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Sonraki</button>
+            <div className="flex items-center justify-center gap-2 mt-4 sm:mt-6">
+                <button onClick={() => setHistoryPage(p => Math.max(1, p - 1))} disabled={historyPage === 1} className="px-3 sm:px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm touch-manipulation">Önceki</button>
+                <span className="text-xs sm:text-sm text-gray-600 px-2 sm:px-4">Sayfa {historyPage} / {historyTotalPages}</span>
+                <button onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))} disabled={historyPage === historyTotalPages} className="px-3 sm:px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm touch-manipulation">Sonraki</button>
             </div>
         )}
     </div>
@@ -457,13 +457,13 @@ const UserBorrowsDetailPage: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <button 
             onClick={() => navigate(-1)} 
-            className="flex items-center mb-4 text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="flex items-center mb-3 sm:mb-4 text-indigo-600 hover:text-indigo-800 transition-colors touch-manipulation text-sm sm:text-base"
         >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
             Geri Dön
         </button>
         {/* User Info Header */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-8 p-4 sm:p-6 bg-white rounded-lg shadow">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 mb-6 sm:mb-8 p-4 sm:p-6 bg-white rounded-lg shadow">
           {user.photoURL ? (
             <img src={user.photoURL} alt={user.displayName} className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src='https://via.placeholder.com/128'; }} />
           ) : (

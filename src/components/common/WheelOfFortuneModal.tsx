@@ -42,16 +42,16 @@ const WheelOfFortuneModal: React.FC<WheelOfFortuneModalProps> = ({ isOpen, onClo
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 text-center relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-center relative max-w-lg w-full">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 touch-manipulation">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
         
-        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">Günün Şanslı Kategorisi</h2>
-        <p className="text-gray-600 mb-6">Çarkı çevir ve yeni kitaplar keşfet!</p>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 text-gray-800">Günün Şanslı Kategorisi</h2>
+        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Çarkı çevir ve yeni kitaplar keşfet!</p>
 
         <div className="flex justify-center items-center">
             <Wheel
@@ -76,7 +76,7 @@ const WheelOfFortuneModal: React.FC<WheelOfFortuneModalProps> = ({ isOpen, onClo
         <button 
           onClick={handleSpinClick} 
           disabled={mustSpin}
-          className="mt-8 w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-transform transform hover:scale-105"
+          className="mt-6 sm:mt-8 w-full px-4 sm:px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-transform transform hover:scale-105 text-sm sm:text-base touch-manipulation min-h-[44px]"
         >
           {mustSpin ? 'Dönüyor...' : 'ÇEVİR'}
         </button>

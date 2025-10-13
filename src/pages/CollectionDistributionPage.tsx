@@ -142,8 +142,8 @@ const CollectionDistributionPage: React.FC = () => {
           </button>
         </div>
 
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Eser Dağılım Analizi</h1>
+        <header className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Eser Dağılım Analizi</h1>
           <p className="mt-2 text-lg text-gray-600">
             Kütüphane koleksiyonunun kategorilere göre detaylı dökümünü inceleyin.
           </p>
@@ -161,71 +161,71 @@ const CollectionDistributionPage: React.FC = () => {
         ) : (
           <>
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {/* Total Books */}
-              <div className="relative bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
+              <div className="relative bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-4 sm:p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
                 <div className="relative">
-                  <p className="text-white/80 text-sm font-medium mb-1">Toplam Eser</p>
-                  <p className="text-4xl font-bold text-white mb-2">{totalBooks}</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1">Toplam Eser</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-white mb-2">{totalBooks}</p>
                   <p className="text-white/70 text-xs">Kütüphane koleksiyonu</p>
                 </div>
               </div>
 
               {/* Most Popular Category */}
-              <div className="relative bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
+              <div className="relative bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg p-4 sm:p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
                 <div className="relative">
-                  <p className="text-white/80 text-sm font-medium mb-1">En Popüler</p>
-                  <p className="text-2xl font-bold text-white mb-1 truncate" title={collections[0]?.name}>{collections[0]?.name || '-'}</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1">En Popüler</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white mb-1 truncate" title={collections[0]?.name}>{collections[0]?.name || '-'}</p>
                   <p className="text-white/70 text-xs">{collections[0]?.data.length || 0} eser</p>
                 </div>
               </div>
 
               {/* Least Popular Category */}
-              <div className="relative bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
+              <div className="relative bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg p-4 sm:p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
                 <div className="relative">
-                  <p className="text-white/80 text-sm font-medium mb-1">En Az Eser</p>
-                  <p className="text-2xl font-bold text-white mb-1 truncate" title={collections[collections.length - 1]?.name}>{collections[collections.length - 1]?.name || '-'}</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1">En Az Eser</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white mb-1 truncate" title={collections[collections.length - 1]?.name}>{collections[collections.length - 1]?.name || '-'}</p>
                   <p className="text-white/70 text-xs">{collections[collections.length - 1]?.data.length || 0} eser</p>
                 </div>
               </div>
 
               {/* Category Diversity */}
-              <div className="relative bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl shadow-lg p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
+              <div className="relative bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl shadow-lg p-4 sm:p-6 overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
                 <div className="relative">
-                  <p className="text-white/80 text-sm font-medium mb-1">Kategori Çeşitliliği</p>
-                  <p className="text-4xl font-bold text-white mb-2">{collections.length}</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1">Kategori Çeşitliliği</p>
+                  <p className="text-2xl sm:text-4xl font-bold text-white mb-2">{collections.length}</p>
                   <p className="text-white/70 text-xs">Farklı kategori</p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Left Column: Chart */}
             <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-white/20">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kategori Görselleştirmesi</h2>
-                <div className="flex items-center gap-2 p-1.5 bg-white/60 backdrop-blur-xl rounded-xl border border-white/20 shadow-md">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kategori Görselleştirmesi</h2>
+                <div className="flex items-center gap-2 p-1.5 bg-white/60 backdrop-blur-xl rounded-xl border border-white/20 shadow-md w-full sm:w-auto">
                   <button
                     onClick={() => setActiveChart('pie')}
-                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${activeChart === 'pie' ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-white/50'}`}
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all ${activeChart === 'pie' ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-white/50'}`}
                   >
-                    <PieChart className="w-5 h-5 inline-block mr-1" />
-                    Pasta
+                    <PieChart className="w-4 h-4 sm:w-5 sm:h-5 inline-block mr-1" />
+                    <span className="hidden sm:inline">Pasta</span>
                   </button>
                   <button
                     onClick={() => setActiveChart('bar')}
-                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${activeChart === 'bar' ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-white/50'}`}
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all ${activeChart === 'bar' ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-white/50'}`}
                   >
-                    <BarChartIcon className="w-5 h-5 inline-block mr-1" />
-                    Çubuk
+                    <BarChartIcon className="w-4 h-4 sm:w-5 sm:h-5 inline-block mr-1" />
+                    <span className="hidden sm:inline">Çubuk Grafik</span>
                   </button>
                 </div>
               </div>

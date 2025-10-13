@@ -13,10 +13,14 @@ interface UserData {
   displayName: string;
   studentClass: string;
   studentNumber: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'teacher';
   createdAt: Date;
   lastLogin: Date;
   photoURL?: string;
+  teacherData?: {
+    assignedClass: string;
+    subject?: string;
+  };
 }
 
 const UsersTab: React.FC = () => {
@@ -26,7 +30,7 @@ const UsersTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [usersSearchQuery, setUsersSearchQuery] = useState('');
   const [classFilter, setClassFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin' | 'teacher'>('all');
   const [activityFilter, setActivityFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [usersCurrentPage, setUsersCurrentPage] = useState(1);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -85,13 +89,23 @@ const UsersTab: React.FC = () => {
 
     try {
       const userRef = doc(db, 'users', updatedUser.uid);
-      await updateDoc(userRef, {
+      const updateData: any = {
         displayName: updatedUser.displayName,
         studentClass: updatedUser.studentClass,
         studentNumber: updatedUser.studentNumber,
         role: updatedUser.role,
         photoURL: updatedUser.photoURL || '',
-      });
+      };
+      
+      // Add teacher data if role is teacher
+      if (updatedUser.role === 'teacher' && updatedUser.teacherData) {
+        updateData.teacherData = {
+          assignedClass: updatedUser.teacherData.assignedClass || '',
+          ...(updatedUser.teacherData.subject && { subject: updatedUser.teacherData.subject })
+        };
+      }
+      
+      await updateDoc(userRef, updateData);
 
       setUsers(prev => prev.map(user => user.uid === updatedUser.uid ? updatedUser : user));
       setShowEditUserModal(false);
@@ -344,7 +358,7 @@ const UsersTab: React.FC = () => {
         </h3>
         <div className="flex items-center justify-center">
           <div className="relative w-48 h-48">
-            <svg className="w-full h-full transform -rotate-90">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 192 192">
               <circle cx="96" cy="96" r="80" fill="none" stroke="#e5e7eb" strokeWidth="24"/>
               <circle 
                 cx="96" cy="96" r="80" fill="none" 
@@ -400,48 +414,48 @@ const UsersTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-indigo-500">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-3 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Kullanıcı</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{userStats.total}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/80">Toplam Kullanıcı</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1">{userStats.total}</p>
             </div>
-            <div className="p-3 bg-indigo-100 rounded-full">
-              <Users className="w-6 h-6 text-indigo-600" />
+            <div className="p-2 sm:p-3 bg-white/20 rounded-full">
+              <Users className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-3 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Bugün Kayıt Olan</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{userStats.todayRegistered}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/80">Bugün Kayıt Olan</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1">{userStats.todayRegistered}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <UserPlus className="w-6 h-6 text-green-600" />
+            <div className="p-2 sm:p-3 bg-white/20 rounded-full">
+              <UserPlus className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-3 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Aktif Ödünç Alan</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{userStats.activeUsers}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/80">Aktif Ödünç Alan</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1">{userStats.activeUsers}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <BookOpen className="w-6 h-6 text-blue-600" />
+            <div className="p-2 sm:p-3 bg-white/20 rounded-full">
+              <BookOpen className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-3 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">En Kalabalık Sınıf</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{userStats.topClass}</p>
+              <p className="text-xs sm:text-sm font-medium text-white/80">En Kalabalık Sınıf</p>
+              <p className="text-xl sm:text-3xl font-bold mt-1">{userStats.topClass}</p>
             </div>
-            <div className="p-3 bg-orange-100 rounded-full">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-2 sm:p-3 bg-white/20 rounded-full">
+              <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
@@ -457,28 +471,28 @@ const UsersTab: React.FC = () => {
         </div>
 
         <div className="p-6">
-          <div className="flex gap-6">
-            <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold flex items-center">
-                  <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+            <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                  <Filter className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-indigo-600" />
                   Filtreler
                 </h2>
               </div>
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <div className="relative">
-                  <input type="text" placeholder="Kullanıcı ara..." value={usersSearchQuery} onChange={(e) => setUsersSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+                  <input type="text" placeholder="Kullanıcı ara..." value={usersSearchQuery} onChange={(e) => setUsersSearchQuery(e.target.value)} className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                  <Search className="absolute left-2.5 sm:left-3 top-2.5 text-gray-400" size={14} />
                 </div>
               </div>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sınıf</h3>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Sınıf</h3>
+                  <div className="space-y-1 sm:space-y-2 max-h-48 overflow-y-auto">
                     {uniqueClasses.map(c => (
-                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-1.5 sm:p-2 rounded touch-manipulation">
                         <input type="radio" name="class" checked={classFilter === c} onChange={() => setClassFilter(c)} className="mr-2" />
-                        <span className="text-sm">{c === 'all' ? 'Tümü' : c}</span>
+                        <span className="text-xs sm:text-sm">{c === 'all' ? 'Tümü' : c}</span>
                       </label>
                     ))}
                   </div>
@@ -493,6 +507,10 @@ const UsersTab: React.FC = () => {
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input type="radio" name="role" checked={roleFilter === 'user'} onChange={() => setRoleFilter('user')} className="mr-2" />
                       <span className="text-sm text-green-600">● Kullanıcı</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <input type="radio" name="role" checked={roleFilter === 'teacher'} onChange={() => setRoleFilter('teacher')} className="mr-2" />
+                      <span className="text-sm text-orange-600">● Öğretmen</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input type="radio" name="role" checked={roleFilter === 'admin'} onChange={() => setRoleFilter('admin')} className="mr-2" />
@@ -541,21 +559,21 @@ const UsersTab: React.FC = () => {
               </div>
             </aside>
             <div className="flex-1">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-3 sm:mb-4 flex items-center justify-between">
                 <div className="flex gap-2">
-                  <button onClick={() => setViewMode('table')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    <List className="w-5 h-5" />
+                  <button onClick={() => setViewMode('table')} className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <List className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
-                  <button onClick={() => setViewMode('card')} className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    <Grid className="w-5 h-5" />
+                  <button onClick={() => setViewMode('card')} className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${viewMode === 'card' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <Grid className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
-                <p className="text-sm text-gray-600">{filteredUsers.length} kullanıcı bulundu</p>
+                <p className="text-xs sm:text-sm text-gray-600">{filteredUsers.length} kullanıcı bulundu</p>
               </div>
               {selectedUsers.length > 0 && (
-                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-indigo-700">{selectedUsers.length} kullanıcı seçildi.</span>
-                  <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors">
+                <div className="p-3 sm:p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
+                  <span className="text-xs sm:text-sm font-medium text-indigo-700">{selectedUsers.length} kullanıcı seçildi.</span>
+                  <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[40px]">
                     {isBulkDeleting ? 'Siliniyor...' : 'Seçilenleri Sil'}
                   </button>
                 </div>
@@ -576,7 +594,7 @@ const UsersTab: React.FC = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kullanıcı</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sınıf / Numara</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol / Sorumlu Sınıf</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kayıt Tarihi</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
               </tr>
@@ -602,11 +620,21 @@ const UsersTab: React.FC = () => {
                       <div>{user.studentNumber}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {user.role}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
+                          user.role === 'admin' ? 'bg-red-100 text-red-800' : 
+                          user.role === 'teacher' ? 'bg-orange-100 text-orange-800' : 
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {user.role === 'teacher' ? 'Öğretmen' : user.role === 'admin' ? 'Admin' : 'Kullanıcı'}
+                        </span>
+                        {user.role === 'teacher' && user.teacherData?.assignedClass && (
+                          <span className="text-xs text-gray-600">
+                            📚 {user.teacherData.assignedClass}
+                            {user.teacherData.subject && ` • ${user.teacherData.subject}`}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {user.createdAt.toLocaleDateString()}
@@ -652,14 +680,27 @@ const UsersTab: React.FC = () => {
               </div>
               ) : (
               <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {paginatedUsers.length > 0 ? (
                 paginatedUsers.map(user => (
                   <div key={user.uid} className={`bg-white rounded-lg shadow-md border-2 transition-all hover:shadow-lg ${selectedUsers.includes(user.uid) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-4">
                         <input type="checkbox" className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" checked={selectedUsers.includes(user.uid)} onChange={() => handleSelectUser(user.uid)} />
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{user.role}</span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' : 
+                            user.role === 'teacher' ? 'bg-orange-100 text-orange-800' : 
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {user.role === 'teacher' ? 'Öğretmen' : user.role === 'admin' ? 'Admin' : 'Kullanıcı'}
+                          </span>
+                          {user.role === 'teacher' && user.teacherData?.assignedClass && (
+                            <span className="text-xs text-gray-600 bg-orange-50 px-2 py-0.5 rounded">
+                              {user.teacherData.assignedClass}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-col items-center mb-4">
                         {user.photoURL ? (

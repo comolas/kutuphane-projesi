@@ -92,26 +92,26 @@ const AdminMagazinesTab: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 px-4">
     <div className="max-w-7xl mx-auto">
     <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden border border-white/20">
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-3 sm:p-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <BookOpen className="w-6 h-6 mr-2 text-indigo-600" />
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
+            <BookOpen className="w-5 sm:w-6 h-5 sm:h-6 mr-2 text-indigo-600" />
             Dergi Yönetimi
           </h2>
           <button
             onClick={handleAddClick}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+            className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center text-xs sm:text-sm min-h-[40px] touch-manipulation"
           >
-            <Plus className="w-5 h-5 mr-2" />
+            <Plus className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
             Yeni Dergi Ekle
           </button>
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="flex gap-6">
+      <div className="p-3 sm:p-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
-          <aside className="w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-6 flex-shrink-0 border border-white/20">
+          <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-3 sm:p-6 flex-shrink-0 border border-white/20">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold flex items-center">
                 <Filter className="w-5 h-5 mr-2 text-indigo-600" />
@@ -179,7 +179,7 @@ const AdminMagazinesTab: React.FC = () => {
           </aside>
 
           <div className="flex-1">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredMagazines.map((magazine, index) => (
             <div key={magazine.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20" style={{ animationDelay: `${index * 0.1}s` }}>
               <div className="relative overflow-hidden aspect-[3/4]">
@@ -191,14 +191,14 @@ const AdminMagazinesTab: React.FC = () => {
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => handleEditClick(magazine)}
-                    className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm text-indigo-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
+                    className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm text-indigo-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center min-h-[40px] touch-manipulation"
                   >
                     <Edit className="w-3 h-3 mr-1" />
                     Düzenle
                   </button>
                   <button
                     onClick={() => handleDeleteClick(magazine.id)}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-h-[40px] touch-manipulation"
                   >
                     <Trash2 className="w-3 h-3 mr-1" />
                     Sil

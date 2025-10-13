@@ -9,5 +9,10 @@ node_modules/
 # Build output
 dist/
 
+# Capacitor
+android/
+ios/
+.capacitor/
+
 # Gemini CLI temporary project
 project-bolt-sb1-vae5dgoc/
