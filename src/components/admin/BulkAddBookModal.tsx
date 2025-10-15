@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud, File as FileIcon, Download, X } from 'lucide-react';
+import { UploadCloud, File as FileIcon, Download, X, BookPlus } from 'lucide-react';
 import Papa from 'papaparse';
 import { db } from '../../firebase/config'; // Adjust this path to your Firebase config
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -145,51 +145,59 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
   const percentage = progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl transform transition-all duration-300">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Toplu Kitap Ekle</h2>
-          <button onClick={handleClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50" disabled={isProcessing}>
-            <X className="w-6 h-6 text-gray-600" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
+              <BookPlus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <h2 className="text-lg sm:text-xl font-bold text-white">Toplu Kitap Ekle</h2>
+          </div>
+          <button onClick={handleClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all disabled:opacity-50" disabled={isProcessing}>
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
+        <div className="p-4 sm:p-6 sm:p-8 overflow-y-auto">
 
         {processingState === 'idle' && (
-          <div className="space-y-6">
-            <div {...getRootProps()} className={`p-10 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${isDragActive ? 'border-indigo-600 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'}`}>
+          <div className="space-y-4 sm:space-y-6">
+            <div {...getRootProps()} className={`p-6 sm:p-10 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${isDragActive ? 'border-indigo-600 bg-gradient-to-br from-indigo-50 to-purple-50 scale-105' : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30'}`}>
               <input {...getInputProps()} />
               <div className="flex flex-col items-center justify-center text-gray-500">
-                <UploadCloud className="w-12 h-12 mb-4" />
+                <UploadCloud className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4 text-indigo-500" />
                 {isDragActive ?
-                  <p className="text-lg font-semibold">Dosyayı buraya bırakın...</p> :
-                  <p className="text-lg font-semibold">CSV dosyanızı buraya sürükleyin veya seçmek için tıklayın</p>
+                  <p className="text-base sm:text-lg font-bold text-indigo-600">Dosyayı buraya bırakın...</p> :
+                  <p className="text-sm sm:text-lg font-bold text-gray-700">CSV dosyanızı buraya sürükleyin veya seçmek için tıklayın</p>
                 }
-                <p className="text-sm">(Sadece .csv formatı kabul edilmektedir)</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-2">(Sadece .csv formatı kabul edilmektedir)</p>
               </div>
             </div>
 
             {file && (
-              <div className="flex items-center justify-center bg-gray-100 p-4 rounded-lg">
-                <FileIcon className="w-6 h-6 text-gray-600 mr-3" />
-                <span className="font-medium text-gray-800">{file.name}</span>
-                <button onClick={() => setFile(null)} className="ml-4 p-1 hover:bg-gray-300 rounded-full">
-                    <X className="w-4 h-4"/>
+              <div className="flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50 p-3 sm:p-4 rounded-xl border-2 border-indigo-200">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <FileIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 flex-shrink-0" />
+                  <span className="font-semibold text-gray-800 text-sm sm:text-base truncate">{file.name}</span>
+                </div>
+                <button onClick={() => setFile(null)} className="ml-2 p-1.5 hover:bg-indigo-200 rounded-full transition-colors flex-shrink-0">
+                    <X className="w-4 h-4 text-gray-600"/>
                 </button>
               </div>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
               <button 
                 onClick={handleDownloadTemplate}
-                className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+                className="flex items-center justify-center px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all font-semibold text-sm sm:text-base min-h-[44px]"
               >
-                <Download className="w-5 h-5 mr-2" />
+                <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Örnek Şablon İndir
               </button>
               <button 
                 onClick={handleProcess} 
                 disabled={!file}
-                className="flex items-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold disabled:bg-indigo-300 disabled:cursor-not-allowed"
+                className="flex items-center justify-center px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base shadow-lg min-h-[44px]"
               >
                 Kitapları Yükle ve İşle
               </button>
@@ -199,30 +207,30 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
 
         {(processingState !== 'idle') && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+            <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-4">
               {processingState === 'parsing' && 'Dosya okunuyor...'}
               {processingState === 'processing' && 'Kitaplar işleniyor...'}
               {processingState === 'completed' && 'İşlem Tamamlandı'}
             </h3>
-            <div className="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
+            <div className="w-full bg-gray-200 rounded-full h-3 sm:h-4 mb-2 overflow-hidden shadow-inner">
                 <div 
-                    className="bg-green-500 h-4 rounded-full transition-all duration-500 ease-out"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 h-full rounded-full transition-all duration-500 ease-out shadow-lg"
                     style={{ width: `${percentage}%` }}
                 ></div>
             </div>
-            <p className="text-center text-gray-600 font-medium mb-6">{progress.processed} / {progress.total} kitap işlendi ({percentage}%)</p>
+            <p className="text-center text-gray-700 font-bold mb-6 text-sm sm:text-base">{progress.processed} / {progress.total} kitap işlendi ({percentage}%)</p>
 
             {report && (
-                 <div className="mt-6 p-4 bg-gray-50 rounded-lg max-h-64 overflow-y-auto">
-                    <h3 className="text-xl font-bold text-gray-800 mb-3">İşlem Raporu</h3>
-                    <p className="text-green-700 font-semibold">✓ {report.successCount} kitap başarıyla eklendi.</p>
-                    <p className="text-red-700 font-semibold">✗ {report.failures.length} kitap eklenemedi.</p>
+                 <div className="mt-6 p-4 sm:p-5 bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl border-2 border-gray-200 max-h-64 overflow-y-auto">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3">İşlem Raporu</h3>
+                    <p className="text-green-700 font-bold text-sm sm:text-base">✓ {report.successCount} kitap başarıyla eklendi.</p>
+                    <p className="text-red-700 font-bold text-sm sm:text-base">✗ {report.failures.length} kitap eklenemedi.</p>
                     {report.failures.length > 0 && (
                         <div className="mt-4">
-                            <button onClick={downloadErrorCSV} className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors font-semibold">
+                            <button onClick={downloadErrorCSV} className="px-4 py-2.5 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-xl hover:from-red-200 hover:to-red-300 transition-all font-semibold text-sm sm:text-base border-2 border-red-300 min-h-[44px]">
                                 Hatalı Kayıtları İndir (CSV)
                             </button>
-                            <ul className="mt-2 text-sm text-red-600 list-disc list-inside space-y-1">
+                            <ul className="mt-3 text-xs sm:text-sm text-red-700 list-disc list-inside space-y-1">
                                 {report.failures.map((fail, index) => (
                                     <li key={index} title={fail.rowData}><b>Satır {index + 2}:</b> {fail.error}</li>
                                 ))}
@@ -235,10 +243,11 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
         )}
 
         {error && (
-          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
+          <div className="p-4 bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 text-red-800 rounded-xl text-sm sm:text-base font-semibold">
             <p>{error}</p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

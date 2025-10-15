@@ -99,7 +99,7 @@ const AdminChatBot: React.FC = () => {
   return (
     <>
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-[9999]">
           <div className="absolute bottom-20 right-0 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 animate-bounce">
             <p className="text-sm font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">Yönetim Asistanı</p>
             <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-3 h-3 bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-700"></div>
@@ -114,7 +114,7 @@ const AdminChatBot: React.FC = () => {
       )}
 
       {isOpen && (
-        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-[500px] h-[calc(100vh-2rem)] sm:h-[700px] max-h-[700px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 dark:border-gray-700">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-[500px] h-[calc(100vh-2rem)] sm:h-[700px] max-h-[700px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col z-[9999] border border-gray-200 dark:border-gray-700">
           <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-3 sm:p-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">

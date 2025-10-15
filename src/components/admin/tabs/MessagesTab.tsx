@@ -15,6 +15,7 @@ const MessagesTab: React.FC = () => {
   const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesPerPage = 10;
 
   const fetchReturnMessages = useCallback(async () => {
@@ -288,19 +289,41 @@ const MessagesTab: React.FC = () => {
         </div>
       </div>
 
+      {/* Floating Filter Button (Mobile) */}
+      <button
+        onClick={() => setIsSidebarOpen(true)}
+        className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+      >
+        <Filter className="w-6 h-6" />
+      </button>
+
+      {/* Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content with Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <div className="w-full lg:w-80 flex-shrink-0">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 lg:sticky lg:top-6">
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtreler</h3>
-              </div>
+        <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-80 bg-white/90 backdrop-blur-xl lg:rounded-xl sm:lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        } lg:flex-shrink-0 border border-white/20 lg:top-6`}>
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+              <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtreler</h3>
             </div>
-
-            <div className="space-y-4 sm:space-y-6">
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="space-y-4 sm:space-y-6">
               {/* Search */}
               <div>
                 <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Arama</label>
@@ -355,8 +378,7 @@ const MessagesTab: React.FC = () => {
                 </select>
               </div>
             </div>
-          </div>
-        </div>
+        </aside>
 
         {/* Messages Content */}
         <div className="flex-1">

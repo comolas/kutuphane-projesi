@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
+import { X, Upload, Users } from 'lucide-react';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config'; // Adjust path as needed
 
@@ -120,28 +121,48 @@ const BulkAddAuthorModal: React.FC<BulkAddAuthorModalProps> = ({ isOpen, onClose
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-      <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Toplu Yazar Ekle</h3>
-        <div className="mt-2">
-          <p className="text-sm text-gray-500 mb-4">
-            Lütfen yazarları toplu olarak eklemek için bir CSV dosyası yükleyin.
-            Dosya şu sütunları içermelidir: <code className="font-bold">name</code> (zorunlu), <code className="font-bold">biography</code> (zorunlu), <code className="font-bold">image</code> (zorunlu), <code className="font-bold">tags</code> (virgülle ayrılmış).
-          </p>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-          />
-          {message && <p className="mt-2 text-sm text-green-600">{message}</p>}
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex justify-center items-center p-2 sm:p-4">
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-white">Toplu Yazar Ekle</h3>
+          </div>
+          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
         </div>
-        <div className="mt-4 flex justify-end space-x-2">
+        <div className="p-4 sm:p-6">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded-xl mb-4">
+            <p className="text-xs sm:text-sm text-gray-700 font-medium mb-2">
+              Lütfen yazarları toplu olarak eklemek için bir CSV dosyası yükleyin.
+            </p>
+            <p className="text-xs text-gray-600">
+              Dosya sütunları: <code className="font-bold bg-white px-1 rounded">name</code>, <code className="font-bold bg-white px-1 rounded">biography</code>, <code className="font-bold bg-white px-1 rounded">image</code>, <code className="font-bold bg-white px-1 rounded">tags</code> (virgülle ayrılmış)
+            </p>
+          </div>
+          <div className="border-2 border-dashed border-indigo-300 rounded-xl p-4 sm:p-6 bg-gradient-to-br from-indigo-50 to-purple-50 hover:border-indigo-400 transition-all">
+            <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-500 mx-auto mb-3" />
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              className="block w-full text-xs sm:text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-gradient-to-r file:from-indigo-600 file:to-purple-600 file:text-white hover:file:from-indigo-700 hover:file:to-purple-700 file:transition-all file:cursor-pointer"
+            />
+            {file && (
+              <p className="text-xs sm:text-sm text-green-700 font-semibold mt-2 text-center">✓ {file.name}</p>
+            )}
+          </div>
+          {message && <p className="mt-3 text-xs sm:text-sm text-green-700 font-semibold bg-green-50 p-2 rounded-lg">{message}</p>}
+          {error && <p className="mt-3 text-xs sm:text-sm text-red-700 font-semibold bg-red-50 p-2 rounded-lg">{error}</p>}
+        </div>
+        <div className="p-4 sm:p-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 bg-gradient-to-t from-white to-transparent">
           <button
             onClick={onClose}
             type="button"
-            className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            className="w-full sm:w-auto px-6 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm sm:text-base min-h-[44px]"
             disabled={loading}
           >
             İptal
@@ -149,7 +170,7 @@ const BulkAddAuthorModal: React.FC<BulkAddAuthorModalProps> = ({ isOpen, onClose
           <button
             onClick={handleUpload}
             type="button"
-            className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-lg disabled:opacity-50 text-sm sm:text-base min-h-[44px]"
             disabled={loading || !file}
           >
             {loading ? 'Yükleniyor...' : 'Yükle'}

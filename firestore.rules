@@ -42,8 +42,8 @@ service cloud.firestore {
 
     // Books collection rules
     match /books/{bookId} {
-      // Allow anyone to read books
-      allow read: if true;
+      // Allow only authenticated users to read books
+      allow read: if isAuthenticated();
       
       // Only admins can create, or delete books
       allow create: if isAdmin();
@@ -56,8 +56,8 @@ service cloud.firestore {
 
     // Authors collection rules
     match /authors/{authorId} {
-      // Allow anyone to read authors
-      allow read: if true;
+      // Allow only authenticated users to read authors
+      allow read: if isAuthenticated();
       
       // Only admins can create, update, or delete authors
       allow create, update, delete: if isAdmin();
@@ -65,8 +65,8 @@ service cloud.firestore {
 
     // Magazines collection rules
     match /magazines/{magazineId} {
-      // Allow any authenticated user to read magazines
-      allow read: if true;
+      // Allow only authenticated users to read magazines
+      allow read: if isAuthenticated();
       
       // Only admins can create, update, or delete magazines
       allow create, update, delete: if isAdmin();
@@ -276,8 +276,8 @@ service cloud.firestore {
 
     // Announcements collection rules
     match /announcements/{announcementId} {
-      // Allow anyone to read announcements
-      allow read: if true;
+      // Allow only authenticated users to read announcements
+      allow read: if isAuthenticated();
       
       // Only admins can create, update, or delete announcements
       allow create, update, delete: if isAdmin();
@@ -313,8 +313,8 @@ service cloud.firestore {
 
     // App Info collection rules (for version checking)
     match /appInfo/{docId} {
-      // Allow anyone to read app information (like version number)
-      allow read: if true;
+      // Allow only authenticated users to read app information
+      allow read: if isAuthenticated();
       
       // Only admins can write to this collection
       allow write: if isAdmin();
@@ -352,7 +352,9 @@ service cloud.firestore {
 
     // Transactions collection rules
     match /transactions/{transactionId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
     // Settings collection rules

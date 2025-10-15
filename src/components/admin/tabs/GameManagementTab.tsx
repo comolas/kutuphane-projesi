@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useGames, Game } from '../../../contexts/GameContext';
 import GameModal from '../GameModal';
-import { Plus, Edit, Trash2, Gamepad2, Search, Filter, Grid3x3, List, ChevronLeft, ChevronRight, TrendingUp, Users, Calendar, BarChart3 } from 'lucide-react';
+import { Plus, Edit, Trash2, Gamepad2, Search, Filter, Grid3x3, List, ChevronLeft, ChevronRight, TrendingUp, Users, Calendar, BarChart3, X } from 'lucide-react';
 import { Bar, Pie } from 'react-chartjs-2';
 import Swal from 'sweetalert2';
 
@@ -14,6 +14,7 @@ const GameManagementTab: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleOpenModal = (game?: Game) => {
     setGameToEdit(game);
@@ -332,20 +333,44 @@ const GameManagementTab: React.FC = () => {
 
       {/* Main Content with Sidebar */}
       <div className="flex flex-col lg:flex-row gap-6 animate-fadeIn">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
+
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar Filters */}
         <div className="w-full lg:w-80 flex-shrink-0">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 sticky top-6">
+          <div className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-80 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 z-50 transition-transform duration-300 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          } lg:top-6`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Filter className="w-5 h-5 text-indigo-600" />
                 <h3 className="text-lg font-bold text-gray-900">Filtreler</h3>
               </div>
-              <button
-                onClick={clearFilters}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
-              >
-                Temizle
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  Temizle
+                </button>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-6">

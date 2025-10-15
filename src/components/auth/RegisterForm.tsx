@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from '../common/Button';
 import FormInput from '../common/FormInput';
+import { validateEmail, validatePassword, validateName, validateStudentNumber, validateClass } from '../../utils/validation';
 
 interface RegisterFormProps {
   onSubmit: (name: string, email: string, password: string, studentClass: string, studentNumber: string) => void;
@@ -45,27 +46,43 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
     
-    if (!firstName.trim()) newErrors.firstName = 'Ad gereklidir';
-    if (!lastName.trim()) newErrors.lastName = 'Soyad gereklidir';
-    if (!studentClass.trim()) newErrors.studentClass = 'Sınıf gereklidir';
-    if (!studentNumber.trim()) {
-      if (studentClass === 'Öğretmen') {
-        newErrors.studentNumber = 'Branş gereklidir';
-      } else {
-        newErrors.studentNumber = 'Öğrenci no gereklidir';
+    // İsim validation
+    const firstNameValidation = validateName(firstName);
+    if (!firstNameValidation.valid) {
+      newErrors.firstName = firstNameValidation.error;
+    }
+    
+    const lastNameValidation = validateName(lastName);
+    if (!lastNameValidation.valid) {
+      newErrors.lastName = lastNameValidation.error;
+    }
+    
+    // Sınıf validation
+    const classValidation = validateClass(studentClass);
+    if (!classValidation.valid) {
+      newErrors.studentClass = classValidation.error;
+    }
+    
+    // Öğrenci no / Branş validation
+    if (studentClass !== 'Öğretmen') {
+      const studentNumberValidation = validateStudentNumber(studentNumber);
+      if (!studentNumberValidation.valid) {
+        newErrors.studentNumber = studentNumberValidation.error;
       }
+    } else if (!studentNumber.trim()) {
+      newErrors.studentNumber = 'Branş gereklidir';
     }
     
-    if (!email) {
-      newErrors.email = 'E-posta adresi gereklidir';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Geçersiz e-posta adresi';
+    // Email validation
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      newErrors.email = emailValidation.error;
     }
     
-    if (!password) {
-      newErrors.password = 'Şifre gereklidir';
-    } else if (password.length < 6) {
-      newErrors.password = 'Şifre en az 6 karakter olmalıdır';
+    // Şifre validation
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      newErrors.password = passwordValidation.error;
     }
     
     setErrors(newErrors);

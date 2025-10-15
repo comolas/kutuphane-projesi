@@ -1,6 +1,8 @@
-# Local environment variables
+# Local environment variables - ASLA GIT'E COMMIT ETMEYİN!
 .env
 .env.local
+.env.*.local
+*.env
 
 # Dependencies
 node_modules/

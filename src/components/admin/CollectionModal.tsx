@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, PlusCircle, Trash2 } from 'lucide-react';
+import { X, Search, PlusCircle, Trash2, Layers } from 'lucide-react';
 import { db } from '../../firebase/config';
 import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { Book } from '../../../types'; // Assuming you have a Book type
@@ -143,38 +143,43 @@ const CollectionModal: React.FC<CollectionModalProps> = ({ onClose, onSave, coll
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 z-50 flex items-center justify-center p-2 md:p-4">
-      <div className="bg-white/95 backdrop-blur-xl rounded-xl md:rounded-2xl shadow-2xl w-full h-full md:h-[95vh] md:max-w-6xl flex flex-col overflow-hidden">
-        <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-4 md:p-6 flex justify-between items-center">
-          <h2 className="text-xl md:text-3xl font-bold text-white">{collectionToEdit ? 'Koleksiyonu Düzenle' : 'Yeni Koleksiyon Oluştur'}</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/20 transition-colors">
-            <X className="w-5 h-5 md:w-6 md:h-6 text-white" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl w-full h-full sm:h-[95vh] sm:max-w-6xl flex flex-col overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
+              <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">{collectionToEdit ? 'Koleksiyonu Düzenle' : 'Yeni Koleksiyon Oluştur'}</h2>
+          </div>
+          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto">
           <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Koleksiyon Başlığı</label>
-                <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500" required />
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Koleksiyon Başlığı</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sıralama</label>
-                <input type="number" value={order} onChange={e => setOrder(Number(e.target.value))} className="w-full p-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sıralama</label>
+                <input type="number" value={order} onChange={e => setOrder(Number(e.target.value))} className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all" />
               </div>
               <div className="flex items-end">
-                <label className="flex items-center cursor-pointer">
+                <label className="flex items-center cursor-pointer bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-2.5 rounded-xl border-2 border-indigo-200 hover:border-indigo-300 transition-all">
                   <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="h-5 w-5 text-indigo-600 border-gray-300 rounded" />
-                  <span className="ml-2 text-sm font-medium text-gray-900">Aktif</span>
+                  <span className="ml-2 text-xs sm:text-sm font-semibold text-gray-900">Aktif</span>
                 </label>
               </div>
             </div>
 
             {/* Book Search */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Kitap Ara ve Ekle</label>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Kitap Ara ve Ekle</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input 
@@ -182,7 +187,7 @@ const CollectionModal: React.FC<CollectionModalProps> = ({ onClose, onSave, coll
                   placeholder="Kitap veya yazar adı..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full p-3 pl-10 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2.5 sm:p-3 pl-10 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
             </div>
@@ -271,9 +276,9 @@ const CollectionModal: React.FC<CollectionModalProps> = ({ onClose, onSave, coll
             </div>
           </div>
 
-          <div className="p-4 md:p-6 border-t bg-gradient-to-r from-gray-50 to-gray-100 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
-            <button type="button" onClick={onClose} className="w-full sm:w-auto px-4 md:px-6 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 text-sm md:text-base">İptal</button>
-            <button type="submit" disabled={isLoading} className="w-full sm:w-auto px-4 md:px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg disabled:opacity-50 text-sm md:text-base">
+          <div className="p-4 sm:p-6 border-t border-gray-200 bg-gradient-to-t from-white to-transparent flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+            <button type="button" onClick={onClose} className="w-full sm:w-auto px-6 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm sm:text-base min-h-[44px]">İptal</button>
+            <button type="submit" disabled={isLoading} className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-lg disabled:opacity-50 text-sm sm:text-base min-h-[44px]">
               {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
           </div>

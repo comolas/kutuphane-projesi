@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Heart } from 'lucide-react';
 import CommentSection from '../components/blog/CommentSection';
 import PostCard from '../components/blog/PostCard';
+import { sanitizeHTML, sanitizeText, sanitizeURL } from '../utils/sanitize';
 import 'react-quill/dist/quill.snow.css';
 
 const SinglePostPage: React.FC = () => {
@@ -88,21 +89,21 @@ const SinglePostPage: React.FC = () => {
       {/* Hero Section with Cover Image */}
       <div className="relative h-[60vh] sm:h-[70vh] overflow-hidden">
         <img 
-          src={post.coverImageURL} 
-          alt={post.title} 
+          src={sanitizeURL(post.coverImageURL)} 
+          alt={sanitizeText(post.title)} 
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-12">
           <div className="container mx-auto max-w-4xl">
             <span className="inline-block px-4 py-2 bg-indigo-600 text-white text-sm rounded-full mb-4">
-              {post.category}
+              {sanitizeText(post.category)}
             </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-4">{post.title}</h1>
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-4">{sanitizeText(post.title)}</h1>
             <div className="flex items-center text-white">
-              <img src={post.authorPhotoURL} alt={post.authorName} className="w-12 h-12 rounded-full object-cover border-2 border-white" />
+              <img src={sanitizeURL(post.authorPhotoURL)} alt={sanitizeText(post.authorName)} className="w-12 h-12 rounded-full object-cover border-2 border-white" />
               <div className="ml-4">
-                <p className="font-semibold text-lg">{post.authorName}</p>
+                <p className="font-semibold text-lg">{sanitizeText(post.authorName)}</p>
                 <p className="text-sm text-gray-200">{new Date(post.createdAt?.toDate()).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
               </div>
             </div>
@@ -112,14 +113,14 @@ const SinglePostPage: React.FC = () => {
 
       {/* Article Content */}
       <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }}></div>
+        <div className="prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHTML(post.content) }}></div>
       
         
         {/* Sources Section */}
         {post.sources && typeof post.sources === 'string' && post.sources.replace(/<[^>]*>/g, '').trim() && (
           <div className="mt-12 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <h3 className="text-2xl font-bold mb-4">Kaynaklar</h3>
-            <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.sources }}></div>
+            <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHTML(post.sources) }}></div>
           </div>
         )}
 
@@ -130,7 +131,7 @@ const SinglePostPage: React.FC = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold text-gray-700 dark:text-gray-300">Etiketler:</span>
                 {post.tags.map(tag => (
-                  <span key={tag} className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-sm rounded-full font-medium">{tag}</span>
+                  <span key={tag} className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-sm rounded-full font-medium">{sanitizeText(tag)}</span>
                 ))}
               </div>
             )}
@@ -148,12 +149,12 @@ const SinglePostPage: React.FC = () => {
         <div className="mt-12 p-8 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
           <div className="flex items-center gap-6">
             <img 
-              src={post.authorPhotoURL} 
-              alt={post.authorName} 
+              src={sanitizeURL(post.authorPhotoURL)} 
+              alt={sanitizeText(post.authorName)} 
               className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg"
             />
             <div className="flex-1">
-              <h3 className="text-2xl font-bold mb-2">{post.authorName}</h3>
+              <h3 className="text-2xl font-bold mb-2">{sanitizeText(post.authorName)}</h3>
               <p className="text-gray-600 dark:text-gray-400">Yazar</p>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { Plus, Search, Edit, Trash2, Star, Upload, Users, Award, Calendar, Grid, List } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Star, Upload, Users, Award, Calendar, Grid, List, Filter, X } from 'lucide-react';
 import AuthorModal from '../AuthorModal';
 import BulkAddAuthorModal from '../BulkAddAuthorModal';
 import { Author } from '../../../types';
@@ -18,6 +18,7 @@ const AuthorManagementTab: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [sortBy, setSortBy] = useState<'name' | 'birthDate'>('name');
   const [featuredFilter, setFeaturedFilter] = useState<'all' | 'featured' | 'regular'>('all');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const itemsPerPage = 10;
 
   const fetchAuthors = async () => {
@@ -257,9 +258,36 @@ const AuthorManagementTab: React.FC = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
+
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         <div className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 sticky top-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filtreler</h3>
+          <div className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 z-50 transition-transform duration-300 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          } lg:top-6`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                Filtreler
+              </h3>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">Arama</label>

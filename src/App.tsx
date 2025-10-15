@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import SplashScreen from './components/SplashScreen';
+import Onboarding from './components/Onboarding';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { EventProvider } from './contexts/EventContext';
 import { BookProvider } from './contexts/BookContext';
@@ -112,6 +113,7 @@ const AppContent = () => {
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     // Check if this is the first load
@@ -124,10 +126,25 @@ function App() {
   const handleSplashFinish = () => {
     sessionStorage.setItem('hasSeenSplash', 'true');
     setShowSplash(false);
+    
+    // Check if user has seen onboarding before
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  };
+
+  const handleOnboardingFinish = () => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
   };
 
   if (showSplash) {
     return <SplashScreen onFinish={handleSplashFinish} />;
+  }
+
+  if (showOnboarding) {
+    return <Onboarding onFinish={handleOnboardingFinish} />;
   }
 
   return (

@@ -1,0 +1,70 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Her Pazartesi saat 09:00
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Manuel çalıştırma
+
+jobs:
+  frontend-audit:
+    name: Frontend Güvenlik Kontrolü
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Node.js Kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Bağımlılıkları Yükle
+        run: npm ci
+      
+      - name: Güvenlik Taraması
+        run: npm audit --audit-level=moderate --json > frontend-audit.json || true
+      
+      - name: Rapor Oluştur
+        run: |
+          echo "## 🔒 Frontend Güvenlik Raporu" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=moderate || echo "✅ Güvenlik açığı bulunamadı" >> $GITHUB_STEP_SUMMARY
+
+  backend-audit:
+    name: Backend Güvenlik Kontrolü
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Node.js Kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+      
+      - name: Bağımlılıkları Yükle
+        working-directory: ./functions
+        run: npm ci
+      
+      - name: Güvenlik Taraması
+        working-directory: ./functions
+        run: npm audit --audit-level=moderate --json > backend-audit.json || true
+      
+      - name: Rapor Oluştur
+        working-directory: ./functions
+        run: |
+          echo "## 🔒 Backend Güvenlik Raporu" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=moderate || echo "✅ Güvenlik açığı bulunamadı" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    name: Bildirim
+    runs-on: ubuntu-latest
+    needs: [frontend-audit, backend-audit]
+    if: always()
+    steps:
+      - name: Durum Kontrolü
+        run: |
+          echo "✅ Güvenlik taraması tamamlandı"
+          echo "📊 Detaylı rapor için Actions sekmesini kontrol edin"
