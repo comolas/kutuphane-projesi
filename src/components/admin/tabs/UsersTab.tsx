@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, WriteBatch } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { Search, Edit, Trash2, Users, UserPlus, BookOpen, DollarSign, Grid, List, ArrowUpDown, Filter, MoreVertical, History, AlertCircle } from 'lucide-react';
+import { Search, Edit, Trash2, Users, UserPlus, BookOpen, DollarSign, Grid, List, ArrowUpDown, Filter, MoreVertical, History, AlertCircle, X } from 'lucide-react';
 import EditUserModal from '../EditUserModal';
 import Swal from 'sweetalert2';
 import { useBooks } from '../../../contexts/BookContext';
@@ -41,6 +41,7 @@ const UsersTab: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'lastLogin'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -471,13 +472,35 @@ const UsersTab: React.FC = () => {
         </div>
 
         <div className="p-6">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+          >
+            <Filter className="w-6 h-6" />
+          </button>
+
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
           <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-            <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20">
+            <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20 z-50 transition-transform duration-300 ${
+              isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            }`}>
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h2 className="text-base sm:text-lg font-semibold flex items-center">
                   <Filter className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-indigo-600" />
                   Filtreler
                 </h2>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
               <div className="mb-4 sm:mb-6">
                 <div className="relative">

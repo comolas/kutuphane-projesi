@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { Plus, Search, Edit, Trash2, BookText } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, BookText, Filter, X } from 'lucide-react';
 import QuoteModal from '../QuoteModal';
 import BulkAddQuoteModal from '../BulkAddQuoteModal'; // Import the new modal
 import Swal from 'sweetalert2';
@@ -198,19 +198,16 @@ const QuoteManagementTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Filter Button */}
         <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="lg:hidden mb-4 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl flex items-center justify-center shadow-lg"
+          onClick={() => setIsSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
         >
-          <Search className="w-5 h-5 mr-2" />
-          Filtrele
+          <Filter className="w-6 h-6" />
         </button>
 
-        {/* Overlay */}
         {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -221,12 +218,15 @@ const QuoteManagementTab: React.FC = () => {
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Filtreler</h3>
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                Filtreler
+              </h3>
               <button
                 onClick={() => setIsSidebarOpen(false)}
                 className="lg:hidden text-gray-500 hover:text-gray-700"
               >
-                <Search className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 

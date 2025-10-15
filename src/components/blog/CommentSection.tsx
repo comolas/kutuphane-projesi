@@ -4,6 +4,7 @@ import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { Comment } from '../../types';
 import { useAlert } from '../../contexts/AlertContext';
+import { sanitizeText } from '../../utils/sanitize';
 
 interface CommentSectionProps {
   postId: string;
@@ -41,7 +42,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, areCommentsEnab
     try {
       const commentsRef = collection(db, 'posts', postId, 'comments');
       await addDoc(commentsRef, {
-        text: newComment,
+        text: sanitizeText(newComment),
         authorId: user.uid,
         authorName: user.displayName || 'Anonim',
         authorPhotoURL: user.photoURL || '',
@@ -125,7 +126,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, areCommentsEnab
                         </div>
                     )}
                 </div>
-                <p className="mt-1">{comment.text}</p>
+                <p className="mt-1">{sanitizeText(comment.text)}</p>
                 {user && user.uid !== comment.authorId && comment.status !== 'reported' && (
                   <button
                     onClick={() => handleReportComment(comment.id)}

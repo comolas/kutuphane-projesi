@@ -12,6 +12,7 @@ const AdminMagazinesTab: React.FC = () => {
   const [selectedMagazine, setSelectedMagazine] = useState<Magazine | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState('newest');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -109,24 +110,47 @@ const AdminMagazinesTab: React.FC = () => {
       </div>
 
       <div className="p-3 sm:p-6">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
+
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar */}
-          <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-3 sm:p-6 flex-shrink-0 border border-white/20">
+          <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-3 sm:p-6 flex-shrink-0 border border-white/20 z-50 transition-transform duration-300 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold flex items-center">
                 <Filter className="w-5 h-5 mr-2 text-indigo-600" />
                 Filtreler
               </h2>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedTags([]);
-                  setSortOrder('newest');
-                }}
-                className="text-sm text-red-600 hover:text-red-700"
-              >
-                Temizle
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedTags([]);
+                    setSortOrder('newest');
+                  }}
+                  className="text-sm text-red-600 hover:text-red-700"
+                >
+                  Temizle
+                </button>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="mb-6">

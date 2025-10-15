@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { Eye, EyeOff, X } from 'lucide-react';
 import Button from '../common/Button';
 import FormInput from '../common/FormInput';
+import { validateEmail } from '../../utils/validation';
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => void;
@@ -58,10 +59,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string; captcha?: string } = {};
     
-    if (!email) {
-      newErrors.email = 'E-posta adresi gereklidir';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Geçersiz e-posta adresi';
+    // Email validation
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      newErrors.email = emailValidation.error;
     }
     
     if (!password) {

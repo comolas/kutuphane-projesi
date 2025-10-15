@@ -1,0 +1,34 @@
+version: 2
+updates:
+  # Frontend bağımlılıkları
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "chore(deps)"
+    reviewers:
+      - "comolas"  # GitHub kullanıcı adınızı buraya yazın
+    
+  # Backend bağımlılıkları
+  - package-ecosystem: "npm"
+    directory: "/functions"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "security"
+      - "backend"
+    commit-message:
+      prefix: "chore(deps)"
+    reviewers:
+      - "comolas"  # GitHub kullanıcı adınızı buraya yazın

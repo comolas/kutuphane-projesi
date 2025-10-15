@@ -8,6 +8,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfi
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import Swal from 'sweetalert2';
+import { handleError, logError } from '../utils/errorHandler';
 
 interface LoginPageProps {
   isDarkMode: boolean;
@@ -43,10 +44,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
     setError('');
     
     try {
-      console.log('Attempting login with email:', email);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('Login successful');
       
       // Get user role from Firestore
       const userDoc = await import('firebase/firestore').then(m => m.getDoc(m.doc(db, 'users', user.uid)));
@@ -62,22 +61,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
-      let errorMessage = 'Giriş yapılırken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.';
-      
-      if (error.code === 'auth/invalid-credential') {
-        errorMessage = 'E-posta adresi veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.';
-      } else if (error.code === 'auth/user-not-found') {
-        errorMessage = 'Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı.';
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Şifre hatalı. Lütfen tekrar deneyin.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Çok fazla başarısız giriş denemesi. Lütfen daha sonra tekrar deneyin.';
-      } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = 'Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.';
-      }
-      
-      setError(errorMessage);
+      logError(error, 'Login');
+      const errorResponse = handleError(error);
+      setError(errorResponse.message);
     } finally {
       setIsLoading(false);
     }
@@ -94,20 +80,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
     setError('');
     
     try {
-      console.log('Starting registration process...');
-      
-      // Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      console.log('User created successfully:', user.uid);
-      
-      // Update user profile with display name
       await updateProfile(user, {
         displayName: name
       });
-      
-      console.log('Profile updated successfully');
       
       // Create user document in Firestore
       const userData = {
@@ -123,12 +101,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         level: 1
       };
       
-      console.log('Creating user document with data:', userData);
-      
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, userData);
-      
-      console.log('User document created successfully');
       
       // Create initial tasks for the user
       const defaultTasks = [
@@ -178,41 +152,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         }
       ];
       
-      console.log('Creating initial tasks...');
-      
-      // Create tasks one by one to avoid batch issues
       for (const task of defaultTasks) {
         const taskRef = doc(db, 'userTasks', `${user.uid}_${task.id}`);
         await setDoc(taskRef, task);
       }
       
-      console.log('Initial tasks created successfully');
-      console.log('Registration completed successfully, navigating to dashboard...');
-      
       navigate('/dashboard');
     } catch (error: any) {
-      // Consolidate error logging to reduce console noise
-      if (error.code === 'auth/email-already-in-use') {
-        console.warn('Registration failed: Email already in use');
-      } else if (error.code === 'permission-denied') {
-        console.warn('Registration failed: Permission denied');
-      } else {
-        console.error('Registration failed:', error.code || error.message);
-      }
-      
-      let errorMessage = 'Kayıt olurken bir hata oluştu. Lütfen tekrar deneyin.';
-      
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'Bu e-posta adresi zaten kullanımda.';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Şifre çok zayıf. Lütfen daha güçlü bir şifre seçin.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Geçersiz e-posta adresi.';
-      } else if (error.code === 'permission-denied') {
-        errorMessage = 'Kayıt işlemi için yetkiniz bulunmuyor. Lütfen yönetici ile iletişime geçin.';
-      }
-      
-      setError(errorMessage);
+      logError(error, 'Registration');
+      const errorResponse = handleError(error);
+      setError(errorResponse.message);
     } finally {
       setIsLoading(false);
     }
@@ -236,14 +185,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
       setShowForgotPasswordModal(false);
       setResetEmail('');
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      let errorMessage = 'Şifre sıfırlama e-postası gönderilirken bir hata oluştu.';
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = 'Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Geçersiz e-posta adresi.';
-      }
-      setError(errorMessage);
+      logError(error, 'Password Reset');
+      const errorResponse = handleError(error);
+      setError(errorResponse.message);
     } finally {
       setIsLoading(false);
     }

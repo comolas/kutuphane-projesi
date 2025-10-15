@@ -5,7 +5,7 @@ import { useBudget } from '../../../contexts/BudgetContext';
 import { useCoupons } from '../../../contexts/CouponContext';
 import SetFineModal from '../SetFineModal';
 import ApplyDiscountModal from '../ApplyDiscountModal';
-import { DollarSign, Search, Filter, SortAsc, SortDesc, Users, Settings, Ticket } from 'lucide-react';
+import { DollarSign, Search, Filter, SortAsc, SortDesc, Users, Settings, Ticket, X } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useLocation } from 'react-router-dom';
 
@@ -53,6 +53,7 @@ const FinesTab: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [classFilter, setClassFilter] = useState('all');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const finesPerPage = 10;
 
   useEffect(() => {
@@ -616,14 +617,38 @@ const FinesTab: React.FC = () => {
         </div>
 
         <div className="p-6">
+          {/* Floating Filter Button (Mobile) */}
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+          >
+            <Filter className="w-6 h-6" />
+          </button>
+
+          {/* Overlay */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Sidebar */}
-            <aside className="w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20">
+            <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
+              isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            } lg:flex-shrink-0 border border-white/20`}>
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h2 className="text-base sm:text-lg font-semibold flex items-center">
                   <Filter className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-indigo-600" />
                   Filtreler
                 </h2>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
               <div className="mb-4 sm:mb-6">

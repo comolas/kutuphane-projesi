@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGameReservations } from '../../../contexts/GameReservationContext';
-import { ChevronLeft, ChevronRight, Calendar, Clock, Users, XCircle, CheckCircle, Gamepad2, Search, Filter, User, ArrowUpDown, BarChart3, TrendingUp, CheckSquare, Square } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, Users, XCircle, CheckCircle, Gamepad2, Search, Filter, User, ArrowUpDown, BarChart3, TrendingUp, CheckSquare, Square, X } from 'lucide-react';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import { db } from '../../../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
@@ -21,6 +21,7 @@ const AdminGameReservationsTab = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedReservations, setSelectedReservations] = useState<string[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -466,20 +467,44 @@ const AdminGameReservationsTab = () => {
 
       {/* Main Content with Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6 animate-fadeIn">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
+
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar Filters */}
         <div className="w-full lg:w-80 flex-shrink-0">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6 lg:sticky lg:top-6">
+          <div className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-80 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6 z-50 transition-transform duration-300 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          } lg:top-6`}>
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
                 <h3 className="text-base md:text-lg font-bold text-gray-900">Filtreler</h3>
               </div>
-              <button
-                onClick={clearFilters}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
-              >
-                Temizle
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  Temizle
+                </button>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4 md:space-y-6">

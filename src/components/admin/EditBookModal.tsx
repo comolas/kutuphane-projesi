@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
+import { X, BookOpen } from 'lucide-react';
 import { Book } from '../../types';
 import { Html5Qrcode, Html5QrcodeScanType } from 'html5-qrcode';
 
@@ -203,33 +203,38 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 md:p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-8xl w-full max-h-[100vh] overflow-y-auto">
-        <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-          <h3 className="text-base md:text-lg font-medium text-gray-900">Kitap Düzenle</h3>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl max-w-8xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-white">Kitap Düzenle</h3>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all"
           >
-            <X className="w-5 h-5 md:w-6 md:h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
         {isScanning && (
-          <div className="p-4 md:p-6">
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">QR Kod Tarama İpuçları:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
+          <div className="p-4 sm:p-6 overflow-y-auto">
+            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-xl">
+              <h4 className="font-bold text-blue-900 mb-2 text-sm sm:text-base">QR Kod Tarama İpuçları:</h4>
+              <ul className="text-xs sm:text-sm text-blue-800 space-y-1">
                 <li>• QR kodu kamera görüş alanının ortasına yerleştirin</li>
                 <li>• Yeterli ışık olduğundan emin olun</li>
                 <li>• Kamerayı QR koddan 10-30 cm uzakta tutun</li>
                 <li>• QR kod net ve buruşuk olmadığından emin olun</li>
               </ul>
             </div>
-            <div id="reader" style={{ width: '100%' }}></div>
-            <div className="mt-4 flex space-x-2">
+            <div id="reader" className="rounded-xl overflow-hidden" style={{ width: '100%' }}></div>
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button 
                 onClick={() => setIsScanning(false)} 
-                className="flex-1 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm sm:text-base min-h-[44px]"
               >
                 Taramayı İptal Et
               </button>
@@ -238,56 +243,56 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
                   setIsScanning(false);
                   setTimeout(() => setIsScanning(true), 100);
                 }} 
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold text-sm sm:text-base shadow-lg min-h-[44px]"
               >
                 Yeniden Başlat
               </button>
             </div>
           </div>
         )}
-        <form onSubmit={handleSubmit} className={`p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 ${isScanning ? 'hidden' : ''}`}>
-          {apiMessage && <div className="md:col-span-2 text-center p-2 rounded-md bg-blue-100 text-blue-800 text-xs md:text-sm">{apiMessage}</div>}
+        <form onSubmit={handleSubmit} className={`p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 overflow-y-auto ${isScanning ? 'hidden' : ''}`}>
+          {apiMessage && <div className="md:col-span-2 text-center p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 text-blue-800 text-xs sm:text-sm font-medium">{apiMessage}</div>}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">Kitap Adı</label>
+            <label htmlFor="title" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Kitap Adı</label>
             <input
               type="text"
               id="title"
               name="title"
               value={editableBook.title || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
               required
             />
           </div>
           <div>
-            <label htmlFor="author" className="block text-sm font-medium text-gray-700">Yazar</label>
+            <label htmlFor="author" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Yazar</label>
             <input
               type="text"
               id="author"
               name="author"
               value={editableBook.author || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
               required
             />
           </div>
 
           <div className="md:col-span-2">
-            <label htmlFor="isbn" className="block text-sm font-medium text-gray-700">ISBN</label>
-            <div className="mt-1 flex rounded-md shadow-sm">
+            <label htmlFor="isbn" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">ISBN</label>
+            <div className="flex rounded-xl shadow-sm overflow-hidden border-2 border-gray-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
               <input
                 type="text"
                 id="isbn"
                 name="isbn"
                 value={editableBook.isbn || ''}
                 onChange={handleChange}
-                className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="flex-1 block w-full min-w-0 border-0 py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-0 text-sm sm:text-base"
                 placeholder="Manuel ISBN girişi"
               />
               <button
                 type="button"
                 onClick={() => setIsScanning(true)}
-                className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                className="inline-flex items-center px-3 sm:px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs sm:text-sm font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all"
               >
                 ISBN Tara
               </button>
@@ -295,84 +300,84 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
           </div>
           
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700">Kategori</label>
+            <label htmlFor="category" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Kategori</label>
             <input
               type="text"
               id="category"
               name="category"
               value={editableBook.category || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
               required
             />
           </div>
           <div>
-            <label htmlFor="publisher" className="block text-sm font-medium text-gray-700">Yayıncı</label>
+            <label htmlFor="publisher" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Yayıncı</label>
             <input
               type="text"
               id="publisher"
               name="publisher"
               value={editableBook.publisher || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
               required
             />
           </div>
           <div>
-            <label htmlFor="id" className="block text-sm font-medium text-gray-700">ID</label>
+            <label htmlFor="id" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">ID</label>
             <input
               type="text"
               id="id"
               name="id"
               value={editableBook.id || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
               required
             />
           </div>
           <div>
-            <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">Kapak Resmi URL</label>
+            <label htmlFor="coverImage" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Kapak Resmi URL</label>
             <input
               type="url"
               id="coverImage"
               name="coverImage"
               value={editableBook.coverImage || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
               required
             />
           </div>
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700">Konum</label>
+            <label htmlFor="location" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Konum</label>
             <input
               type="text"
               id="location"
               name="location"
               value={editableBook.location || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
               required
             />
           </div>
           <div>
-            <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700">Sayfa Sayısı</label>
+            <label htmlFor="pageCount" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sayfa Sayısı</label>
             <input
               type="number"
               id="pageCount"
               name="pageCount"
               value={editableBook.pageCount || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             />
           </div>
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700">Durum</label>
+            <label htmlFor="status" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Durum</label>
             <select
               id="status"
               name="status"
               value={editableBook.status || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             >
               <option value="available">Müsait</option>
               <option value="borrowed">Ödünç Verildi</option>
@@ -380,103 +385,104 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
             </select>
           </div>
           <div>
-            <label htmlFor="dimensions" className="block text-sm font-medium text-gray-700">Boyut</label>
+            <label htmlFor="dimensions" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Boyut</label>
             <input
               type="text"
               id="dimensions"
               name="dimensions"
               value={editableBook.dimensions || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             />
           </div>
           <div>
-            <label htmlFor="binding" className="block text-sm font-medium text-gray-700">Cilt</label>
+            <label htmlFor="binding" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Cilt</label>
             <input
               type="text"
               id="binding"
               name="binding"
               value={editableBook.binding || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             />
           </div>
           <div>
-            <label htmlFor="weight" className="block text-sm font-medium text-gray-700">Ağırlık</label>
+            <label htmlFor="weight" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Ağırlık</label>
             <input
               type="text"
               id="weight"
               name="weight"
               value={editableBook.weight || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             />
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="backCover" className="block text-sm font-medium text-gray-700">Arka Kapak Yazısı</label>
+            <label htmlFor="backCover" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Arka Kapak Yazısı</label>
             <textarea
               id="backCover"
               name="backCover"
+              rows={3}
               value={editableBook.backCover || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all resize-none"
             />
           </div>
           <div>
-            <label htmlFor="addedDate" className="block text-sm font-medium text-gray-700">Eklendiği Tarih</label>
+            <label htmlFor="addedDate" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Eklendiği Tarih</label>
             <input
               type="text"
               id="addedDate"
               name="addedDate"
               value={editableBook.addedDate ? new Date(editableBook.addedDate.seconds * 1000).toLocaleDateString() : ''}
               readOnly
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-100"
+              className="block w-full border-2 border-gray-200 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 bg-gray-50 text-gray-500 text-sm sm:text-base cursor-not-allowed"
             />
           </div>
           <div>
-            <label htmlFor="mood" className="block text-sm font-medium text-gray-700">Mood</label>
+            <label htmlFor="mood" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Mood</label>
             <input
               type="text"
               id="mood"
               name="mood"
               value={editableBook.mood || ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             />
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="theme" className="block text-sm font-medium text-gray-700">Temalar (virgülle ayırın)</label>
+            <label htmlFor="theme" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Temalar (virgülle ayırın)</label>
             <input
               type="text"
               id="theme"
               name="theme"
               value={Array.isArray(editableBook.theme) ? editableBook.theme.join(', ') : ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             />
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Etiketler (virgülle ayırın)</label>
+            <label htmlFor="tags" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Etiketler (virgülle ayırın)</label>
             <input
               type="text"
               id="tags"
               name="tags"
               value={Array.isArray(editableBook.tags) ? editableBook.tags.join(', ') : ''}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
             />
           </div>
-          <div className="md:col-span-2 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 sticky bottom-0 bg-white pt-4 border-t">
+          <div className="md:col-span-2 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm md:text-base"
+              className="w-full sm:w-auto px-6 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all text-sm sm:text-base font-semibold min-h-[44px]"
             >
               İptal
             </button>
             <button
               type="submit"
-              className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm md:text-base"
+              className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all text-sm sm:text-base font-semibold shadow-lg min-h-[44px]"
             >
               Kaydet
             </button>

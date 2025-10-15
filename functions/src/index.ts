@@ -3,37 +3,95 @@ import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
-import request = require("request");
+import axios from "axios";
 
 admin.initializeApp();
 
 export const setAdminRole = onCall(async (request: any) => {
-  // **ÖNEMLİ:** İlk admin kullanıcısını atadıktan sonra, güvenliği sağlamak için
-  // aşağıdaki 'if' bloğunu yorum satırından çıkarın ve fonksiyonları yeniden yayınlayın.
-  
-  // if (request.auth?.token.role !== "admin") {
-  //   throw new HttpsError(
-  //     "permission-denied",
-  //     "Bu işlemi sadece adminler yapabilir."
-  //   );
-  // }
-  
+  // Güvenlik kontrolü: Sadece mevcut adminler yeni admin atayabilir
+  if (request.auth?.token.role !== "admin") {
+    throw new HttpsError(
+      "permission-denied",
+      "Bu işlemi sadece adminler yapabilir."
+    );
+  }
+
+  // Rate limiting - Saatte maksimum 5 admin atama
+  const adminActionLimit = await checkAdminActionRateLimit(request.auth.uid, "setAdminRole");
+  if (!adminActionLimit.allowed) {
+    throw new HttpsError(
+      "resource-exhausted",
+      "Bu işlemi çok sık yaptınız. Lütfen daha sonra tekrar deneyin."
+    );
+  }
 
   const email = request.data.email;
-  if (!email) {
+  
+  // Email validation
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.valid) {
     throw new HttpsError(
       "invalid-argument",
-      "E-posta adresi belirtilmedi."
+      emailValidation.error!
     );
   }
 
   try {
     const user = await admin.auth().getUserByEmail(email);
     await admin.auth().setCustomUserClaims(user.uid, { role: "admin" });
+    
+    // Firestore'daki kullanıcı belgesini de güncelle
+    await admin.firestore().collection("users").doc(user.uid).update({
+      role: "admin",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
     return { message: `${email} kullanıcısı başarıyla admin yapıldı.` };
   } catch (error) {
-    console.error("Error setting admin role:", error);
-    throw new HttpsError("internal", "Admin rolü atanırken bir hata oluştu.");
+    const err = error as any;
+    logger.error("Error setting admin role", { code: err.code });
+    throw new HttpsError("internal", "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
+  }
+});
+
+// İLK ADMIN OLUŞTURMA FONKSİYONU (Sadece bir kez kullanılmalı, sonra silinmeli veya devre dışı bırakılmalı)
+// KULLANIM: Firebase Console > Functions > initializeFirstAdmin çalıştır
+export const initializeFirstAdmin = onCall(async (request: any) => {
+  const db = admin.firestore();
+  
+  // Sistemde admin var mı kontrol et
+  const adminsSnapshot = await db.collection("users").where("role", "==", "admin").limit(1).get();
+  
+  if (!adminsSnapshot.empty) {
+    throw new HttpsError(
+      "already-exists",
+      "Sistemde zaten admin kullanıcı mevcut. Bu fonksiyon devre dışı bırakıldı."
+    );
+  }
+  
+  const email = request.data.email;
+  
+  // Email validation
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.valid) {
+    throw new HttpsError("invalid-argument", emailValidation.error!);
+  }
+  
+  try {
+    const user = await admin.auth().getUserByEmail(email);
+    await admin.auth().setCustomUserClaims(user.uid, { role: "admin" });
+    
+    await db.collection("users").doc(user.uid).update({
+      role: "admin",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    logger.info("İlk admin kullanıcı oluşturuldu");
+    return { message: `${email} ilk admin olarak atandı. Bu fonksiyonu artık kullanmayın.` };
+  } catch (error) {
+    const err = error as any;
+    logger.error("İlk admin oluşturma hatası", { code: err.code });
+    throw new HttpsError("internal", "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
   }
 });
 
@@ -56,13 +114,14 @@ export const deleteUser = onCall(async (request: any) => {
 
   try {
     await admin.auth().deleteUser(uid);
-    console.log(`Successfully deleted user ${uid}`);
+    logger.info("User deleted successfully");
     return { message: `Kullanıcı ${uid} başarıyla silindi.` };
   } catch (error) {
-    console.error("Error deleting user:", error);
+    const err = error as any;
+    logger.error("Error deleting user", { code: err.code });
     throw new HttpsError(
       "internal",
-      "Kullanıcı silinirken bir hata oluştu."
+      "Bir hata oluştu. Lütfen daha sonra tekrar deneyin."
     );
   }
 });
@@ -126,7 +185,7 @@ export const updateMonthlyLeaderboard = onSchedule("every 1 hours", async () => 
   }
 });
 
-export const imageProxy = onRequest({ cors: true }, (req, res) => {
+export const imageProxy = onRequest({ cors: true }, async (req, res) => {
   const imageUrl = req.query.url as string;
 
   if (!imageUrl) {
@@ -134,16 +193,20 @@ export const imageProxy = onRequest({ cors: true }, (req, res) => {
     return;
   }
 
-  logger.info(`Proxying image: ${imageUrl}`);
-
-  const options = {
-    url: imageUrl,
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
-    }
-  };
-
-  req.pipe(request(options)).pipe(res);
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'stream',
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+      }
+    });
+    
+    res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
+    response.data.pipe(res);
+  } catch (error) {
+    logger.error("Image proxy error", { code: (error as any).code });
+    res.status(500).send("Error proxying image");
+  }
 });
 
 
@@ -153,15 +216,22 @@ export const imageProxy = onRequest({ cors: true }, (req, res) => {
 
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 
-import { defineString } from "firebase-functions/params";
-import { sanitizeInput, validateMessage, MAX_MESSAGE_LENGTH, MIN_MESSAGE_LENGTH } from "./security";
+import { defineSecret } from "firebase-functions/params";
+import { sanitizeInput, validateMessage, validateEmail, MIN_MESSAGE_LENGTH } from "./security";
 
-const awsAccessKeyId = defineString("AWS_ACCESS_KEY_ID");
-const awsSecretAccessKey = defineString("AWS_SECRET_ACCESS_KEY");
+// AWS kimlik bilgileri Secret Manager'dan alınıyor (güvenli)
+const awsAccessKeyId = defineSecret("AWS_ACCESS_KEY_ID");
+const awsSecretAccessKey = defineSecret("AWS_SECRET_ACCESS_KEY");
 
 // Rate limiting sabitleri
-const HOURLY_LIMIT = 20; // Saatte maksimum 20 mesaj
-const DAILY_LIMIT = 100; // Günde maksimum 100 mesaj
+const HOURLY_LIMIT = 10; // Saatte maksimum 10 mesaj
+const DAILY_LIMIT = 30; // Günde maksimum 30 mesaj
+const MINUTE_LIMIT = 3; // Dakikada maksimum 3 mesaj
+
+// Admin rate limiting sabitleri (daha yüksek)
+const ADMIN_HOURLY_LIMIT = 50;
+const ADMIN_DAILY_LIMIT = 200;
+const ADMIN_MINUTE_LIMIT = 10;
 
 // Fallback yanıtları
 const FALLBACK_RESPONSES = [
@@ -195,37 +265,80 @@ function getFallbackResponse(userMessage: string, userContext: any): string {
   return FALLBACK_RESPONSES[randomIndex];
 }
 
-// Rate limiting kontrolü
-async function checkRateLimit(userId: string): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> {
+// Admin action rate limiting (kritik işlemler için)
+async function checkAdminActionRateLimit(userId: string, action: string): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> {
   const db = admin.firestore();
   const now = new Date();
   const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  const rateLimitDoc = db.collection("rateLimits").doc(userId);
+  const rateLimitDoc = db.collection("adminActionLimits").doc(`${userId}_${action}`);
   const doc = await rateLimitDoc.get();
   const data = doc.data();
 
+  const hourlyActions = (data?.hourlyActions || []).filter((ts: any) => ts.toDate() > hourAgo);
+
+  const ACTION_LIMIT = 5; // Saatte maksimum 5 kritik işlem
+
+  if (hourlyActions.length >= ACTION_LIMIT) {
+    const oldestAction = hourlyActions[0].toDate();
+    const resetTime = new Date(oldestAction.getTime() + 60 * 60 * 1000);
+    return { allowed: false, remaining: 0, resetTime };
+  }
+
+  hourlyActions.push(admin.firestore.Timestamp.now());
+
+  await rateLimitDoc.set({
+    hourlyActions,
+    lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    allowed: true,
+    remaining: ACTION_LIMIT - hourlyActions.length,
+    resetTime: new Date(now.getTime() + 60 * 60 * 1000),
+  };
+}
+
+// Admin rate limiting kontrolü
+async function checkAdminRateLimit(userId: string): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> {
+  const db = admin.firestore();
+  const now = new Date();
+  const minuteAgo = new Date(now.getTime() - 60 * 1000);
+  const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const rateLimitDoc = db.collection("adminRateLimits").doc(userId);
+  const doc = await rateLimitDoc.get();
+  const data = doc.data();
+
+  const minuteMessages = (data?.minuteMessages || []).filter((ts: any) => ts.toDate() > minuteAgo);
   const hourlyMessages = (data?.hourlyMessages || []).filter((ts: any) => ts.toDate() > hourAgo);
   const dailyMessages = (data?.dailyMessages || []).filter((ts: any) => ts.toDate() > dayAgo);
 
-  if (hourlyMessages.length >= HOURLY_LIMIT) {
+  if (minuteMessages.length >= ADMIN_MINUTE_LIMIT) {
+    const oldestMinute = minuteMessages[0].toDate();
+    const resetTime = new Date(oldestMinute.getTime() + 60 * 1000);
+    return { allowed: false, remaining: 0, resetTime };
+  }
+
+  if (hourlyMessages.length >= ADMIN_HOURLY_LIMIT) {
     const oldestHourly = hourlyMessages[0].toDate();
     const resetTime = new Date(oldestHourly.getTime() + 60 * 60 * 1000);
     return { allowed: false, remaining: 0, resetTime };
   }
 
-  if (dailyMessages.length >= DAILY_LIMIT) {
+  if (dailyMessages.length >= ADMIN_DAILY_LIMIT) {
     const oldestDaily = dailyMessages[0].toDate();
     const resetTime = new Date(oldestDaily.getTime() + 24 * 60 * 60 * 1000);
     return { allowed: false, remaining: 0, resetTime };
   }
 
-  // Mesaj sayısını güncelle
+  minuteMessages.push(admin.firestore.Timestamp.now());
   hourlyMessages.push(admin.firestore.Timestamp.now());
   dailyMessages.push(admin.firestore.Timestamp.now());
 
   await rateLimitDoc.set({
+    minuteMessages,
     hourlyMessages,
     dailyMessages,
     lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
@@ -233,8 +346,64 @@ async function checkRateLimit(userId: string): Promise<{ allowed: boolean; remai
 
   return {
     allowed: true,
-    remaining: Math.min(HOURLY_LIMIT - hourlyMessages.length, DAILY_LIMIT - dailyMessages.length),
-    resetTime: new Date(now.getTime() + 60 * 60 * 1000),
+    remaining: Math.min(ADMIN_MINUTE_LIMIT - minuteMessages.length, ADMIN_HOURLY_LIMIT - hourlyMessages.length, ADMIN_DAILY_LIMIT - dailyMessages.length),
+    resetTime: new Date(now.getTime() + 60 * 1000),
+  };
+}
+
+// Rate limiting kontrolü
+async function checkRateLimit(userId: string): Promise<{ allowed: boolean; remaining: number; resetTime: Date }> {
+  const db = admin.firestore();
+  const now = new Date();
+  const minuteAgo = new Date(now.getTime() - 60 * 1000);
+  const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const rateLimitDoc = db.collection("rateLimits").doc(userId);
+  const doc = await rateLimitDoc.get();
+  const data = doc.data();
+
+  const minuteMessages = (data?.minuteMessages || []).filter((ts: any) => ts.toDate() > minuteAgo);
+  const hourlyMessages = (data?.hourlyMessages || []).filter((ts: any) => ts.toDate() > hourAgo);
+  const dailyMessages = (data?.dailyMessages || []).filter((ts: any) => ts.toDate() > dayAgo);
+
+  // Dakikalık limit kontrolü
+  if (minuteMessages.length >= MINUTE_LIMIT) {
+    const oldestMinute = minuteMessages[0].toDate();
+    const resetTime = new Date(oldestMinute.getTime() + 60 * 1000);
+    return { allowed: false, remaining: 0, resetTime };
+  }
+
+  // Saatlik limit kontrolü
+  if (hourlyMessages.length >= HOURLY_LIMIT) {
+    const oldestHourly = hourlyMessages[0].toDate();
+    const resetTime = new Date(oldestHourly.getTime() + 60 * 60 * 1000);
+    return { allowed: false, remaining: 0, resetTime };
+  }
+
+  // Günlük limit kontrolü
+  if (dailyMessages.length >= DAILY_LIMIT) {
+    const oldestDaily = dailyMessages[0].toDate();
+    const resetTime = new Date(oldestDaily.getTime() + 24 * 60 * 60 * 1000);
+    return { allowed: false, remaining: 0, resetTime };
+  }
+
+  // Mesaj sayısını güncelle
+  minuteMessages.push(admin.firestore.Timestamp.now());
+  hourlyMessages.push(admin.firestore.Timestamp.now());
+  dailyMessages.push(admin.firestore.Timestamp.now());
+
+  await rateLimitDoc.set({
+    minuteMessages,
+    hourlyMessages,
+    dailyMessages,
+    lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    allowed: true,
+    remaining: Math.min(MINUTE_LIMIT - minuteMessages.length, HOURLY_LIMIT - hourlyMessages.length, DAILY_LIMIT - dailyMessages.length),
+    resetTime: new Date(now.getTime() + 60 * 1000),
   };
 }
 
@@ -471,7 +640,7 @@ async function getUserContext(userId: string) {
       booksByAuthor: Object.fromEntries(booksByAuthor),
     };
   } catch (error) {
-    logger.error("Error fetching user context:", error);
+    logger.error("Error fetching user context");
     return {
       name: "Kullanıcı",
       email: "",
@@ -616,7 +785,8 @@ Her yanıtı kullanıcının profil verilerine göre kişiselleştir. Kısa, öz
     
     return responseBody.content[0].text;
   } catch (error: any) {
-    logger.error(`Bedrock API Error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error);
+    const err = error as any;
+    logger.error(`Bedrock API Error (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`, { code: err.code, statusCode: err.$metadata?.httpStatusCode });
 
     if (retryCount < MAX_RETRIES) {
       logger.info(`Retrying Bedrock API call in ${RETRY_DELAY}ms...`);
@@ -630,7 +800,9 @@ Her yanıtı kullanıcının profil verilerine göre kişiselleştir. Kısa, öz
 }
 
 // Chat Function
-export const chatWithAssistant = onCall(async (request: any) => {
+export const chatWithAssistant = onCall(
+  { secrets: [awsAccessKeyId, awsSecretAccessKey] },
+  async (request: any) => {
   // Kullanıcı doğrulama
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
@@ -669,8 +841,8 @@ export const chatWithAssistant = onCall(async (request: any) => {
     try {
       aiResponse = await chatWithBedrock(userMessage, userContext);
       usedFallback = FALLBACK_RESPONSES.some(fb => aiResponse.includes(fb.substring(0, 20)));
-    } catch (bedrockError) {
-      logger.error("Bedrock completely failed, using fallback:", bedrockError);
+    } catch (bedrockError: any) {
+      logger.error("Bedrock completely failed, using fallback");
       aiResponse = getFallbackResponse(userMessage, userContext);
       usedFallback = true;
     }
@@ -679,8 +851,6 @@ export const chatWithAssistant = onCall(async (request: any) => {
     try {
       await db.collection("chatHistory").add({
         userId,
-        userMessage: userMessage.substring(0, MAX_MESSAGE_LENGTH),
-        aiResponse: aiResponse.substring(0, 2000),
         usedFallback,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         metadata: {
@@ -690,10 +860,10 @@ export const chatWithAssistant = onCall(async (request: any) => {
         },
       });
     } catch (dbError) {
-      logger.error("Failed to save chat history:", dbError);
+      logger.error("Failed to save chat history");
     }
 
-    logger.info(`Chat completed for user ${userId} (fallback: ${usedFallback})`);
+    logger.info(`Chat completed (fallback: ${usedFallback})`);
 
     return {
       response: aiResponse,
@@ -702,7 +872,7 @@ export const chatWithAssistant = onCall(async (request: any) => {
       usedFallback,
     };
   } catch (error: any) {
-    logger.error("Critical chat error:", error);
+    logger.error("Critical chat error", { code: error.code, message: error.message });
     
     if (error.code) {
       throw error;
@@ -711,6 +881,7 @@ export const chatWithAssistant = onCall(async (request: any) => {
     throw new HttpsError("internal", "Sohbet servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.");
   }
 });
+
 
 // ============================================
 // ADMIN SOHBET BOTU
@@ -1213,13 +1384,25 @@ async function getAdminContext() {
 }
 
 // Admin sohbet fonksiyonu
-export const chatWithAdminAssistant = onCall({ cors: true }, async (request: any) => {
+export const chatWithAdminAssistant = onCall(
+  { cors: true, secrets: [awsAccessKeyId, awsSecretAccessKey] },
+  async (request: any) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   }
 
   if (request.auth?.token.role !== "admin") {
     throw new HttpsError("permission-denied", "Bu özellik sadece adminler için.");
+  }
+
+  // Admin için de rate limiting (daha yüksek limitler)
+  const adminRateLimit = await checkAdminRateLimit(request.auth.uid);
+  if (!adminRateLimit.allowed) {
+    const resetTimeStr = adminRateLimit.resetTime.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+    throw new HttpsError(
+      "resource-exhausted",
+      `Mesaj limitiniz doldu. Lütfen ${resetTimeStr} sonra tekrar deneyin.`
+    );
   }
 
   const rawMessage = request.data.message;
@@ -1489,17 +1672,21 @@ EYLEM ÖNERİLERİ:
     const db = admin.firestore();
     await db.collection("adminChatHistory").add({
       adminId: request.auth.uid,
-      message: userMessage,
-      response: aiResponse,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      metadata: {
+        messageLength: userMessage.length,
+        responseLength: aiResponse.length,
+      },
     });
 
     return { response: aiResponse, timestamp: new Date().toISOString() };
-  } catch (error: any) {
-    logger.error("Admin chat error:", error);
+  } catch (error) {
+    const err = error as any;
+    logger.error("Admin chat error", { code: err.code, message: err.message });
     throw new HttpsError("internal", "Bir hata oluştu.");
   }
-});
+}
+);
 
 // Admin sohbet geçmişini getir
 export const getAdminChatHistory = onCall({ cors: true }, async (request: any) => {
@@ -1526,7 +1713,7 @@ export const getAdminChatHistory = onCall({ cors: true }, async (request: any) =
 
     return { messages: messages.reverse() };
   } catch (error) {
-    logger.error("Error fetching admin chat history:", error);
+    logger.error("Error fetching admin chat history");
     return { messages: [] };
   }
 });
@@ -1556,7 +1743,7 @@ export const getChatHistory = onCall(async (request: any) => {
 
     return { messages: messages.reverse() };
   } catch (error) {
-    logger.error("Error fetching chat history:", error);
+    logger.error("Error fetching chat history");
     return { messages: [] };
   }
 });
