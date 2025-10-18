@@ -4,6 +4,7 @@ import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Se
 import { useSpinWheel } from '../contexts/SpinWheelContext';
 import SpinWheelModal from '../components/user/SpinWheelModal';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
+import PersonalizationQuestions from '../components/PersonalizationQuestions';
 import ItemDetailsModal from '../components/common/ItemDetailsModal';
 import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
 import ItemSlider from '../components/common/ItemSlider';
@@ -48,6 +49,7 @@ const UserDashboard: React.FC = () => {
   const [scrollLeft, setScrollLeft] = useState(0);
   const sliderRef = React.useRef<HTMLDivElement>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showPersonalization, setShowPersonalization] = useState(false);
   const [showItemDetailsModal, setShowItemDetailsModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Event | Survey | Announcement | null>(null);
   const [showSpinModal, setShowSpinModal] = useState(false);
@@ -172,7 +174,7 @@ const UserDashboard: React.FC = () => {
     fetchQuote();
   }, []);
 
-  const handleOnboardingComplete = async () => {
+  const handleOnboardingComplete = async (dontShowAgain: boolean) => {
     if (!user) return;
     
     try {
@@ -181,10 +183,16 @@ const UserDashboard: React.FC = () => {
         hasCompletedOnboarding: true
       });
       setShowOnboarding(false);
+      // Show personalization questions after onboarding
+      setShowPersonalization(true);
     } catch (error) {
       console.error('Error updating onboarding status:', error);
       setShowOnboarding(false);
     }
+  };
+
+  const handlePersonalizationComplete = () => {
+    setShowPersonalization(false);
   };
 
   const handleBorrowBook = async (book: BookType) => {
@@ -277,16 +285,66 @@ const UserDashboard: React.FC = () => {
   const currentDueDateStyle = dueDateStyles[summaryStats.dueDateStatus] || dueDateStyles.safe;
 
   const libraryRules = [
-    'Kütüphane içerisinde sessiz olunmalıdır.',
-    'Ödünç alınan kitaplar zamanında iade edilmelidir.',
-    'Kitaplara zarar vermekten kaçınılmalıdır.',
-    'Yiyecek ve içecekle kütüphaneye girilmemelidir.',
-    'Diğer kullanıcıların çalışma ortamına saygı gösterilmelidir.',
-    'Çalışma masaları uzun süre terk edilmemelidir. 30 dakikadan fazla terk edilen masalardaki eşyalar görevliler tarafından kaldırılabilir.',
-    'Kütüphane materyalleri izinsiz olarak dışarı çıkarılmamalıdır. Ödünç alma işlemleri kütüphane görevlileri tarafından yapılmalıdır.',
-    'Grup çalışmaları için ayrılmış özel alanlar dışında grup çalışması yapılmamalıdır.',
-    'Kütüphane içerisinde cep telefonları sessiz modda tutulmalı ve görüşmeler kütüphane dışında yapılmalıdır.',
-    'Kütüphane çalışma saatleri içerisinde uyulması gereken kurallara uymayan kullanıcılar kütüphane görevlileri tarafından uyarılabilir ve gerekli durumlarda kütüphane kullanım hakları geçici olarak kısıtlanabilir.'
+    {
+      icon: '📚',
+      title: 'Kitap Ödünç Alma',
+      description: 'Her kullanıcı aynı anda en fazla 3 kitap ödünç alabilir. Ödünç alma süresi 14 gündür.'
+    },
+    {
+      icon: '⏰',
+      title: 'İade Süreleri',
+      description: 'Kitaplar belirlenen süre içinde iade edilmelidir. Geç iade edilen her gün için 5 TL ceza uygulanır.'
+    },
+    {
+      icon: '💰',
+      title: 'Ceza Sistemi',
+      description: 'Gecikme cezaları ödenmeden yeni kitap ödünç alınamaz. Cezalar admin panelinden ödenebilir.'
+    },
+    {
+      icon: '🎯',
+      title: 'Okuma Hedefleri',
+      description: 'Aylık ve yıllık okuma hedefleri belirleyerek ilerlemenizi takip edebilirsiniz.'
+    },
+    {
+      icon: '⭐',
+      title: 'Yorum ve Değerlendirme',
+      description: 'Okuduğunuz kitaplar için yorum yapabilir ve 1-5 yıldız arası puan verebilirsiniz.'
+    },
+    {
+      icon: '❤️',
+      title: 'Favoriler',
+      description: 'Beğendiğiniz kitapları favorilerinize ekleyerek kolayca erişebilirsiniz.'
+    },
+    {
+      icon: '🎡',
+      title: 'Şans Çarkı',
+      description: 'Her gün bir kez şans çarkını çevirerek kupon, rozet veya özel kategori erişimi kazanabilirsiniz.'
+    },
+    {
+      icon: '🎫',
+      title: 'Kuponlar',
+      description: 'Kazandığınız kuponları kullanarak ceza indirimi veya ödünç alma süresi uzatma hakkı elde edebilirsiniz.'
+    },
+    {
+      icon: '📝',
+      title: 'Talep Sistemi',
+      description: 'Kitap önerisi, teknik sorun veya genel geri bildirimlerinizi talep sistemi üzerinden iletebilirsiniz.'
+    },
+    {
+      icon: '🎮',
+      title: 'Oyun Rezervasyonu',
+      description: 'Kütüphanedeki masa oyunları için randevu alabilir ve arkadaşlarınızla oyun oynayabilirsiniz.'
+    },
+    {
+      icon: '📖',
+      title: 'Blog Yazıları',
+      description: 'Okuduğunuz kitaplar hakkında blog yazıları yazabilir ve diğer kullanıcıların yazılarını okuyabilirsiniz.'
+    },
+    {
+      icon: '🏆',
+      title: 'Lider Tablosu',
+      description: 'En çok kitap okuyan kullanıcılar lider tablosunda görüntülenir. Okuyarak sıralamada yükselmeye çalışın!'
+    }
   ];
 
   return (
@@ -313,7 +371,7 @@ const UserDashboard: React.FC = () => {
             </Link>
             {isTeacher && (
               <>
-                <Link to="/teacher/my-class" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
+                <Link to="/my-class" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
                   <Users className="w-5 h-5" />
                   <span>Sınıfım</span>
                 </Link>
@@ -383,39 +441,63 @@ const UserDashboard: React.FC = () => {
       </div>
 
       {showRules && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <ScrollText className="w-6 h-6 mr-2 text-indigo-600" />
-                Kütüphane Kuralları
-              </h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/30 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden border border-white/20">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+                  <ScrollText className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Kütüphane Rehberi</h2>
+                  <p className="text-white/80 text-sm">Sistemin nasıl çalıştığını öğrenin</p>
+                </div>
+              </div>
               <button
                 onClick={() => setShowRules(false)}
-                className="text-gray-400 hover:text-gray-500"
+                className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <ul className="space-y-4">
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {libraryRules.map((rule, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mr-3 mt-0.5 text-sm font-medium">
-                      {index + 1}
-                    </span>
-                    <p className="text-gray-700">{rule}</p>
-                  </li>
+                  <div
+                    key={index}
+                    className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/40"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                        {rule.icon}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 mb-2 text-lg">{rule.title}</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed">{rule.description}</p>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
-            <div className="p-6 border-t border-gray-200 bg-gray-50">
-              <button
-                onClick={() => setShowRules(false)}
-                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Anladım
-              </button>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-white/20 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="text-2xl">💡</span>
+                  <span>Sorularınız için <strong>Taleplerim</strong> bölümünden bize ulaşabilirsiniz</span>
+                </p>
+                <button
+                  onClick={() => setShowRules(false)}
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300 hover:scale-105"
+                >
+                  Anladım
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -453,7 +535,7 @@ const UserDashboard: React.FC = () => {
         ></div>
       )}
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
         <div className={`${isTeacher ? 'bg-orange-900' : 'bg-indigo-900'} text-white py-8 relative overflow-hidden`}>
           {/* Animated Gradient Background */}
           <div className="absolute inset-0 overflow-hidden">
@@ -469,30 +551,30 @@ const UserDashboard: React.FC = () => {
               >
                 <Menu className="w-6 h-6" />
               </button>
-              <div className="flex items-center space-x-4">
+              <div className="flex-1 flex items-center justify-center gap-6">
                 <div className="relative">
                   {userData?.photoURL ? (
                     <img
                       src={userData.photoURL}
                       alt="Profil"
-                      className="w-16 h-16 rounded-full border-4 border-white/30 shadow-lg object-cover"
+                      className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg object-cover"
                     />
                   ) : (
-                    <div className={`w-16 h-16 rounded-full border-4 border-white/30 shadow-lg ${isTeacher ? 'bg-orange-700' : 'bg-indigo-700'} flex items-center justify-center`}>
-                      <span className="text-2xl font-bold text-white">
+                    <div className={`w-20 h-20 rounded-full border-4 border-white/30 shadow-lg ${isTeacher ? 'bg-orange-700' : 'bg-indigo-700'} flex items-center justify-center`}>
+                      <span className="text-3xl font-bold text-white">
                         {(userData?.displayName || user.displayName || user.email?.split('@')[0] || 'U')[0].toUpperCase()}
                       </span>
                     </div>
                   )}
-                  <div className={`absolute -bottom-1 -right-1 bg-yellow-400 ${isTeacher ? 'text-orange-900 border-orange-900' : 'text-indigo-900 border-indigo-900'} rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm border-2 shadow-lg`}>
+                  <div className={`absolute -bottom-1 -right-1 bg-yellow-400 ${isTeacher ? 'text-orange-900 border-orange-900' : 'text-indigo-900 border-indigo-900'} rounded-full w-10 h-10 flex items-center justify-center font-bold text-base border-2 shadow-lg`}>
                     {userData?.level || 1}
                   </div>
                 </div>
-                <div>
+                <div className="flex flex-col items-center">
                   <p className={`text-lg ${isTeacher ? 'text-orange-200' : 'text-indigo-200'} mb-1`}>{getGreeting()}</p>
-                  <h1 className="text-3xl font-bold">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <div className={`flex-1 ${isTeacher ? 'bg-orange-800' : 'bg-indigo-800'} rounded-full h-2 w-48`}>
+                  <h1 className="text-3xl font-bold mb-2">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
+                  <div className="flex items-center space-x-2">
+                    <div className={`${isTeacher ? 'bg-orange-800' : 'bg-indigo-800'} rounded-full h-2 w-48`}>
                       <div
                         className="bg-yellow-400 h-2 rounded-full transition-all duration-500"
                         style={{ width: `${((userData?.totalXP || 0) % 100)}%` }}
@@ -502,7 +584,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <UpdateButton /> {/* Added UpdateButton here */}
+              <UpdateButton />
             </div>
           </div>
         </div>
@@ -577,25 +659,43 @@ const UserDashboard: React.FC = () => {
 
           {/* Bento Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-            {/* Quote - Full Width */}
-            <div className="lg:col-span-12 bg-gradient-to-r from-indigo-900 to-blue-800 rounded-xl shadow-lg p-4 sm:p-8 text-white relative overflow-hidden">
-              <div className="absolute top-4 right-4">
-                <Quote className="w-8 h-8 text-indigo-300 opacity-50" />
+            {/* Quote - Polaroid Style */}
+            <div className="lg:col-span-12 flex justify-center items-center py-8">
+              <div className="group relative rotate-[-2deg] hover:rotate-0 transition-all duration-500 hover:scale-105">
+                {/* Polaroid Frame */}
+                <div className="bg-white p-6 shadow-2xl hover:shadow-3xl transition-shadow duration-500">
+                  {/* Quote Content */}
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 mb-4 relative">
+                    {/* Decorative Quote Marks */}
+                    <div className="absolute top-2 left-2 text-6xl text-indigo-300 opacity-30 font-serif">“</div>
+                    <div className="absolute bottom-2 right-2 text-6xl text-indigo-300 opacity-30 font-serif">”</div>
+                    
+                    {dailyQuote ? (
+                      <blockquote className="relative z-10">
+                        <p className="text-lg sm:text-xl font-medium text-gray-800 italic mb-6 leading-relaxed text-center">
+                          {dailyQuote.text}
+                        </p>
+                        <footer className="text-center">
+                          <p className="font-bold text-indigo-600 text-lg">{dailyQuote.author}</p>
+                          <p className="text-sm text-gray-600 mt-1">{dailyQuote.book}</p>
+                        </footer>
+                      </blockquote>
+                    ) : (
+                      <p className="text-center text-gray-600">Alıntı yükleniyor...</p>
+                    )}
+                  </div>
+                  
+                  {/* Polaroid Bottom - Handwritten Style */}
+                  <div className="text-center">
+                    <p className="text-gray-700 font-handwriting text-lg" style={{ fontFamily: 'cursive' }}>
+                      Günün Alıntısı ✨
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Shadow effect */}
+                <div className="absolute inset-0 bg-black/10 blur-xl -z-10 group-hover:bg-black/20 transition-all duration-500"></div>
               </div>
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Günün Alıntısı</h2>
-              {dailyQuote ? (
-                <blockquote className="relative">
-                  <p className="text-base sm:text-lg font-medium italic mb-3 sm:mb-4">
-                    "{dailyQuote.text}"
-                  </p>
-                  <footer className="text-indigo-200">
-                    <p className="font-semibold">{dailyQuote.author}</p>
-                    <p className="text-sm">{dailyQuote.book}</p>
-                  </footer>
-                </blockquote>
-              ) : (
-                <p>Alıntı yükleniyor...</p>
-              )}
             </div>
 
             {/* Reading Goals - Left Column */}
@@ -710,7 +810,7 @@ const UserDashboard: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center min-h-[280px]">
+                <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center min-h-[280px] border border-white/20">
                   <Heart className="w-12 h-12 text-gray-300 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">Henüz Size Özel Öneri Yok</h3>
                   <p className="text-gray-500 mb-4">Daha fazla kitap okuyup etkileşimde bulundukça size özel öneriler burada görünecektir.</p>
@@ -823,7 +923,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+                <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg p-8 text-center border border-white/20">
                   <Star className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-600">Bu ay öne çıkan bir yazar bulunamadı.</p>
                 </div>
@@ -928,7 +1028,7 @@ const UserDashboard: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="bg-white rounded-xl shadow-sm p-8 text-center flex flex-col items-center justify-center h-full min-h-[280px]">
+                  <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center h-full min-h-[280px] border border-white/20">
                     <BookPlus className="w-12 h-12 text-gray-300 mb-4" />
                     <h3 className="text-lg font-semibold text-gray-800 mb-2">Henüz Yeni Kitap Eklenmemiş</h3>
                     <p className="text-gray-500 mb-4">Bu hafta yeni eklenen bir kitap yok. Katalogdaki diğer harika eserlere göz atabilirsiniz.</p>
@@ -948,7 +1048,7 @@ const UserDashboard: React.FC = () => {
               </h2>
               
               {/* Tabs */}
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">
                 <div className="border-b border-gray-200 overflow-x-auto">
                   <nav className="flex space-x-1 p-2 min-w-max" aria-label="Tabs">
                     <button
@@ -1018,9 +1118,18 @@ const UserDashboard: React.FC = () => {
 
       <OnboardingTour
         isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
+        onClose={(dontShowAgain) => {
+          setShowOnboarding(false);
+          if (!dontShowAgain) {
+            setShowPersonalization(true);
+          }
+        }}
         onComplete={handleOnboardingComplete}
       />
+
+      {showPersonalization && (
+        <PersonalizationQuestions onComplete={handlePersonalizationComplete} />
+      )}
     
 
       <ReadingGoalsModal

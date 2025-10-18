@@ -131,7 +131,7 @@ const QuoteManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-8 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Alıntı Yönetimi</h1>
@@ -173,7 +173,7 @@ const QuoteManagementPage: React.FC = () => {
         </div>
 
         {/* Quotes Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+        <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-x-auto border border-white/20">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

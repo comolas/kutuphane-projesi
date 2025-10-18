@@ -59,6 +59,7 @@ export const CouponProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           createdAt: data.createdAt.toDate(),
           expiryDate: data.expiryDate.toDate(),
           wonFromSpin: data.wonFromSpin || false,
+          status: data.status || 'active',
         };
       });
 
@@ -76,10 +77,9 @@ export const CouponProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + (data.expiryDays || 30));
 
-      const couponData = {
+      const couponData: any = {
         userId: data.userId,
-        type: 'penalty-discount',
-        discountPercent: data.discountPercent,
+        type: data.type,
         category: data.category,
         isUsed: false,
         usedAt: null,
@@ -87,7 +87,12 @@ export const CouponProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         createdAt: Timestamp.now(),
         expiryDate: Timestamp.fromDate(expiryDate),
         wonFromSpin: true,
+        status: 'active',
       };
+
+      if (data.type === 'penalty-discount' && data.discountPercent) {
+        couponData.discountPercent = data.discountPercent;
+      }
 
       await addDoc(collection(db, 'users', data.userId, 'coupons'), couponData);
       

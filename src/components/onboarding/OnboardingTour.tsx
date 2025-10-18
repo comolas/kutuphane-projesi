@@ -22,57 +22,37 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComp
 
   const steps: OnboardingStep[] = [
     {
-      id: 'welcome',
-      title: 'Data Koleji Kütüphanesi\'ne Hoş Geldiniz! 🎉',
-      description: 'Dijital kütüphane sisteminize hoş geldiniz. Size kısa bir tur yapalım ve temel özellikleri tanıtalım.',
-      icon: <BookOpen className="w-8 h-8 text-indigo-600" />
-    },
-    {
       id: 'catalog',
       title: 'Kitap Kataloğu 📚',
-      description: 'Binlerce kitaba erişim sağlayın. Arama yapın, filtreleyin ve istediğiniz kitapları bulun. Kitap detaylarını inceleyebilir ve ödünç alma talebinde bulunabilirsiniz.',
+      description: 'Sol menüden "Katalog" seçeneğine tıklayarak binlerce kitaba erişin. Arama yapabilir, kategorilere göre filtreleyebilir ve kitap detaylarını inceleyebilirsiniz.',
       icon: <Search className="w-8 h-8 text-indigo-600" />,
       highlight: 'catalog'
     },
     {
+      id: 'spin-wheel',
+      title: 'Şans Çarkı 🎡',
+      description: 'Ana sayfadaki çark ikonuna tıklayarak her gün şansınızı deneyin! Ceza indirimleri, süre uzatma hakları ve özel ödüller kazanabilirsiniz.',
+      icon: <Award className="w-8 h-8 text-purple-600" />,
+      highlight: 'dashboard'
+    },
+    {
       id: 'borrowed',
-      title: 'Ödünç Aldığım Kitaplar 📖',
-      description: 'Ödünç aldığınız kitapları takip edin. Teslim tarihlerini görün, süre uzatma talebinde bulunun ve iade işlemlerinizi yönetin.',
+      title: 'Ödünç Kitaplarım 📖',
+      description: 'Ödünç aldığınız kitapları "Kitaplarım" bölümünden takip edin. Süre uzatabilir, iade talebinde bulunabilir ve okuma istatistiklerinizi görebilirsiniz.',
       icon: <BookOpen className="w-8 h-8 text-indigo-600" />,
       highlight: 'borrowed-books'
     },
     {
       id: 'events',
-      title: 'Etkinlikler ve Duyurular 🎭',
-      description: 'Kütüphane etkinliklerine katılın. Yazar söyleşileri, kitap kulübü buluşmaları ve okuma atölyelerine kayıt olun.',
+      title: 'Etkinlikler 🎭',
+      description: 'Kütüphane etkinliklerine katılın. Yazar söyleşileri, kitap kulübü ve okuma atölyelerine "Etkinliklerim" sayfasından kayıt olabilirsiniz.',
       icon: <Calendar className="w-8 h-8 text-indigo-600" />,
       highlight: 'my-events'
     },
     {
-      id: 'requests',
-      title: 'Talep Sistemi 💬',
-      description: 'Kütüphane yönetimine talepte bulunun. Kitap önerileri, şikayetler veya önerilerinizi iletebilirsiniz.',
-      icon: <MessageSquare className="w-8 h-8 text-indigo-600" />,
-      highlight: 'requests'
-    },
-    {
-      id: 'gamification',
-      title: 'Görevler ve Başarımlar 🏆',
-      description: 'Günlük ve haftalık görevleri tamamlayarak XP kazanın. Seviye atlayın ve özel başarımlar elde edin.',
-      icon: <Award className="w-8 h-8 text-indigo-600" />,
-      highlight: 'settings'
-    },
-    {
-      id: 'settings',
-      title: 'Kişiselleştirme ⚙️',
-      description: 'Profil bilgilerinizi güncelleyin, bildirim tercihlerinizi ayarlayın ve sistemi kendinize göre özelleştirin.',
-      icon: <Settings className="w-8 h-8 text-indigo-600" />,
-      highlight: 'settings'
-    },
-    {
       id: 'complete',
       title: 'Hazırsınız! 🚀',
-      description: 'Tebrikler! Artık kütüphane sisteminin tüm özelliklerini kullanabilirsiniz. İyi okumalar dileriz!',
+      description: 'Tebrikler! Artık tüm özellikleri kullanabilirsiniz. İlk işiniz olarak çarkı çevirmeyi unutmayın! İyi okumalar dileriz.',
       icon: <BookOpen className="w-8 h-8 text-green-600" />
     }
   ];
@@ -124,7 +104,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComp
           </button>
           
           <div className="text-center">
-            <div className="mb-4 flex justify-center">
+            <div className="mb-4 flex justify-center animate-bounce">
               {currentStepData.icon}
             </div>
             <h2 className="text-xl font-bold mb-2">{currentStepData.title}</h2>
@@ -150,24 +130,25 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComp
             </p>
 
             {/* Feature Highlights */}
-            {currentStep === 1 && (
+            {currentStep === 0 && (
               <div className="bg-indigo-50 rounded-lg p-4 mb-4">
-                <h4 className="font-semibold text-indigo-900 mb-2">Katalog Özellikleri:</h4>
+                <h4 className="font-semibold text-indigo-900 mb-2">💡 Hızlı İpuçları:</h4>
                 <ul className="text-sm text-indigo-700 space-y-1">
-                  <li>• Gelişmiş arama ve filtreleme</li>
-                  <li>• Kitap detayları ve önizleme</li>
-                  <li>• Kategori bazlı tarama</li>
+                  <li>• Arama çubuğunu kullanarak hızlıca kitap bulun</li>
+                  <li>• Kategorilere göre filtreleyin</li>
+                  <li>• Kitap kapağına tıklayarak detayları görün</li>
                 </ul>
               </div>
             )}
 
-            {currentStep === 5 && (
-              <div className="bg-green-50 rounded-lg p-4 mb-4">
-                <h4 className="font-semibold text-green-900 mb-2">Görev Türleri:</h4>
-                <ul className="text-sm text-green-700 space-y-1">
-                  <li>• Günlük okuma görevi (50 XP)</li>
-                  <li>• Haftalık kitap bitirme (200 XP)</li>
-                  <li>• Etkinlik katılımı (150 XP)</li>
+            {currentStep === 1 && (
+              <div className="bg-purple-50 rounded-lg p-4 mb-4">
+                <h4 className="font-semibold text-purple-900 mb-2">🎁 Kazanabileceğiniz Ödüller:</h4>
+                <ul className="text-sm text-purple-700 space-y-1">
+                  <li>• %5 - %100 ceza indirimleri</li>
+                  <li>• Süre uzatma hakları (2x uzatma)</li>
+                  <li>• Yeniden çevirme hakkı</li>
+                  <li>• Kategori keşfi fırsatları</li>
                 </ul>
               </div>
             )}
@@ -219,19 +200,21 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onClose, onComp
           )}
         </div>
 
-        {/* "Don't Show Again" checkbox */}
-        <div className="p-4 bg-gray-100 flex items-center justify-center">
-          <input
-            type="checkbox"
-            id="dontShowAgain"
-            checked={dontShowAgain}
-            onChange={(e) => setDontShowAgain(e.target.checked)}
-            className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
-          />
-          <label htmlFor="dontShowAgain" className="ml-2 text-sm text-gray-700">
-            Bu turu bir daha gösterme
-          </label>
-        </div>
+        {/* "Don't Show Again" checkbox - Only show on last step */}
+        {isLastStep && (
+          <div className="p-4 bg-gray-100 flex items-center justify-center">
+            <input
+              type="checkbox"
+              id="dontShowAgain"
+              checked={dontShowAgain}
+              onChange={(e) => setDontShowAgain(e.target.checked)}
+              className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded"
+            />
+            <label htmlFor="dontShowAgain" className="ml-2 text-sm text-gray-700">
+              Bu turu bir daha gösterme
+            </label>
+          </div>
+        )}
       </div>
     </div>
   );

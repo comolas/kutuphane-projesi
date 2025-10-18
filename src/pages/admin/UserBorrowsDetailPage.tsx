@@ -124,9 +124,11 @@ const UserBorrowsDetailPage: React.FC = () => {
       if (result.isConfirmed) {
         try {
           const borrowDocRef = doc(db, 'borrowedBooks', borrowDocId);
+          const now = serverTimestamp();
           await updateDoc(borrowDocRef, { 
               returnStatus: 'returned',
-              returnDate: serverTimestamp()
+              returnDate: now,
+              returnRequestDate: now // Admin direkt iade aldığında da talep tarihi olarak kaydet
           });
           const statusRef = doc(db, 'bookStatuses', bookId);
           await updateDoc(statusRef, { status: 'available' });
@@ -394,7 +396,7 @@ const UserBorrowsDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <div className="p-4 sm:p-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
           {/* Back button skeleton */}
           <div className="h-6 bg-gray-200 rounded w-24 mb-4 animate-pulse"></div>
@@ -453,7 +455,7 @@ const UserBorrowsDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <button 
             onClick={() => navigate(-1)} 
@@ -463,7 +465,7 @@ const UserBorrowsDetailPage: React.FC = () => {
             Geri Dön
         </button>
         {/* User Info Header */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 mb-6 sm:mb-8 p-4 sm:p-6 bg-white rounded-lg shadow">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 mb-6 sm:mb-8 p-4 sm:p-6 bg-white/90 backdrop-blur-xl rounded-lg shadow-lg border border-white/20">
           {user.photoURL ? (
             <img src={user.photoURL} alt={user.displayName} className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src='https://via.placeholder.com/128'; }} />
           ) : (

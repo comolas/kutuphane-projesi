@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart, PieChart, Download, Calendar, FileText } from 'lucide-react';
+import { BarChart, PieChart, Download, Calendar, FileText, AlertTriangle, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useBooks } from '../contexts/BookContext';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, LineElement, PointElement } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, LineElement, PointElement);
 
@@ -16,6 +16,14 @@ interface StudentData {
   uid: string;
   displayName: string;
   studentNumber: string;
+  personalization?: {
+    favoriteCategories: string[];
+    favoriteTopics: string[];
+    favoriteMagazines: string[];
+    readingInfluence: string;
+    interests: string[];
+    isCompleted: boolean;
+  };
 }
 
 const TeacherReportsPage: React.FC = () => {
@@ -48,7 +56,8 @@ const TeacherReportsPage: React.FC = () => {
           students.push({
             uid: doc.id,
             displayName: data.displayName,
-            studentNumber: data.studentNumber
+            studentNumber: data.studentNumber,
+            personalization: data.personalization
           });
         });
         setClassStudents(students);
@@ -100,6 +109,45 @@ const TeacherReportsPage: React.FC = () => {
       ? (classBooks.filter(b => b.returnStatus === 'returned').length / classStudents.length).toFixed(1)
       : '0'
   };
+
+  // Gecikme & Disiplin Analizi
+  const disciplineReport = (() => {
+    const now = new Date();
+    const lateReturns = classBooks.filter(book => {
+      if (book.returnStatus === 'borrowed') {
+        return new Date(book.dueDate) < now;
+      }
+      if (book.returnStatus === 'returned' && book.returnedAt) {
+        return book.returnedAt > new Date(book.dueDate);
+      }
+      return false;
+    });
+
+    const studentDelayData = classStudents.map(student => {
+      const studentLateBooks = lateReturns.filter(b => b.borrowedBy === student.uid);
+      const totalFine = studentLateBooks.reduce((sum, book) => {
+        const dueDate = new Date(book.dueDate);
+        const returnDate = book.returnStatus === 'returned' && book.returnedAt ? book.returnedAt : now;
+        const daysLate = Math.max(0, Math.ceil((returnDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
+        return sum + (daysLate * 1); // 1 TL per day
+      }, 0);
+
+      return {
+        student,
+        lateCount: studentLateBooks.length,
+        totalFine,
+        currentlyLate: studentLateBooks.filter(b => b.returnStatus === 'borrowed').length,
+        books: studentLateBooks
+      };
+    }).filter(d => d.lateCount > 0).sort((a, b) => b.lateCount - a.lateCount);
+
+    return {
+      totalLateReturns: lateReturns.length,
+      currentlyOverdue: lateReturns.filter(b => b.returnStatus === 'borrowed').length,
+      totalFines: studentDelayData.reduce((sum, d) => sum + d.totalFine, 0),
+      studentDelayData
+    };
+  })();
 
   const categoryChartData = {
     labels: Object.keys(categoryData),
@@ -183,68 +231,54 @@ const TeacherReportsPage: React.FC = () => {
     };
   })();
 
-  const handleDownloadPDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // Başlık
-    doc.setFontSize(20);
-    doc.text('Sinif Okuma Raporu', pageWidth / 2, 20, { align: 'center' });
-    doc.setFontSize(12);
-    doc.text(`${userData?.teacherData?.assignedClass} Sinifi`, pageWidth / 2, 28, { align: 'center' });
-    doc.setFontSize(10);
-    doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`, pageWidth / 2, 35, { align: 'center' });
-    
-    // İstatistikler
-    doc.setFontSize(14);
-    doc.text('Genel Istatistikler', 14, 45);
-    autoTable(doc, {
-      startY: 50,
-      head: [['Metrik', 'Deger']],
-      body: [
-        ['Toplam Ogrenci', classStudents.length.toString()],
-        ['Okunan Kitap', classBooks.filter(b => b.returnStatus === 'returned').length.toString()],
-        ['Aktif Kitap', classBooks.filter(b => b.returnStatus === 'borrowed').length.toString()],
-        ['Ortalama Okuma Hizi', `${readingHabits.averageReadingSpeed} kitap/ogrenci`],
-        ['Hic Okumayan', readingHabits.nonReaders.length.toString()]
-      ]
-    });
-    
-    // En Popüler Kitaplar
-    const finalY = (doc as any).lastAutoTable.finalY || 50;
-    doc.setFontSize(14);
-    doc.text('En Populer Kitaplar', 14, finalY + 10);
-    autoTable(doc, {
-      startY: finalY + 15,
-      head: [['Sira', 'Kitap Adi', 'Yazar', 'Odunc Alinma']],
-      body: popularBooks.map((item, idx) => [
-        (idx + 1).toString(),
-        item.book!.title,
-        item.book!.author,
-        item.count.toString()
-      ])
-    });
-    
-    // En Çok Okuyan Öğrenciler
-    const finalY2 = (doc as any).lastAutoTable.finalY || 50;
-    doc.setFontSize(14);
-    doc.text('En Cok Okuyan Ogrenciler', 14, finalY2 + 10);
-    autoTable(doc, {
-      startY: finalY2 + 15,
-      head: [['Sira', 'Ogrenci Adi', 'Okunan Kitap']],
-      body: studentReadingData.slice(0, 10).map((s, idx) => [
-        (idx + 1).toString(),
-        s.name,
-        s.count.toString()
-      ])
-    });
-    
-    doc.save(`sinif-raporu-${userData?.teacherData?.assignedClass}-${new Date().toISOString().split('T')[0]}.pdf`);
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('report-content');
+    if (!element) return;
+
+    try {
+      // Butonu gizle
+      const button = document.getElementById('pdf-button');
+      if (button) button.style.display = 'none';
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f9fafb'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+
+      // Sayfa sayısını hesapla
+      const totalPages = Math.ceil((imgHeight * ratio) / pdfHeight);
+
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+        const yOffset = -i * pdfHeight;
+        pdf.addImage(imgData, 'PNG', imgX, imgY + yOffset, imgWidth * ratio, imgHeight * ratio);
+      }
+
+      pdf.save(`sinif-raporu-${userData?.teacherData?.assignedClass}-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      // Butonu tekrar göster
+      if (button) button.style.display = 'flex';
+    } catch (error) {
+      console.error('PDF oluşturma hatası:', error);
+      alert('PDF oluşturulurken bir hata oluştu.');
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="report-content">
         {/* Header */}
         <button
           onClick={() => navigate('/teacher-dashboard')}
@@ -264,6 +298,7 @@ const TeacherReportsPage: React.FC = () => {
             <p className="text-gray-600">{userData?.teacherData?.assignedClass} Sınıfı</p>
           </div>
           <button
+            id="pdf-button"
             onClick={handleDownloadPDF}
             className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
           >
@@ -272,43 +307,251 @@ const TeacherReportsPage: React.FC = () => {
           </button>
         </div>
 
+        {/* Kullanıcı Analizi */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <svg className="w-7 h-7 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Kullanıcı Analizi
+          </h2>
+          
+          {(() => {
+            // Kişiselleştirme verilerini topla
+            const studentsWithData = classStudents.filter(s => s.personalization?.isCompleted);
+            
+            if (studentsWithData.length === 0) {
+              return (
+                <div className="text-center py-12 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border-2 border-dashed border-purple-200">
+                  <div className="text-6xl mb-4">📊</div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Kullanıcı Analizi Hazırlanıyor</h3>
+                  <p className="text-gray-600 mb-4">Öğrenciler kişiselleştirme sorularını yanıtladıkça bu bölümde grafikler görünecek.</p>
+                  <p className="text-sm text-gray-500">({classStudents.length} öğrenciden {studentsWithData.length} kişiselleştirme tamamladı)</p>
+                </div>
+              );
+            }
+
+            // Verileri topla
+            const categories: Record<string, number> = {};
+            const topics: Record<string, number> = {};
+            const magazines: Record<string, number> = {};
+            const influences: Record<string, number> = {};
+            const interests: Record<string, number> = {};
+
+            studentsWithData.forEach(student => {
+              const p = student.personalization!;
+              p.favoriteCategories?.forEach(c => categories[c] = (categories[c] || 0) + 1);
+              p.favoriteTopics?.forEach(t => topics[t] = (topics[t] || 0) + 1);
+              p.favoriteMagazines?.forEach(m => magazines[m] = (magazines[m] || 0) + 1);
+              if (p.readingInfluence) influences[p.readingInfluence] = (influences[p.readingInfluence] || 0) + 1;
+              p.interests?.forEach(i => interests[i] = (interests[i] || 0) + 1);
+            });
+
+            // Grafik verileri
+            const categoryChartData = {
+              labels: Object.keys(categories),
+              datasets: [{
+                label: 'Öğrenci Sayısı',
+                data: Object.values(categories),
+                backgroundColor: ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6', '#f97316', '#84cc16'],
+              }]
+            };
+
+            const topicChartData = {
+              labels: Object.keys(topics),
+              datasets: [{
+                label: 'Öğrenci Sayısı',
+                data: Object.values(topics),
+                backgroundColor: '#ec4899',
+              }]
+            };
+
+            const magazineChartData = {
+              labels: Object.keys(magazines),
+              datasets: [{
+                label: 'Öğrenci Sayısı',
+                data: Object.values(magazines),
+                backgroundColor: '#f59e0b',
+              }]
+            };
+
+            const influenceChartData = {
+              labels: Object.keys(influences),
+              datasets: [{
+                label: 'Öğrenci Sayısı',
+                data: Object.values(influences),
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+              }]
+            };
+
+            const interestChartData = {
+              labels: Object.keys(interests),
+              datasets: [{
+                label: 'Öğrenci Sayısı',
+                data: Object.values(interests),
+                backgroundColor: '#10b981',
+              }]
+            };
+
+            // En popüler seçenekler
+            const topCategory = Object.entries(categories).sort((a, b) => b[1] - a[1])[0];
+            const topTopic = Object.entries(topics).sort((a, b) => b[1] - a[1])[0];
+            const topInfluence = Object.entries(influences).sort((a, b) => b[1] - a[1])[0];
+
+            return (
+              <div className="space-y-6">
+                {/* İstatistik Kartları */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
+                    <p className="text-purple-600 text-sm font-medium mb-1">Veri Tamamlama</p>
+                    <p className="text-3xl font-bold text-purple-700">{Math.round((studentsWithData.length / classStudents.length) * 100)}%</p>
+                    <p className="text-xs text-purple-600 mt-1">{studentsWithData.length}/{classStudents.length} öğrenci</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-pink-50 to-pink-100 border border-pink-200 rounded-lg p-4">
+                    <p className="text-pink-600 text-sm font-medium mb-1">En Popüler Kategori</p>
+                    <p className="text-lg font-bold text-pink-700">{topCategory?.[0] || '-'}</p>
+                    <p className="text-xs text-pink-600 mt-1">{topCategory?.[1] || 0} öğrenci</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4">
+                    <p className="text-orange-600 text-sm font-medium mb-1">En Popüler Konu</p>
+                    <p className="text-lg font-bold text-orange-700">{topTopic?.[0] || '-'}</p>
+                    <p className="text-xs text-orange-600 mt-1">{topTopic?.[1] || 0} öğrenci</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                    <p className="text-blue-600 text-sm font-medium mb-1">En Etkili Faktör</p>
+                    <p className="text-lg font-bold text-blue-700">{topInfluence?.[0] || '-'}</p>
+                    <p className="text-xs text-blue-600 mt-1">{topInfluence?.[1] || 0} öğrenci</p>
+                  </div>
+                </div>
+
+                {/* Grafikler */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Kategori Tercihleri */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="w-1 h-5 bg-purple-500 rounded-full mr-2"></span>
+                      Kategori Tercihleri
+                    </h3>
+                    <div className="h-64">
+                      <Pie data={categoryChartData} options={{ maintainAspectRatio: false }} />
+                    </div>
+                  </div>
+
+                  {/* Konu Tercihleri */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="w-1 h-5 bg-pink-500 rounded-full mr-2"></span>
+                      Konu Tercihleri
+                    </h3>
+                    <div className="h-64">
+                      <Bar data={topicChartData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} />
+                    </div>
+                  </div>
+
+                  {/* Dergi Tercihleri */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="w-1 h-5 bg-orange-500 rounded-full mr-2"></span>
+                      Dergi Tercihleri
+                    </h3>
+                    <div className="h-64">
+                      <Bar data={magazineChartData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} />
+                    </div>
+                  </div>
+
+                  {/* Okuma Etkisi */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="w-1 h-5 bg-blue-500 rounded-full mr-2"></span>
+                      Okuma Etkisi
+                    </h3>
+                    <div className="h-64">
+                      <Pie data={influenceChartData} options={{ maintainAspectRatio: false }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* İlgi Alanları - Tam Genişlik */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="w-1 h-5 bg-green-500 rounded-full mr-2"></span>
+                    İlgi Alanları
+                  </h3>
+                  <div className="h-64">
+                    <Bar data={interestChartData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} />
+                  </div>
+                </div>
+
+                {/* Öneriler */}
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-l-4 border-indigo-500 rounded-lg p-6">
+                  <h3 className="font-bold text-indigo-900 mb-4 flex items-center">
+                    <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    Öneriler & İçgörüler
+                  </h3>
+                  <ul className="space-y-2">
+                    {topCategory && (
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">•</span>
+                        <span className="text-gray-700"><strong>{topCategory[0]}</strong> kategorisi en popüler (%{Math.round((topCategory[1] / studentsWithData.length) * 100)}). Koleksiyonu güçlendirin.</span>
+                      </li>
+                    )}
+                    {topTopic && (
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">•</span>
+                        <span className="text-gray-700"><strong>{topTopic[0]}</strong> konusu ilgi çekiyor. Bu konuda etkinlik düzenleyin.</span>
+                      </li>
+                    )}
+                    {topInfluence && topInfluence[0] === 'Sosyal Medya' && (
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">•</span>
+                        <span className="text-gray-700">Sosyal medya etkisi yüksek. Instagram/TikTok kampanyaları düşünün.</span>
+                      </li>
+                    )}
+                    {topInfluence && topInfluence[0] === 'Öğretmen' && (
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">•</span>
+                        <span className="text-gray-700">Öğretmen etkisi güçlü. Öğretmen işbirliklerini artırın.</span>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm mb-1">Toplam Öğrenci</p>
-                <p className="text-3xl font-bold text-gray-900">{classStudents.length}</p>
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <Calendar className="w-8 h-8 text-white" />
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Calendar className="w-8 h-8 text-blue-600" />
-              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Toplam Öğrenci</p>
+              <p className="text-4xl font-bold text-white">{classStudents.length}</p>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm mb-1">Okunan Kitap</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {classBooks.filter(b => b.returnStatus === 'returned').length}
-                </p>
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <BarChart className="w-8 h-8 text-white" />
               </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <BarChart className="w-8 h-8 text-green-600" />
-              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Okunan Kitap</p>
+              <p className="text-4xl font-bold text-white">{classBooks.filter(b => b.returnStatus === 'returned').length}</p>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm mb-1">Aktif Kitap</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {classBooks.filter(b => b.returnStatus === 'borrowed').length}
-                </p>
+          <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="relative">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <PieChart className="w-8 h-8 text-white" />
               </div>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <PieChart className="w-8 h-8 text-orange-600" />
-              </div>
+              <p className="text-white/80 text-sm font-medium mb-2">Aktif Kitap</p>
+              <p className="text-4xl font-bold text-white">{classBooks.filter(b => b.returnStatus === 'borrowed').length}</p>
             </div>
           </div>
         </div>
@@ -344,6 +587,126 @@ const TeacherReportsPage: React.FC = () => {
           ) : (
             <div className="text-center py-8 text-gray-500">
               Henüz veri yok
+            </div>
+          )}
+        </div>
+
+        {/* Gecikme & Disiplin Raporu */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <AlertTriangle className="w-6 h-6 mr-2 text-red-600" />
+            Gecikme & Disiplin Raporu
+          </h2>
+          
+          {/* Özet Kartlar */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-600 text-sm font-medium mb-1">Toplam Geç Teslim</p>
+                  <p className="text-3xl font-bold text-red-700">{disciplineReport.totalLateReturns}</p>
+                </div>
+                <Clock className="w-10 h-10 text-red-400" />
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-600 text-sm font-medium mb-1">Şu An Gecikmiş</p>
+                  <p className="text-3xl font-bold text-orange-700">{disciplineReport.currentlyOverdue}</p>
+                </div>
+                <AlertTriangle className="w-10 h-10 text-orange-400" />
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-yellow-600 text-sm font-medium mb-1">Toplam Ceza</p>
+                  <p className="text-3xl font-bold text-yellow-700">{disciplineReport.totalFines} ₺</p>
+                </div>
+                <FileText className="w-10 h-10 text-yellow-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Geç Teslim Eden Öğrenciler */}
+          {disciplineReport.studentDelayData.length > 0 ? (
+            <div className="space-y-3">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                <span className="w-1 h-5 bg-red-500 rounded-full mr-2"></span>
+                Geç Teslim Eden Öğrenciler
+              </h3>
+              {disciplineReport.studentDelayData.map((data, index) => (
+                <div key={data.student.uid} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                        index === 0 ? 'bg-red-600' : index === 1 ? 'bg-orange-500' : 'bg-yellow-500'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{data.student.displayName}</h4>
+                        <p className="text-sm text-gray-500">{data.student.studentNumber}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500">Geç Teslim</p>
+                          <p className="text-lg font-bold text-red-600">{data.lateCount}</p>
+                        </div>
+                        {data.currentlyLate > 0 && (
+                          <div>
+                            <p className="text-xs text-gray-500">Şu An Gecikmiş</p>
+                            <p className="text-lg font-bold text-orange-600">{data.currentlyLate}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs text-gray-500">Toplam Ceza</p>
+                          <p className="text-lg font-bold text-yellow-600">{data.totalFine} ₺</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Geciken Kitaplar */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs font-semibold text-gray-600 mb-2">Geciken Kitaplar:</p>
+                    <div className="space-y-1">
+                      {data.books.slice(0, 3).map(book => {
+                        const dueDate = new Date(book.dueDate);
+                        const returnDate = book.returnStatus === 'returned' && book.returnedAt ? book.returnedAt : new Date();
+                        const daysLate = Math.ceil((returnDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+                        const bookInfo = allBooks.find(b => b.id === book.id);
+                        
+                        return (
+                          <div key={book.id + book.borrowedAt} className="flex items-center justify-between text-sm bg-gray-50 rounded p-2">
+                            <span className="text-gray-700 flex-1">{bookInfo?.title || 'Bilinmeyen Kitap'}</span>
+                            <span className={`font-semibold ml-2 ${
+                              book.returnStatus === 'borrowed' ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {daysLate} gün gecikme
+                              {book.returnStatus === 'borrowed' && ' ⚠️'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {data.books.length > 3 && (
+                        <p className="text-xs text-gray-500 italic">+{data.books.length - 3} kitap daha...</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-green-50 rounded-lg border border-green-200">
+              <div className="text-5xl mb-2">🎉</div>
+              <p className="text-green-700 font-semibold">Harika! Hiç geç teslim yok.</p>
+              <p className="text-green-600 text-sm mt-1">Tüm öğrenciler kitaplarını zamanında teslim ediyor.</p>
             </div>
           )}
         </div>

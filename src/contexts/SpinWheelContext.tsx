@@ -178,6 +178,11 @@ export const SpinWheelProvider: React.FC<{ children: ReactNode }> = ({ children 
         updateData.extraSpins = userSpinData.extraSpins - 1;
       }
 
+      // Süre uzatma ödülü kazandıysa borrowExtensionCount'u 2 yap
+      if (reward.type === 'borrow-extension') {
+        updateData.borrowExtensionCount = 2;
+      }
+
       const userSpinDocRef = doc(db, 'users', currentUser.uid, 'spinData', 'current');
       await updateDoc(userSpinDocRef, updateData);
 

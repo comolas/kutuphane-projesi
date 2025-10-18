@@ -4,6 +4,8 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { ChevronLeft, AlertCircle, Clock, Search, Filter, X, SortAsc, SortDesc, ChevronRight, BookCheck, History, ShieldQuestion, Book as BookIcon, Bookmark, Calendar as CalendarIcon, BarChart2 } from 'lucide-react';
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useCoupons } from '../contexts/CouponContext';
+import { useSpinWheel } from '../contexts/SpinWheelContext';
 import { db } from '../firebase/config';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import BookDetailsModal from '../components/common/BookDetailsModal';
@@ -16,6 +18,8 @@ const BorrowedBooksPage: React.FC = () => {
   const navigate = useNavigate();
   const { borrowedBooks, requestReturn, extendBook, canExtend } = useBooks();
   const { user, userData } = useAuth();
+  const { coupons } = useCoupons();
+  const { userSpinData } = useSpinWheel();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -361,6 +365,13 @@ const BorrowedBooksPage: React.FC = () => {
                               Uzatılmış
                             </div>
                           )}
+
+                          {/* Extension Reward Badge */}
+                          {userSpinData && userSpinData.borrowExtensionCount === 2 && canExtend(book.id) && (
+                            <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg flex items-center gap-1 animate-pulse">
+                              🎁 2x Uzatma
+                            </div>
+                          )}
                         </div>
 
                         <div className="p-4 flex flex-col flex-grow">
@@ -377,6 +388,25 @@ const BorrowedBooksPage: React.FC = () => {
 
                           {/* Action Buttons */}
                           <div className="space-y-2 mt-auto">
+                            {/* Extend Button - First */}
+                            {book.returnStatus !== 'pending' && (
+                              canExtend(book.id) ? (
+                                <button
+                                  onClick={() => handleExtend(book.id, book.title)}
+                                  className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                                >
+                                  <Clock className="w-4 h-4" />
+                                  Süre Uzat (7 Gün)
+                                </button>
+                              ) : (
+                                <div className="w-full px-4 py-2.5 bg-gray-300 text-gray-600 rounded-xl text-sm font-semibold text-center cursor-not-allowed flex items-center justify-center gap-2">
+                                  <Clock className="w-4 h-4" />
+                                  Uzatma Hakkı Bitti
+                                </div>
+                              )
+                            )}
+                            
+                            {/* Return Button - Second */}
                             {book.returnStatus === 'pending' ? (
                               <div className="w-full px-4 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-xl text-sm font-bold text-center shadow-md">
                                 İade Talebi Gönderildi
@@ -387,14 +417,6 @@ const BorrowedBooksPage: React.FC = () => {
                                 className="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300"
                               >
                                 İade Et
-                              </button>
-                            )}
-                            {canExtend(book.id) && !book.returnStatus && (
-                              <button
-                                onClick={() => handleExtend(book.id, book.title)}
-                                className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300"
-                              >
-                                7 Gün Uzat
                               </button>
                             )}
                           </div>

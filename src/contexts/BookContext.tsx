@@ -178,6 +178,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 dueDate: data.dueDate?.toDate() || new Date(),
                 returnedAt: data.returnDate?.toDate(),
                 extended: data.extended || false,
+                extensionCount: data.extensionCount || 0,
+                maxExtensions: data.maxExtensions || 1,
                 borrowedBy: data.userId,
                 returnStatus: data.returnStatus || 'borrowed',
                 borrowStatus: data.borrowStatus || 'approved',
@@ -223,6 +225,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 dueDate: data.dueDate?.toDate() || new Date(),
                 returnedAt: data.returnDate?.toDate(),
                 extended: data.extended || false,
+                extensionCount: data.extensionCount || 0,
+                maxExtensions: data.maxExtensions || 1,
                 borrowedBy: data.userId,
                 returnStatus: data.returnStatus || 'borrowed',
                 borrowStatus: data.borrowStatus || 'approved',
@@ -373,6 +377,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         borrowedAt: serverTimestamp(),
         dueDate,
         extended: false,
+        extensionCount: 0,
+        maxExtensions: 1,
         returnStatus: 'borrowed',
         borrowStatus: 'approved',
         fineStatus: 'pending'
@@ -558,6 +564,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         borrowedAt: serverTimestamp(),
         dueDate,
         extended: false,
+        extensionCount: 0,
+        maxExtensions: 1,
         returnStatus: 'borrowed',
         borrowStatus: 'approved',
         fineStatus: 'pending'
@@ -574,6 +582,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         borrowedAt,
         dueDate,
         extended: false,
+        extensionCount: 0,
+        maxExtensions: 1,
         borrowedBy: userId,
         returnStatus: 'borrowed',
         borrowStatus: 'approved'
@@ -784,7 +794,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const borrowedBookRef = doc(db, 'borrowedBooks', `${user.uid}_${bookId}`);
       await updateDoc(borrowedBookRef, {
-        returnStatus: 'pending'
+        returnStatus: 'pending',
+        returnRequestDate: serverTimestamp() // İade talep tarihini kaydet
       });
 
       setBorrowedBooks(prev => prev.map(b => 
