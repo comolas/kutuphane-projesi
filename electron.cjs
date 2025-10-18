@@ -22,6 +22,7 @@ const db = getFirestore(firebaseApp);
 // --- End of Firebase Configuration ---
 
 let mainWindow;
+let autoUpdater;
 
 function createWindow(isDev) {
   mainWindow = new BrowserWindow({
@@ -83,7 +84,7 @@ app.whenReady().then(() => {
   createWindow(isDev);
 
   if (!isDev) {
-    const { autoUpdater } = require('electron-updater');
+    autoUpdater = require('electron-updater').autoUpdater;
     autoUpdater.autoDownload = false;
 
     // --- Replaced original check with Firebase check ---
@@ -119,12 +120,17 @@ app.whenReady().then(() => {
     });
 
     ipcMain.on('download_update', () => {
-      // Manually trigger the download from the default provider (GitHub)
-      autoUpdater.downloadUpdate();
+      console.log('Received download_update request');
+      if (autoUpdater) {
+        autoUpdater.downloadUpdate();
+      }
     });
 
     ipcMain.on('install_update', () => {
-      autoUpdater.quitAndInstall();
+      console.log('Received install_update request');
+      if (autoUpdater) {
+        autoUpdater.quitAndInstall();
+      }
     });
   }
 

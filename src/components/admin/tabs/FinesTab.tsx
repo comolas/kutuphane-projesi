@@ -16,6 +16,7 @@ interface BorrowedBook {
   borrowedAt: Date;
   dueDate: Date;
   returnedAt?: Date;
+  returnRequestDate?: Date; // İade talep tarihi
   borrowedBy: string;
   returnStatus: 'borrowed' | 'returned' | 'pending';
   fineStatus?: 'pending' | 'paid';
@@ -97,8 +98,17 @@ const FinesTab: React.FC = () => {
     const discount = appliedDiscounts[fineKey];
     const book = allBorrowedBooks.find(b => b.id === bookId && b.borrowedBy === userId);
     
-    const today = new Date();
-    const diffTime = today.getTime() - new Date(book?.dueDate || new Date()).getTime();
+    // Öncelik: returnRequestDate > returnedAt > bugün
+    let comparisonDate: Date;
+    if (book?.returnRequestDate) {
+      comparisonDate = new Date(book.returnRequestDate);
+    } else if (book?.returnStatus === 'returned' && book?.returnedAt) {
+      comparisonDate = new Date(book.returnedAt);
+    } else {
+      comparisonDate = new Date();
+    }
+    
+    const diffTime = comparisonDate.getTime() - new Date(book?.dueDate || new Date()).getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const originalAmount = diffDays > 0 ? diffDays * finePerDay : 0;
     const finalAmount = discount ? originalAmount - (originalAmount * discount.discountPercent / 100) : originalAmount;
@@ -182,8 +192,21 @@ const FinesTab: React.FC = () => {
       if (book.fineStatus === 'paid') {
         return book.fineAmountSnapshot || 0;
       }
-      const today = new Date();
-      const diffTime = today.getTime() - new Date(book.dueDate).getTime();
+      
+      // Öncelik sırası: returnRequestDate > returnedAt > bugün
+      let comparisonDate: Date;
+      if (book.returnRequestDate) {
+        // İade talebi varsa, talep tarihini kullan (en önemli)
+        comparisonDate = new Date(book.returnRequestDate);
+      } else if (book.returnStatus === 'returned' && book.returnedAt) {
+        // İade edildiyse, iade tarihini kullan
+        comparisonDate = new Date(book.returnedAt);
+      } else {
+        // Henüz iade edilmediyse, bugünü kullan
+        comparisonDate = new Date();
+      }
+      
+      const diffTime = comparisonDate.getTime() - new Date(book.dueDate).getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       const originalFine = diffDays > 0 ? diffDays * finePerDay : 0;
       
@@ -200,8 +223,19 @@ const FinesTab: React.FC = () => {
   const overdueBooks = useMemo(() => {
     const books = (allBorrowedBooks || []).filter(book => {
       if (book.fineStatus === 'paid') return true;
+      
+      // Öncelik sırası: returnRequestDate > returnedAt > bugün
+      let comparisonDate: Date;
+      if (book.returnRequestDate) {
+        comparisonDate = new Date(book.returnRequestDate);
+      } else if (book.returnStatus === 'returned' && book.returnedAt) {
+        comparisonDate = new Date(book.returnedAt);
+      } else {
+        comparisonDate = new Date();
+      }
+      
       const daysOverdue = Math.ceil(
-        (new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)
+        (comparisonDate.getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)
       );
       return daysOverdue > 0;
     });
@@ -465,8 +499,16 @@ const FinesTab: React.FC = () => {
         userId={selectedBookForDiscount?.borrowedBy || ''}
         bookCategory={(selectedBookForDiscount as any)?.category || ''}
         originalAmount={selectedBookForDiscount ? (() => {
-          const today = new Date();
-          const diffTime = today.getTime() - new Date(selectedBookForDiscount.dueDate).getTime();
+          // Öncelik: returnRequestDate > returnedAt > bugün
+          let comparisonDate: Date;
+          if (selectedBookForDiscount.returnRequestDate) {
+            comparisonDate = new Date(selectedBookForDiscount.returnRequestDate);
+          } else if (selectedBookForDiscount.returnStatus === 'returned' && selectedBookForDiscount.returnedAt) {
+            comparisonDate = new Date(selectedBookForDiscount.returnedAt);
+          } else {
+            comparisonDate = new Date();
+          }
+          const diffTime = comparisonDate.getTime() - new Date(selectedBookForDiscount.dueDate).getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           return diffDays > 0 ? diffDays * finePerDay : 0;
         })() : 0}
@@ -824,7 +866,18 @@ const FinesTab: React.FC = () => {
                   const isFinalized = book.fineRateSnapshot !== undefined;
                   const daysOverdue = isFinalized
                     ? book.daysOverdueSnapshot
-                    : Math.max(0, Math.ceil((new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)));
+                    : (() => {
+                        // Öncelik: returnRequestDate > returnedAt > bugün
+                        let comparisonDate: Date;
+                        if (book.returnRequestDate) {
+                          comparisonDate = new Date(book.returnRequestDate);
+                        } else if (book.returnStatus === 'returned' && book.returnedAt) {
+                          comparisonDate = new Date(book.returnedAt);
+                        } else {
+                          comparisonDate = new Date();
+                        }
+                        return Math.max(0, Math.ceil((comparisonDate.getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)));
+                      })();
                   const fine = calculateFine(book);
 
                   return (
@@ -908,8 +961,16 @@ const FinesTab: React.FC = () => {
                           {appliedDiscounts[fineKey] && (
                             <div className="text-xs text-gray-500 line-through">
                               {(() => {
-                                const today = new Date();
-                                const diffTime = today.getTime() - new Date(book.dueDate).getTime();
+                                // Öncelik: returnRequestDate > returnedAt > bugün
+                                let comparisonDate: Date;
+                                if (book.returnRequestDate) {
+                                  comparisonDate = new Date(book.returnRequestDate);
+                                } else if (book.returnStatus === 'returned' && book.returnedAt) {
+                                  comparisonDate = new Date(book.returnedAt);
+                                } else {
+                                  comparisonDate = new Date();
+                                }
+                                const diffTime = comparisonDate.getTime() - new Date(book.dueDate).getTime();
                                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                                 return diffDays > 0 ? diffDays * finePerDay : 0;
                               })()} TL
@@ -983,7 +1044,20 @@ const FinesTab: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedFines.map((book) => {
                 const fineKey = `${book.id}-${book.borrowedBy}`;
-                const daysOverdue = book.fineRateSnapshot !== undefined ? book.daysOverdueSnapshot : Math.max(0, Math.ceil((new Date().getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)));
+                const daysOverdue = book.fineRateSnapshot !== undefined 
+                  ? book.daysOverdueSnapshot 
+                  : (() => {
+                      // Öncelik: returnRequestDate > returnedAt > bugün
+                      let comparisonDate: Date;
+                      if (book.returnRequestDate) {
+                        comparisonDate = new Date(book.returnRequestDate);
+                      } else if (book.returnStatus === 'returned' && book.returnedAt) {
+                        comparisonDate = new Date(book.returnedAt);
+                      } else {
+                        comparisonDate = new Date();
+                      }
+                      return Math.max(0, Math.ceil((comparisonDate.getTime() - new Date(book.dueDate).getTime()) / (1000 * 60 * 60 * 24)));
+                    })();
                 const fine = calculateFine(book);
                 return (
                   <div key={fineKey} className={`bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg ${daysOverdue > 30 ? 'border-l-4 border-red-500' : daysOverdue > 14 ? 'border-l-4 border-orange-500' : 'border-l-4 border-yellow-500'}`}>
@@ -1009,8 +1083,16 @@ const FinesTab: React.FC = () => {
                             {appliedDiscounts[fineKey] && (
                               <p className="text-sm text-gray-500 line-through">
                                 {(() => {
-                                  const today = new Date();
-                                  const diffTime = today.getTime() - new Date(book.dueDate).getTime();
+                                  // Öncelik: returnRequestDate > returnedAt > bugün
+                                  let comparisonDate: Date;
+                                  if (book.returnRequestDate) {
+                                    comparisonDate = new Date(book.returnRequestDate);
+                                  } else if (book.returnStatus === 'returned' && book.returnedAt) {
+                                    comparisonDate = new Date(book.returnedAt);
+                                  } else {
+                                    comparisonDate = new Date();
+                                  }
+                                  const diffTime = comparisonDate.getTime() - new Date(book.dueDate).getTime();
                                   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                                   return (diffDays > 0 ? diffDays * finePerDay : 0).toFixed(2);
                                 })()} TL

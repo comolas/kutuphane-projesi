@@ -14,45 +14,27 @@ const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
   const steps = [
     {
       icon: BookOpen,
-      title: 'Dijital Kütüphane',
-      description: '1000+ kitaba anında erişin. Kitap ödünç alın, okuyun ve keşfedin.',
-      stats: ['1000+ Kitap', 'Anında Erişim', '7/24 Açık'],
+      title: 'Hoş Geldiniz! 📚',
+      description: 'Data Koleji Kütüphanesi\'ne hoş geldiniz! 1000+ kitaba anında erişin, ödünç alın ve okuma serüveninize başlayın.',
+      stats: ['1000+ Kitap', '7/24 Erişim', 'Ücretsiz'],
       color: 'from-indigo-600 to-purple-600',
       bgColor: 'bg-indigo-100',
       iconColor: 'text-indigo-600'
     },
     {
-      icon: Calendar,
-      title: 'Etkinlikler & Randevular',
-      description: '5 dakikada randevu alın. Kütüphane etkinliklerine katılın ve toplulukla buluşun.',
-      stats: ['50+ Etkinlik/Ay', '5 Dk Randevu', 'Ücretsiz Katılım'],
+      icon: Trophy,
+      title: 'Şans Çarkı 🎡',
+      description: 'Her gün çarkı çevirin! Ceza indirimleri, süre uzatma hakları ve özel ödüller kazanın. İlk çevirme hakkınız hazır!',
+      stats: ['Günlük Çark', 'Özel Ödüller', '%100 İndirim Şansı'],
       color: 'from-purple-600 to-pink-600',
       bgColor: 'bg-purple-100',
       iconColor: 'text-purple-600'
     },
     {
-      icon: Users,
-      title: 'Sosyal Özellikler',
-      description: 'Blog yazıları paylaşın, yorumlar yapın ve 500+ aktif kullanıcıyla buluşun.',
-      stats: ['500+ Kullanıcı', 'Blog Paylaşımı', 'Yorum & Beğeni'],
-      color: 'from-pink-600 to-rose-600',
-      bgColor: 'bg-pink-100',
-      iconColor: 'text-pink-600'
-    },
-    {
-      icon: Trophy,
-      title: 'Ödüller & Başarılar',
-      description: 'Okuma hedeflerinize ulaşın, 20+ rozet kazanın ve özel kuponlarla ödüllendirilın.',
-      stats: ['20+ Rozet', 'Özel Kuponlar', 'Liderlik Tablosu'],
-      color: 'from-orange-600 to-red-600',
-      bgColor: 'bg-orange-100',
-      iconColor: 'text-orange-600'
-    },
-    {
       icon: Sparkles,
-      title: 'Hemen Başlayın!',
-      description: 'Artık hazırsınız! Kütüphane deneyiminizi keşfetmeye başlayın.',
-      stats: ['Ücretsiz', 'Kolay Kullanım', 'Hızlı Başlangıç'],
+      title: 'Hemen Başlayın! 🚀',
+      description: 'Artık hazırsınız! Kataloğu keşfedin, etkinliklere katılın ve okuma topluluğumuzun bir parçası olun.',
+      stats: ['Kolay Kullanım', 'Hızlı Başlangıç', 'Eğlenceli'],
       color: 'from-green-600 to-emerald-600',
       bgColor: 'bg-green-100',
       iconColor: 'text-green-600'
@@ -155,6 +137,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl px-4 mb-6 sm:mb-8 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
               {currentStepData.description}
             </p>
+            {/* Special message for spin wheel step */}
+            {currentStep === 1 && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-w-md mx-auto mb-4 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
+                <p className="text-white text-sm sm:text-base font-semibold">
+                  💡 İpucu: Çarkı çevirmek için ana sayfadaki çark ikonuna tıklayın!
+                </p>
+              </div>
+            )}
             {/* Stats */}
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4 px-4 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
               {currentStepData.stats.map((stat, index) => (

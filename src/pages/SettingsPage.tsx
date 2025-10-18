@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Bell, BellOff } from 'lucide-react';
+import { ChevronLeft, Bell, BellOff, User, Award, Calendar, Mail, GraduationCap, Hash, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
@@ -42,7 +42,7 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24"> 
         <div className="mb-6 sm:mb-8">
           <button
@@ -61,90 +61,185 @@ const SettingsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        {/* Profil Kartı */}
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-6 sm:p-8 mb-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+          <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              {userData?.photoURL ? (
+                <img
+                  src={userData.photoURL}
+                  alt="Profil"
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/30 shadow-xl object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/30 shadow-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <User className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+                </div>
+              )}
+              <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-indigo-900 rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg border-4 border-white shadow-lg">
+                {userData?.level || 1}
+              </div>
+            </div>
+
+            {/* Bilgiler */}
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                {userData?.displayName || user?.email?.split('@')[0]}
+              </h2>
+              <p className="text-white/80 mb-4">{user?.email}</p>
+              
+              {/* XP Progress */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white/90 text-sm font-medium">Seviye İlerlemesi</span>
+                  <span className="text-white font-bold">{userData?.totalXP || 0} XP</span>
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-3">
+                  <div
+                    className="bg-yellow-400 h-3 rounded-full transition-all duration-500 shadow-lg"
+                    style={{ width: `${((userData?.totalXP || 0) % 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* İstatistikler */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="flex items-center justify-center mb-2">
+                    <Award className="w-5 h-5 text-yellow-400 mr-2" />
+                    <span className="text-white/80 text-sm">Seviye</span>
+                  </div>
+                  <p className="text-2xl font-bold text-white text-center">{userData?.level || 1}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="flex items-center justify-center mb-2">
+                    <Calendar className="w-5 h-5 text-blue-300 mr-2" />
+                    <span className="text-white/80 text-sm">Üyelik</span>
+                  </div>
+                  <p className="text-2xl font-bold text-white text-center">
+                    {userData?.createdAt ? Math.floor((Date.now() - new Date(userData.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0} gün
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Hesap Bilgileri */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <User className="w-5 h-5 mr-2 text-indigo-600" />
+              Hesap Bilgileri
+            </h3>
+          </div>
           <div className="p-4 sm:p-6">
-            <div className="space-y-4 sm:space-y-6">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-lg p-4 shadow-sm">
                 <p className="text-sm text-yellow-800">
                   <strong>Not:</strong> Profil bilgileriniz sistem yöneticisi tarafından yönetilmektedir. 
                   Değişiklik yapmak için kütüphane personeli ile iletişime geçiniz.
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Ad Soyad
-                </label>
-                <input
-                  type="text"
-                  name="displayName"
-                  value={userData?.displayName || ''}
-                  disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="group">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <User className="w-4 h-4 mr-2 text-indigo-600" />
+                    Ad Soyad
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={userData?.displayName || ''}
+                      disabled
+                      className="block w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl shadow-sm bg-gradient-to-r from-gray-50 to-gray-100 transition-all group-hover:shadow-md"
+                    />
+                    <User className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  E-posta
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={user?.email || ''}
-                  disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                />
-              </div>
+                <div className="group">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Mail className="w-4 h-4 mr-2 text-indigo-600" />
+                    E-posta
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="block w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl shadow-sm bg-gradient-to-r from-gray-50 to-gray-100 transition-all group-hover:shadow-md"
+                    />
+                    <Mail className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Sınıf
-                </label>
-                <input
-                  type="text"
-                  name="studentClass"
-                  value={userData?.studentClass || ''}
-                  disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                />
-              </div>
+                <div className="group">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <GraduationCap className="w-4 h-4 mr-2 text-indigo-600" />
+                    Sınıf
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={userData?.studentClass || ''}
+                      disabled
+                      className="block w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl shadow-sm bg-gradient-to-r from-gray-50 to-gray-100 transition-all group-hover:shadow-md"
+                    />
+                    <GraduationCap className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Öğrenci Numarası
-                </label>
-                <input
-                  type="text"
-                  name="studentNumber"
-                  value={userData?.studentNumber || ''}
-                  disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                />
-              </div>
+                <div className="group">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Hash className="w-4 h-4 mr-2 text-indigo-600" />
+                    Öğrenci Numarası
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={userData?.studentNumber || ''}
+                      disabled
+                      className="block w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl shadow-sm bg-gradient-to-r from-gray-50 to-gray-100 transition-all group-hover:shadow-md"
+                    />
+                    <Hash className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Kayıt Tarihi
-                </label>
-                <input
-                  type="text"
-                  value={userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : ''}
-                  disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                />
-              </div>
+                <div className="group">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 mr-2 text-indigo-600" />
+                    Kayıt Tarihi
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString('tr-TR') : ''}
+                      disabled
+                      className="block w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl shadow-sm bg-gradient-to-r from-gray-50 to-gray-100 transition-all group-hover:shadow-md"
+                    />
+                    <Calendar className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Son Giriş
-                </label>
-                <input
-                  type="text"
-                  value={userData?.lastLogin ? new Date(userData.lastLogin).toLocaleDateString() : ''}
-                  disabled
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                />
+                <div className="group">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Clock className="w-4 h-4 mr-2 text-indigo-600" />
+                    Son Giriş
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={userData?.lastLogin ? new Date(userData.lastLogin).toLocaleDateString('tr-TR') : ''}
+                      disabled
+                      className="block w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl shadow-sm bg-gradient-to-r from-gray-50 to-gray-100 transition-all group-hover:shadow-md"
+                    />
+                    <Clock className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -152,7 +247,7 @@ const SettingsPage: React.FC = () => {
 
         {/* Bildirim Ayarları */}
         {isNative && (
-          <div className="mt-6 bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="mt-6 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">
             <div className="p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Bell className="w-5 h-5 mr-2 text-indigo-600" />

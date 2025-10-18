@@ -81,6 +81,7 @@ const ReportsTab: React.FC = () => {
         studentClass: doc.data().studentClass || '',
         role: doc.data().role || 'student',
         createdAt: doc.data().createdAt || null,
+        personalization: doc.data().personalization || null,
       })) as UserData[];
       const booksData = booksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as BookType[];
       const allBorrowedData = borrowedBooksSnapshot.docs.map(doc => doc.data());
@@ -564,6 +565,177 @@ const ReportsTab: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Kullanıcı Analizi */}
+      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 mb-8">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-4 -mx-6 -mt-6 rounded-t-2xl mb-6">
+          <h3 className="text-lg font-semibold flex items-center">
+            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Kullanıcı Analizi
+          </h3>
+        </div>
+        {(() => {
+          const studentsWithData = reportData.usersData.filter((u: any) => u.personalization?.isCompleted);
+          
+          if (studentsWithData.length === 0) {
+            return (
+              <div className="text-center py-12 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border-2 border-dashed border-purple-200">
+                <div className="text-6xl mb-4">📊</div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Kullanıcı Analizi Hazırlanıyor</h3>
+                <p className="text-gray-600 mb-4">Öğrenciler kişiselleştirme sorularını yanıtladıkça bu bölümde grafikler görünecek.</p>
+                <p className="text-sm text-gray-500">({reportData.usersData.length} kullanıcıdan {studentsWithData.length} kişiselleştirme tamamladı)</p>
+              </div>
+            );
+          }
+
+          const categories: Record<string, number> = {};
+          const topics: Record<string, number> = {};
+          const magazines: Record<string, number> = {};
+          const influences: Record<string, number> = {};
+          const interests: Record<string, number> = {};
+
+          studentsWithData.forEach((user: any) => {
+            const p = user.personalization!;
+            p.favoriteCategories?.forEach((c: string) => categories[c] = (categories[c] || 0) + 1);
+            p.favoriteTopics?.forEach((t: string) => topics[t] = (topics[t] || 0) + 1);
+            p.favoriteMagazines?.forEach((m: string) => magazines[m] = (magazines[m] || 0) + 1);
+            if (p.readingInfluence) influences[p.readingInfluence] = (influences[p.readingInfluence] || 0) + 1;
+            p.interests?.forEach((i: string) => interests[i] = (interests[i] || 0) + 1);
+          });
+
+          const categoryChartData = {
+            labels: Object.keys(categories),
+            datasets: [{ label: 'Öğrenci Sayısı', data: Object.values(categories), backgroundColor: ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6', '#f97316', '#84cc16'] }]
+          };
+
+          const topicChartData = {
+            labels: Object.keys(topics),
+            datasets: [{ label: 'Öğrenci Sayısı', data: Object.values(topics), backgroundColor: '#ec4899' }]
+          };
+
+          const magazineChartData = {
+            labels: Object.keys(magazines),
+            datasets: [{ label: 'Öğrenci Sayısı', data: Object.values(magazines), backgroundColor: '#f59e0b' }]
+          };
+
+          const influenceChartData = {
+            labels: Object.keys(influences),
+            datasets: [{ label: 'Öğrenci Sayısı', data: Object.values(influences), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }]
+          };
+
+          const interestChartData = {
+            labels: Object.keys(interests),
+            datasets: [{ label: 'Öğrenci Sayısı', data: Object.values(interests), backgroundColor: '#10b981' }]
+          };
+
+          const topCategory = Object.entries(categories).sort((a, b) => b[1] - a[1])[0];
+          const topTopic = Object.entries(topics).sort((a, b) => b[1] - a[1])[0];
+          const topInfluence = Object.entries(influences).sort((a, b) => b[1] - a[1])[0];
+
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
+                  <p className="text-purple-600 text-sm font-medium mb-1">Veri Tamamlama</p>
+                  <p className="text-3xl font-bold text-purple-700">{Math.round((studentsWithData.length / reportData.usersData.length) * 100)}%</p>
+                  <p className="text-xs text-purple-600 mt-1">{studentsWithData.length}/{reportData.usersData.length} kullanıcı</p>
+                </div>
+                <div className="bg-gradient-to-br from-pink-50 to-pink-100 border border-pink-200 rounded-lg p-4">
+                  <p className="text-pink-600 text-sm font-medium mb-1">En Popüler Kategori</p>
+                  <p className="text-lg font-bold text-pink-700">{topCategory?.[0] || '-'}</p>
+                  <p className="text-xs text-pink-600 mt-1">{topCategory?.[1] || 0} kullanıcı</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4">
+                  <p className="text-orange-600 text-sm font-medium mb-1">En Popüler Konu</p>
+                  <p className="text-lg font-bold text-orange-700">{topTopic?.[0] || '-'}</p>
+                  <p className="text-xs text-orange-600 mt-1">{topTopic?.[1] || 0} kullanıcı</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                  <p className="text-blue-600 text-sm font-medium mb-1">En Etkili Faktör</p>
+                  <p className="text-lg font-bold text-blue-700">{topInfluence?.[0] || '-'}</p>
+                  <p className="text-xs text-blue-600 mt-1">{topInfluence?.[1] || 0} kullanıcı</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="w-1 h-5 bg-purple-500 rounded-full mr-2"></span>
+                    Kategori Tercihleri
+                  </h3>
+                  <div className="h-64"><Pie data={categoryChartData} options={{ maintainAspectRatio: false }} /></div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="w-1 h-5 bg-pink-500 rounded-full mr-2"></span>
+                    Konu Tercihleri
+                  </h3>
+                  <div className="h-64"><Bar data={topicChartData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} /></div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="w-1 h-5 bg-orange-500 rounded-full mr-2"></span>
+                    Dergi Tercihleri
+                  </h3>
+                  <div className="h-64"><Bar data={magazineChartData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} /></div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="w-1 h-5 bg-blue-500 rounded-full mr-2"></span>
+                    Okuma Etkisi
+                  </h3>
+                  <div className="h-64"><Pie data={influenceChartData} options={{ maintainAspectRatio: false }} /></div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                  <span className="w-1 h-5 bg-green-500 rounded-full mr-2"></span>
+                  İlgi Alanları
+                </h3>
+                <div className="h-64"><Bar data={interestChartData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} /></div>
+              </div>
+
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-l-4 border-indigo-500 rounded-lg p-6">
+                <h3 className="font-bold text-indigo-900 mb-4 flex items-center">
+                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  Öneriler & İçgörüler
+                </h3>
+                <ul className="space-y-2">
+                  {topCategory && (
+                    <li className="flex items-start">
+                      <span className="text-green-500 mr-2">•</span>
+                      <span className="text-gray-700"><strong>{topCategory[0]}</strong> kategorisi en popüler (%{Math.round((topCategory[1] / studentsWithData.length) * 100)}). Koleksiyonu güçlendirin.</span>
+                    </li>
+                  )}
+                  {topTopic && (
+                    <li className="flex items-start">
+                      <span className="text-green-500 mr-2">•</span>
+                      <span className="text-gray-700"><strong>{topTopic[0]}</strong> konusu ilgi çekiyor. Bu konuda etkinlik düzenleyin.</span>
+                    </li>
+                  )}
+                  {topInfluence && topInfluence[0] === 'Sosyal Medya' && (
+                    <li className="flex items-start">
+                      <span className="text-green-500 mr-2">•</span>
+                      <span className="text-gray-700">Sosyal medya etkisi yüksek. Instagram/TikTok kampanyaları düşünün.</span>
+                    </li>
+                  )}
+                  {topInfluence && topInfluence[0] === 'Öğretmen' && (
+                    <li className="flex items-start">
+                      <span className="text-green-500 mr-2">•</span>
+                      <span className="text-gray-700">Öğretmen etkisi güçlü. Öğretmen işbirliklerini artırın.</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Class Utilization Chart */}

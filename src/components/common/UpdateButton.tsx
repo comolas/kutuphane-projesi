@@ -4,6 +4,11 @@ import { useUpdate } from '../../contexts/UpdateContext';
 const UpdateButton: React.FC = () => {
   const { isUpdateAvailable, isUpdateDownloaded, downloadProgress, downloadUpdate, installUpdate } = useUpdate();
 
+  // Sadece Electron'da göster
+  if (!window.electronAPI) {
+    return null;
+  }
+
   let buttonText = 'Uygulamayı Güncelle';
   let buttonColorClass = 'bg-blue-500 hover:bg-blue-700'; // Default blue
 
@@ -29,6 +34,11 @@ const UpdateButton: React.FC = () => {
       downloadUpdate();
     }
   };
+
+  // Güncelleme yoksa butonu gösterme
+  if (!isUpdateAvailable && !isUpdateDownloaded) {
+    return null;
+  }
 
   return (
     <button

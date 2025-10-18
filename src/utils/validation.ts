@@ -11,11 +11,6 @@ export const validateEmail = (email: string): { valid: boolean; error?: string }
     return { valid: false, error: 'Geçersiz e-posta formatı' };
   }
   
-  // Data Koleji domain kontrolü (opsiyonel)
-  if (!email.endsWith('@datakolej.edu.tr') && !email.endsWith('@gmail.com')) {
-    return { valid: false, error: 'Sadece @datakolej.edu.tr veya @gmail.com adresleri kabul edilir' };
-  }
-  
   return { valid: true };
 };
 

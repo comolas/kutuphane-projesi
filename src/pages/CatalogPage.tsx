@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import OptimizedImage from '../components/common/OptimizedImage';
 import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Star, Heart, MessageSquare } from 'lucide-react';
 import { Book } from '../types';
 import { useBooks } from '../contexts/BookContext';
@@ -219,7 +220,7 @@ const CatalogPage: React.FC = () => {
   const totalPages = Math.ceil(filteredAndSortedBooks.length / booksPerPage);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-4">
           <button
@@ -525,7 +526,11 @@ const CatalogPage: React.FC = () => {
                         >
                           <Heart className={`w-5 h-5 transition-all ${userFavorites.includes(book.id) ? 'text-red-500 fill-current scale-110' : ''}`} />
                         </button>
-                        <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <OptimizedImage 
+                          src={book.coverImage} 
+                          alt={book.title} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                             <button
@@ -624,10 +629,12 @@ const CatalogPage: React.FC = () => {
               {/* Left Side */}
               <div className="md:w-2/5 bg-gradient-to-br from-gray-100 to-gray-200 p-4 sm:p-8 flex flex-col items-center justify-center">
                 <div className="relative mb-4 sm:mb-6">
-                  <img
+                  <OptimizedImage
                     src={selectedBook.coverImage}
                     alt={selectedBook.title}
                     className="w-48 h-72 sm:w-64 sm:h-96 object-cover rounded-2xl shadow-2xl"
+                    width={256}
+                    height={384}
                   />
                   <div className="absolute top-3 right-3">
                     <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg backdrop-blur-sm ${
@@ -725,7 +732,7 @@ const CatalogPage: React.FC = () => {
                       {recommendedBooksForModal.slice(0, 6).map(book => (
                         <div key={book.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-lg transition-all hover:scale-105">
                           <div className="relative aspect-[2/3]">
-                            <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
+                            <OptimizedImage src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
                           </div>
                           <div className="p-3">
                             <h5 className="font-semibold text-gray-900 text-sm line-clamp-1">{book.title}</h5>

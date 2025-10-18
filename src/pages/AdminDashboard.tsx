@@ -126,7 +126,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
       {/* Sidebar */}
       <div className={`fixed top-0 left-0 h-full w-80 sm:w-96 bg-indigo-900 text-white transform transition-transform duration-300 ease-in-out z-50 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -482,7 +482,7 @@ const AdminDashboard: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="bg-indigo-900 text-white">
+      <div className="bg-indigo-900 text-white pt-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center">

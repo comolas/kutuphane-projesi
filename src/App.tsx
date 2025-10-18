@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import LoadingSpinner from './components/common/LoadingSpinner';
 import SplashScreen from './components/SplashScreen';
 import Onboarding from './components/Onboarding';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -22,42 +24,55 @@ import { SpinWheelProvider } from './contexts/SpinWheelContext';
 import { CouponProvider } from './contexts/CouponContext';
 import { LocalNotificationProvider } from './contexts/LocalNotificationContext';
 import { useContentNotifications } from './hooks/useContentNotifications';
+import { useMobileUpdate } from './hooks/useMobileUpdate';
+import MobileUpdateModal from './components/common/MobileUpdateModal';
 import Header from './components/layout/Header';
+import AdminHeader from './components/layout/AdminHeader';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
-import AdminDashboard from './pages/AdminDashboard';
-import UserDashboard from './pages/UserDashboard';
-import MyEventsPage from './pages/MyEventsPage';
-import RequestsPage from './pages/RequestsPage';
-import CatalogPage from './pages/CatalogPage';
-import MagazinesPage from './pages/MagazinesPage';
-import BorrowedBooksPage from './pages/BorrowedBooksPage';
-import SettingsPage from './pages/SettingsPage';
-import FinesPage from './pages/FinesPage';
-import CollectionDistributionPage from './pages/CollectionDistributionPage';
-import FavoritesPage from './pages/FavoritesPage';
-import AuthorsPage from './pages/AuthorsPage';
-import AuthorDetailsPage from './pages/AuthorDetailsPage';
-import ProgressPage from './pages/ProgressPage';
-import UserBorrowsDetailPage from './pages/admin/UserBorrowsDetailPage';
-import GamesPage from './pages/GamesPage';
-import GameReservationPage from './pages/GameReservationPage';
-import MyGameReservationsPage from './pages/MyGameReservationsPage';
-import MyAppointments from './pages/MyAppointments';
-import BlogPage from './pages/BlogPage';
-import SinglePostPage from './pages/SinglePostPage';
-import CreatePostPage from './pages/CreatePostPage';
-import MyPostsPage from './pages/MyPostsPage';
-import MyCoupons from './pages/user/MyCoupons';
-import TeacherDashboard from './pages/TeacherDashboard';
-import MyClassPage from './pages/MyClassPage';
-import TeacherReportsPage from './pages/TeacherReportsPage';
+
+// Lazy loaded pages
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
+const MyEventsPage = lazy(() => import('./pages/MyEventsPage'));
+const RequestsPage = lazy(() => import('./pages/RequestsPage'));
+const CatalogPage = lazy(() => import('./pages/CatalogPage'));
+const MagazinesPage = lazy(() => import('./pages/MagazinesPage'));
+const BorrowedBooksPage = lazy(() => import('./pages/BorrowedBooksPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const FinesPage = lazy(() => import('./pages/FinesPage'));
+const CollectionDistributionPage = lazy(() => import('./pages/CollectionDistributionPage'));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
+const AuthorsPage = lazy(() => import('./pages/AuthorsPage'));
+const AuthorDetailsPage = lazy(() => import('./pages/AuthorDetailsPage'));
+const ProgressPage = lazy(() => import('./pages/ProgressPage'));
+const UserBorrowsDetailPage = lazy(() => import('./pages/admin/UserBorrowsDetailPage'));
+const GamesPage = lazy(() => import('./pages/GamesPage'));
+const GameReservationPage = lazy(() => import('./pages/GameReservationPage'));
+const MyGameReservationsPage = lazy(() => import('./pages/MyGameReservationsPage'));
+const MyAppointments = lazy(() => import('./pages/MyAppointments'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const SinglePostPage = lazy(() => import('./pages/SinglePostPage'));
+const CreatePostPage = lazy(() => import('./pages/CreatePostPage'));
+const MyPostsPage = lazy(() => import('./pages/MyPostsPage'));
+const MyCoupons = lazy(() => import('./pages/user/MyCoupons'));
+const MyClassPage = lazy(() => import('./pages/MyClassPage'));
+const TeacherReportsPage = lazy(() => import('./pages/TeacherReportsPage'));
+const StudentComparePage = lazy(() => import('./pages/StudentComparePage'));
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
-    return <div>Yükleniyor...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-lg font-semibold text-gray-700">Yükleniyor...</p>
+        </div>
+      </div>
+    );
   }
   
   return user ? <>{children}</> : <Navigate to="/login" replace />;
@@ -66,15 +81,30 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const showHeader = location.pathname !== '/login' && location.pathname !== '/admin' && !location.pathname.startsWith('/teacher');
+  const isAdminPath = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+  const showHeader = location.pathname !== '/login' && !isAdminPath && !location.pathname.startsWith('/teacher');
+  const showAdminHeader = isAdminPath;
   
   useContentNotifications();
+  const { updateInfo, showModal, handleUpdate, handleClose } = useMobileUpdate();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {showHeader && <Header isDarkMode={theme === 'dark'} toggleDarkMode={toggleTheme} />}
+      {showAdminHeader && <AdminHeader isDarkMode={theme === 'dark'} toggleDarkMode={toggleTheme} />}
+      {updateInfo && (
+        <MobileUpdateModal
+          isOpen={showModal}
+          version={updateInfo.version}
+          downloadUrl={updateInfo.downloadUrl}
+          forceUpdate={updateInfo.forceUpdate}
+          onClose={handleClose}
+          onUpdate={handleUpdate}
+        />
+      )}
       <main className={showHeader ? "pt-16" : ""}>
-        <Routes>
+        <Suspense fallback={<LoadingSpinner fullScreen size="xl" text="Sayfa yükleniyor..." variant="book" />}>
+          <Routes>
           <Route path="/login" element={<LoginPage isDarkMode={theme === 'dark'} />} />
           <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           <Route path="/dashboard" element={<PrivateRoute><UserDashboard /></PrivateRoute>} />
@@ -101,10 +131,12 @@ const AppContent = () => {
           <Route path="/my-posts" element={<PrivateRoute><MyPostsPage /></PrivateRoute>} />
           <Route path="/my-coupons" element={<PrivateRoute><MyCoupons /></PrivateRoute>} />
           <Route path="/teacher-dashboard" element={<PrivateRoute><TeacherDashboard /></PrivateRoute>} />
-          <Route path="/teacher/my-class" element={<PrivateRoute><MyClassPage /></PrivateRoute>} />
+          <Route path="/my-class" element={<PrivateRoute><MyClassPage /></PrivateRoute>} />
           <Route path="/teacher/reports" element={<PrivateRoute><TeacherReportsPage /></PrivateRoute>} />
+          <Route path="/student-compare" element={<PrivateRoute><StudentComparePage /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>
@@ -148,8 +180,9 @@ function App() {
   }
 
   return (
-    <Router>
-      <AlertProvider>
+    <ErrorBoundary>
+      <Router>
+        <AlertProvider>
         <AuthProvider>
           <SpinWheelProvider>
             <CouponProvider>
@@ -187,8 +220,9 @@ function App() {
             </CouponProvider>
           </SpinWheelProvider>
         </AuthProvider>
-      </AlertProvider>
-    </Router>
+        </AlertProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

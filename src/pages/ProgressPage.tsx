@@ -70,7 +70,7 @@ const ProgressPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         <div className="mb-8">
           <button
@@ -89,7 +89,7 @@ const ProgressPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">
           <div className="flex border-b border-gray-200 overflow-x-auto">
             {tabs.map(tab => (
               <button
@@ -109,7 +109,7 @@ const ProgressPage: React.FC = () => {
 
           <div className="p-6">
             {activeTab === 'level' && (
-              <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+              <div className="bg-white/80 backdrop-blur-xl rounded-xl shadow-lg p-6 mb-6 border border-white/20">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">Seviye {userProgress.level}</h2>
@@ -124,7 +124,7 @@ const ProgressPage: React.FC = () => {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
-                    className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full transition-all duration-300"
                     style={{
                       width: `${(userProgress.currentXP / userProgress.nextLevelXP) * 100}%`
                     }}
