@@ -308,9 +308,9 @@ const MessagesTab: React.FC = () => {
       {/* Main Content with Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-80 bg-white/90 backdrop-blur-xl lg:rounded-xl sm:lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
+        <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-80 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } lg:flex-shrink-0 border border-white/20 lg:top-6`}>
+        } lg:flex-shrink-0 border border-white/20`}>
           <div className="flex justify-between items-center mb-4 sm:mb-6">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />

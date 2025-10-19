@@ -387,40 +387,72 @@ const ReportsTab: React.FC = () => {
   const exportToPDF = async () => {
     const input = reportContentRef.current;
     if (!input) return;
-
+  
     setIsExporting(true);
     try {
+      const isMobile = window.innerWidth < 768;
+      await new Promise(resolve => setTimeout(resolve, isMobile ? 500 : 300));
+  
       const canvas = await html2canvas(input, {
-        scale: 2,
+        scale: isMobile ? 1.5 : 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#f8f9fa'
+        backgroundColor: '#f8f9fa',
+        windowWidth: isMobile ? 1200 : input.scrollWidth,
+        windowHeight: input.scrollHeight,
+        scrollY: -window.scrollY,
+        scrollX: -window.scrollX,
+        allowTaint: true
       });
-
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = canvasWidth / canvasHeight;
-      const imgWidth = pdfWidth;
-      const imgHeight = imgWidth / ratio;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+  
+      const platform = Capacitor.getPlatform();
+  
+      if (platform === 'android' || platform === 'ios') {
+        const pdfOutput = pdf.output('datauristring');
+        const fileName = `kutuphane-raporu-${reportMonth}.pdf`;
+        
+        try {
+          const result = await Filesystem.writeFile({
+            path: fileName,
+            data: pdfOutput,
+            directory: Directory.Cache,
+          });
+      
+          await Share.share({
+            title: 'Kütüphane Raporu',
+            text: `Kütüphane Raporu (${reportMonth})`,
+            url: result.uri,
+          });
+        } catch (error) {
+          console.error('File sharing error:', error);
+          await Dialog.alert({
+            title: 'Hata',
+            message: 'PDF paylaşılırken bir hata oluştu. Lütfen tekrar deneyin.',
+          });
+        }
+      } else {
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+        let heightLeft = imgHeight;
+        let position = 0;
+    
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, '', 'FAST');
         heightLeft -= pdfHeight;
+    
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, '', 'FAST');
+          heightLeft -= pdfHeight;
+        }
+    
+        pdf.save(`kutuphane-raporu-${reportMonth}.pdf`);
       }
-
-      pdf.save(`kutuphane-raporu-${reportMonth}.pdf`);
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
       alert('PDF oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');

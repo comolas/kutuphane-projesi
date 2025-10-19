@@ -194,11 +194,12 @@ service cloud.firestore {
         isAdmin() ||
         (isOwner(resource.data.userId) &&
           request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['extended', 'dueDate', 'returnStatus', 'maxExtensions', 'extensionCount']) &&
+            .hasOnly(['extended', 'dueDate', 'returnStatus', 'maxExtensions', 'extensionCount', 'returnRequestDate', 'returnDate', 'fineStatus', 'paymentDate', 'fineAmountSnapshot', 'fineRateSnapshot', 'daysOverdueSnapshot', 'discountApplied', 'originalFineAmount']) &&
           (
             (request.resource.data.extended == true && !resource.data.extended) ||
             request.resource.data.returnStatus in ['borrowed', 'returned', 'pending'] ||
-            request.resource.data.maxExtensions is int
+            request.resource.data.maxExtensions is int ||
+            request.resource.data.fineStatus in ['pending', 'paid']
           ))
       );
       
@@ -224,8 +225,7 @@ service cloud.firestore {
 
     // Return messages collection rules
     match /returnMessages/{messageId} {
-      allow read: if isAuthenticated() && 
-        (request.auth.uid == resource.data.userId || isAdmin());
+      allow read: if isAuthenticated();
       
       allow create: if isAuthenticated() &&
         request.auth.uid == request.resource.data.userId &&

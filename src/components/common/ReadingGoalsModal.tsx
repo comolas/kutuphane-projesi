@@ -69,10 +69,15 @@ const ReadingGoalsModal: React.FC<ReadingGoalsModalProps> = ({ isOpen, onClose, 
               Aylık Hedef (Kitap Sayısı)
             </label>
             <input 
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               id="monthlyGoalValue"
               value={monthlyGoalValue}
-              onChange={(e) => setMonthlyGoalValue(parseInt(e.target.value, 10))}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                if (value) setMonthlyGoalValue(parseInt(value, 10));
+              }}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
             />
           </div>
@@ -81,10 +86,15 @@ const ReadingGoalsModal: React.FC<ReadingGoalsModalProps> = ({ isOpen, onClose, 
               Yıllık Hedef (Kitap Sayısı)
             </label>
             <input 
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               id="yearlyGoalValue"
               value={yearlyGoalValue}
-              onChange={(e) => setYearlyGoalValue(parseInt(e.target.value, 10))}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                if (value) setYearlyGoalValue(parseInt(value, 10));
+              }}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
             />
           </div>

@@ -3,7 +3,7 @@ import { useBudget } from '../../../contexts/BudgetContext';
 import Button from '../../common/Button';
 import BudgetTransactionModal from '../BudgetTransactionModal';
 import { Transaction } from '../../../types';
-import { ChevronLeft, ChevronRight, ArrowUpDown, Wallet, TrendingDown, TrendingUp, Plus, Edit2, Trash2, Filter, BarChart3, PieChart, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUpDown, Wallet, TrendingDown, TrendingUp, Plus, Edit2, Trash2, Filter, BarChart3, PieChart, Calendar, X } from 'lucide-react';
 import { Line, Bar } from 'react-chartjs-2';
 import ExpensePieChart from '../budget/ExpensePieChart';
 import MonthlyBarChart from '../budget/MonthlyBarChart';
@@ -21,6 +21,7 @@ const BudgetTab: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [visualizationType, setVisualizationType] = useState<'line' | 'area' | 'stacked'>('line');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSaveTransaction = async (transactionData: Omit<Transaction, 'id'>) => {
     try {
@@ -659,51 +660,85 @@ const BudgetTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter and Actions */}
-        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fadeIn">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-              <h3 className="text-base sm:text-lg font-bold text-gray-900">Filtreler</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
-                {/* Category Filter */}
-                <div>
-                    <label htmlFor="category" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Kategori</label>
-                    <select id="category" name="category" value={filters.category} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm">
-                        {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat === '' ? 'Tümü' : cat}</option>)}
-                    </select>
-                </div>
-                {/* Type Filter */}
-                <div>
-                    <label htmlFor="type" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">İşlem Tipi</label>
-                    <select id="type" name="type" value={filters.type} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm">
-                        <option value="">Tümü</option>
-                        <option value="income">Gelir</option>
-                        <option value="expense">Gider</option>
-                    </select>
-                </div>
-                {/* Start Date */}
-                <div>
-                    <label htmlFor="startDate" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Başlangıç Tarihi</label>
-                    <input type="date" id="startDate" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm" />
-                </div>
-                {/* End Date */}
-                <div>
-                    <label htmlFor="endDate" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Bitiş Tarihi</label>
-                    <input type="date" id="endDate" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-indigo-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm" />
-                </div>
-                {/* Add New Button */}
-                <div className="flex justify-end sm:col-span-2 lg:col-span-1">
-                    <button onClick={handleAddNewClick} className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation">
-                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                        Yeni İşlem
-                    </button>
-                </div>
-            </div>
-        </div>
+        {/* Floating Filter Button (Mobile) */}
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
 
-        {/* Transactions Table */}
-        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 animate-fadeIn">
+        {/* Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        {/* Filter and Actions */}
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mb-6 sm:mb-8 animate-fadeIn">
+          {/* Sidebar Filters */}
+          <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20 z-50 transition-transform duration-300 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}>
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                <Filter className="w-5 h-5 mr-2 text-indigo-600" />
+                Filtreler
+              </h2>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 sm:space-y-6">
+              {/* Category Filter */}
+              <div>
+                <label htmlFor="category" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Kategori</label>
+                <select id="category" name="category" value={filters.category} onChange={handleFilterChange} className="block w-full px-3 py-2 bg-white border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm">
+                  {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat === '' ? 'Tümü' : cat}</option>)}
+                </select>
+              </div>
+
+              {/* Type Filter */}
+              <div>
+                <label htmlFor="type" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">İşlem Tipi</label>
+                <select id="type" name="type" value={filters.type} onChange={handleFilterChange} className="block w-full px-3 py-2 bg-white border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm">
+                  <option value="">Tümü</option>
+                  <option value="income">Gelir</option>
+                  <option value="expense">Gider</option>
+                </select>
+              </div>
+
+              {/* Start Date */}
+              <div>
+                <label htmlFor="startDate" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Başlangıç Tarihi</label>
+                <input type="date" id="startDate" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="block w-full px-3 py-2 bg-white border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm" />
+              </div>
+
+              {/* End Date */}
+              <div>
+                <label htmlFor="endDate" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Bitiş Tarihi</label>
+                <input type="date" id="endDate" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="block w-full px-3 py-2 bg-white border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm font-medium text-xs sm:text-sm" />
+              </div>
+
+              {/* Add New Button */}
+              <div>
+                <button onClick={handleAddNewClick} className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm min-h-[40px] touch-manipulation">
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Yeni İşlem
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <div className="flex-1">
+            {/* Transactions Table */}
+            <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
           <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Son İşlemler</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -786,6 +821,8 @@ const BudgetTab: React.FC = () => {
               </div>
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </>

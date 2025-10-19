@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, BookOpen } from 'lucide-react';
+import { X, BookOpen, Lightbulb, Loader2 } from 'lucide-react';
 import { Book } from '../../types';
 import { Html5Qrcode, Html5QrcodeScanType } from 'html5-qrcode';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../firebase/config';
+import Swal from 'sweetalert2';
 
 interface EditBookModalProps {
   isOpen: boolean;
@@ -14,6 +17,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
   const [editableBook, setEditableBook] = useState<Book | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
 
   useEffect(() => {
     if (book) {
@@ -199,6 +203,44 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
     e.preventDefault();
     if (editableBook) {
       onSave(editableBook);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!editableBook?.title || !editableBook?.author) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Eksik Bilgi',
+        text: 'Açıklama oluşturmak için kitap başlığı ve yazar bilgisi gerekli.'
+      });
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const generateBookDescription = httpsCallable(functions, 'generateBookDescription');
+      const result: any = await generateBookDescription({
+        title: editableBook.title,
+        author: editableBook.author
+      });
+
+      setEditableBook(prev => prev ? { ...prev, backCover: result.data.description } : null);
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: `Açıklama AI tarafından oluşturuldu. Kalan hakkınız: ${result.data.remaining}/10`,
+        timer: 3000
+      });
+    } catch (error: any) {
+      console.error('Error generating description:', error);
+      const errorMessage = error?.message || 'Açıklama oluşturulurken bir hata oluştu.';
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: errorMessage
+      });
+    } finally {
+      setGeneratingDescription(false);
     }
   };
 
@@ -418,7 +460,27 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
             />
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="backCover" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Arka Kapak Yazısı</label>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="backCover" className="block text-xs sm:text-sm font-semibold text-gray-700">Arka Kapak Yazısı</label>
+              <button
+                type="button"
+                onClick={handleGenerateDescription}
+                disabled={generatingDescription}
+                className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generatingDescription ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Oluşturuluyor...
+                  </>
+                ) : (
+                  <>
+                    <Lightbulb className="w-3 h-3" />
+                    AI ile Oluştur
+                  </>
+                )}
+              </button>
+            </div>
             <textarea
               id="backCover"
               name="backCover"

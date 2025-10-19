@@ -154,10 +154,11 @@ const GameManagementTab: React.FC = () => {
             </div>
             <button 
               onClick={() => handleOpenModal()} 
-              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold"
+              className="px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 font-semibold text-sm sm:text-base"
             >
-              <Plus className="w-5 h-5" />
-              Yeni Oyun Ekle
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Yeni Oyun Ekle</span>
+              <span className="sm:hidden">Yeni Ekle</span>
             </button>
           </div>
         </div>
