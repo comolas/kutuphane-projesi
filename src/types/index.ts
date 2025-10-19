@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface Book {
   id: string;
   isbn?: string;
@@ -190,4 +192,27 @@ export interface Penalty {
   paymentMethod?: 'cash' | 'card' | 'other';
   collectedBy?: string;
   createdAt: any; // Firestore Timestamp
+}
+
+export interface Borrow {
+  bookId: string;
+  userId: string;
+  borrowedAt: Timestamp;
+  dueDate: Timestamp;
+  returnedAt?: Timestamp;
+  fineStatus?: 'paid' | 'unpaid';
+  paymentDate?: Timestamp;
+  fineAmount?: number;
+  returnStatus: 'borrowed' | 'returned';
+}
+
+export interface BorrowedBook extends Book {
+    borrowedAt: Timestamp;
+    dueDate: Timestamp;
+    returnedAt?: Timestamp;
+    fineStatus?: 'paid' | 'unpaid';
+    paymentDate?: Timestamp;
+    fineAmount?: number;
+    returnStatus: 'borrowed' | 'returned';
+    userId: string;
 }

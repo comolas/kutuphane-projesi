@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
-import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, ChevronLeft, ChevronRight as ChevronRightIcon, Search, PieChart, MapPin, Calendar as CalendarIcon, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart } from 'lucide-react';
+import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, Search, PieChart, MapPin, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart } from 'lucide-react';
 import { useSpinWheel } from '../contexts/SpinWheelContext';
 import SpinWheelModal from '../components/user/SpinWheelModal';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
@@ -11,6 +11,7 @@ import ItemSlider from '../components/common/ItemSlider';
 import Leaderboard from '../components/dashboard/Leaderboard'; // Lider tablosu import edildi
 import UpdateButton from '../components/common/UpdateButton'; // Added import
 import ChatBot from '../components/ChatBot'; // Chat bot import edildi
+import EnhancedBookCarousel from '../components/common/EnhancedBookCarousel';
 
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -40,14 +41,8 @@ const UserDashboard: React.FC = () => {
   const [showReadingGoalsModal, setShowReadingGoalsModal] = useState(false);
   const [showCongratulatoryModal, setShowCongratulatoryModal] = useState(false);
   const [dailyQuote, setDailyQuote] = useState<{text: string, author: string, book: string} | null>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [currentRecSlide, setCurrentRecSlide] = useState(0);
-  const [newBooks, setNewBooks] = useState<Book[][]>([]);
-  
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const sliderRef = React.useRef<HTMLDivElement>(null);
+  const [newBooks, setNewBooks] = useState<Book[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showPersonalization, setShowPersonalization] = useState(false);
   const [showItemDetailsModal, setShowItemDetailsModal] = useState(false);
@@ -136,11 +131,7 @@ const UserDashboard: React.FC = () => {
         return dateB - dateA;
       });
       const latestBooks = sortedBooks.slice(0, 12);
-      const chunkedBooks = [];
-      for (let i = 0; i < latestBooks.length; i += 4) {
-        chunkedBooks.push(latestBooks.slice(i, i + 4));
-      }
-      setNewBooks(chunkedBooks);
+      setNewBooks(latestBooks);
     }
   }, [allBooks]);
 
@@ -206,13 +197,7 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % newBooks.length);
-  };
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + newBooks.length) % newBooks.length);
-  };
 
   const nextRecSlide = () => {
     setCurrentRecSlide((prev) => (prev + 1) % Math.ceil(recommendedBooks.length / 4));
@@ -235,30 +220,9 @@ const UserDashboard: React.FC = () => {
     setCurrentAuthorBookSlide((prev) => (prev - 1 + slideCount) % slideCount);
   };
 
-  useEffect(() => {
-    const timer = setInterval(nextSlide, 5000);
-    return () => clearInterval(timer);
-  }, [newBooks.length]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.pageX - (sliderRef.current?.offsetLeft || 0));
-    setScrollLeft(sliderRef.current?.scrollLeft || 0);
-  };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - (sliderRef.current?.offsetLeft || 0);
-    const walk = (x - startX) * 2;
-    if (sliderRef.current) {
-      sliderRef.current.scrollLeft = scrollLeft - walk;
-    }
-  };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
 
   if (!user || isAdmin) {
     return <Navigate to="/login" replace />;
@@ -932,112 +896,14 @@ const UserDashboard: React.FC = () => {
 
             {/* New Books - Full Width */}
             <section className="lg:col-span-12">
-              <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <div className="mb-6">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
                   <BookPlus className="w-6 h-6 mr-2 text-green-500" />
                   Yeni Eklenen Kitaplar
                 </h2>
-                {newBooks.length > 0 && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={prevSlide}
-                      className="p-2 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <button
-                      onClick={nextSlide}
-                      className="p-2 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors"
-                    >
-                      <ChevronRightIcon className="w-5 h-5 text-gray-600" />
-                    </button>
-                  </div>
-                )}
+                <p className="text-gray-600 mt-2">Kütüphanemize yeni eklenen kitapları keşfedin</p>
               </div>
-              <div className="relative">
-                {newBooks.length > 0 ? (
-                  <>
-                    <div
-                      ref={sliderRef}
-                      className="overflow-hidden"
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
-                      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-                    >
-                      <div
-                        className="flex transition-transform duration-500 ease-in-out"
-                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                      >
-                        {newBooks.map((slide, slideIndex) => (
-                          <div key={slideIndex} className="w-full flex-shrink-0 px-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                              {slide.map(book => (
-                                <div
-                                  key={book.id}
-                                  className="bg-white rounded-xl shadow-sm overflow-hidden transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-4 border-transparent hover:border-indigo-400"
-                                >
-                                  <div className="relative">
-                                    <img
-                                      src={book.coverImage}
-                                      alt={book.title}
-                                      className="w-full h-80 object-cover"
-                                    />
-                                    <div className="absolute top-2 right-2">
-                                      <div className="px-2 py-1 bg-indigo-600 text-white text-xs rounded-full">
-                                        Yeni
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="p-4">
-                                    <h3 className="font-semibold text-gray-900 mb-1">{book.title}</h3>
-                                    <p className="text-sm text-gray-600">{book.author}</p>
-                                    <div className="mt-3 flex items-center justify-between">
-                                      <div className="flex items-center text-xs text-gray-500">
-                                        <CalendarIcon className="w-4 h-4 mr-1" />
-                                        {book.addedDate && new Date((book.addedDate as any).seconds * 1000).toLocaleDateString()}
-                                      </div>
-                                      <button
-                                        onClick={() => handleBorrowBook(book as BookType)}
-                                        className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium hover:bg-indigo-200 transition-colors"
-                                      >
-                                        Ödünç Al
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                      {newBooks.map((_, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentSlide(index)}
-                          className={`w-2 h-2 rounded-full transition-colors ${
-                            currentSlide === index
-                              ? 'bg-indigo-600'
-                              : 'bg-gray-300 hover:bg-indigo-400'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center h-full min-h-[280px] border border-white/20">
-                    <BookPlus className="w-12 h-12 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Henüz Yeni Kitap Eklenmemiş</h3>
-                    <p className="text-gray-500 mb-4">Bu hafta yeni eklenen bir kitap yok. Katalogdaki diğer harika eserlere göz atabilirsiniz.</p>
-                    <Link to="/catalog" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                      Kataloğa Göz At
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <EnhancedBookCarousel books={newBooks} onBorrowBook={handleBorrowBook} />
             </section>
 
             {/* Events - Full Width */}

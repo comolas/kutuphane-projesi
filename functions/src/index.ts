@@ -1747,3 +1747,98 @@ export const getChatHistory = onCall(async (request: any) => {
     return { messages: [] };
   }
 });
+
+// AI ile kitap açıklaması oluştur
+export const generateBookDescription = onCall(
+  { cors: true },
+  async (request: any) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+    }
+
+    if (request.auth?.token.role !== "admin") {
+      throw new HttpsError("permission-denied", "Bu özellik sadece adminler için.");
+    }
+
+    // Günlük limit kontrolü (10 kullanım)
+    const db = admin.firestore();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const rateLimitDoc = db.collection("aiDescriptionLimits").doc(request.auth.uid);
+    const doc = await rateLimitDoc.get();
+    const data = doc.data();
+    
+    const todayUsage = data?.lastUsed?.toDate().setHours(0, 0, 0, 0) === today.getTime() ? (data?.count || 0) : 0;
+    
+    if (todayUsage >= 10) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Günlük AI açıklama oluşturma limitiniz doldu (10/10). Yarın tekrar deneyebilirsiniz."
+      );
+    }
+
+    const { title, author } = request.data;
+
+    if (!title || !author) {
+      throw new HttpsError("invalid-argument", "Kitap başlığı ve yazar bilgisi gerekli.");
+    }
+
+    try {
+      const bedrockClient = new BedrockRuntimeClient({
+        region: "us-east-1",
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID || awsAccessKeyId.value(),
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || awsSecretAccessKey.value(),
+        },
+      });
+
+      const prompt = `Sen bir kütüphane uzmanısın. Aşağıdaki kitap için öğrencilere yönelik, resmi ama merak uyandırıcı bir arka kapak açıklaması yaz.
+
+Kitap Bilgileri:
+Başlık: ${title}
+Yazar: ${author}
+
+Kurallar:
+- Hedef kitle: Öğrenciler
+- Ton: Resmi ama merak uyandırıcı
+- Uzunluk: 1 paragraf (yaklaşık 4-6 cümle)
+- Kitabın konusunu, temasını ve neden okunması gerektiğini anlat
+- Spoiler verme
+- Sadece açıklamayı yaz, başka bir şey ekleme
+
+Açıklama:`;
+
+      const payload = {
+        anthropic_version: "bedrock-2023-05-31",
+        max_tokens: 500,
+        temperature: 0.7,
+        messages: [{ role: "user", content: prompt }],
+      };
+
+      const command = new InvokeModelCommand({
+        modelId: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+        contentType: "application/json",
+        accept: "application/json",
+        body: JSON.stringify(payload),
+      });
+
+      const response = await bedrockClient.send(command);
+      const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+      const description = responseBody.content[0].text.trim();
+
+      // Kullanım sayısını güncelle
+      await rateLimitDoc.set({
+        count: todayUsage + 1,
+        lastUsed: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      logger.info("Book description generated successfully");
+      return { description, remaining: 9 - todayUsage };
+    } catch (error) {
+      const err = error as any;
+      logger.error("Error generating book description", { code: err.code, message: err.message });
+      throw new HttpsError("internal", "Açıklama oluşturulurken bir hata oluştu.");
+    }
+  }
+);

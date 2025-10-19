@@ -16,7 +16,7 @@ interface GoalsContextType {
   yearlyGoal: Goal | null;
   fetchGoals: () => Promise<void>;
   saveGoal: (goal: Omit<Goal, 'progress'>) => Promise<void>;
-  updateGoalProgress: (bookCount: number) => Promise<void>;
+  updateGoalProgress: (bookCount: number, targetUserId?: string) => Promise<void>;
   showConfetti: boolean;
   resetConfetti: () => void;
 }
@@ -81,23 +81,26 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [user]);
 
-  const updateGoalProgress = useCallback(async (bookCount: number) => {
-    if (!user) return;
+  const updateGoalProgress = useCallback(async (bookCount: number, targetUserId?: string) => {
+    const userId = targetUserId || user?.uid;
+    if (!userId) return;
 
     try {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth() + 1;
 
-    const monthlyGoalRef = doc(db, 'readingGoals', `${user.uid}_${year}_${month}_monthly`);
-    const yearlyGoalRef = doc(db, 'readingGoals', `${user.uid}_${year}_yearly`);
+    const monthlyGoalRef = doc(db, 'readingGoals', `${userId}_${year}_${month}_monthly`);
+    const yearlyGoalRef = doc(db, 'readingGoals', `${userId}_${year}_yearly`);
 
     const monthlyGoalSnap = await getDoc(monthlyGoalRef);
     if (monthlyGoalSnap.exists()) {
       const monthlyGoalData = monthlyGoalSnap.data() as Goal;
       await updateDoc(monthlyGoalRef, { progress: increment(bookCount) });
-      setMonthlyGoal(prev => prev ? { ...prev, progress: prev.progress + bookCount } : null);
-      if (monthlyGoalData.progress + bookCount >= monthlyGoalData.goal) {
+      if (userId === user?.uid) {
+        setMonthlyGoal(prev => prev ? { ...prev, progress: prev.progress + bookCount } : null);
+      }
+      if (monthlyGoalData.progress + bookCount >= monthlyGoalData.goal && userId === user?.uid) {
         setShowConfetti(true);
       }
     }
@@ -106,8 +109,10 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (yearlyGoalSnap.exists()) {
       const yearlyGoalData = yearlyGoalSnap.data() as Goal;
       await updateDoc(yearlyGoalRef, { progress: increment(bookCount) });
-      setYearlyGoal(prev => prev ? { ...prev, progress: prev.progress + bookCount } : null);
-      if (yearlyGoalData.progress + bookCount >= yearlyGoalData.goal) {
+      if (userId === user?.uid) {
+        setYearlyGoal(prev => prev ? { ...prev, progress: prev.progress + bookCount } : null);
+      }
+      if (yearlyGoalData.progress + bookCount >= yearlyGoalData.goal && userId === user?.uid) {
         setShowConfetti(true);
       }
     }

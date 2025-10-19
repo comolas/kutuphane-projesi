@@ -258,12 +258,7 @@ const AuthorManagementTab: React.FC = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
-        >
-          <Filter className="w-6 h-6" />
-        </button>
+
 
         {isSidebarOpen && (
           <div
@@ -364,11 +359,11 @@ const AuthorManagementTab: React.FC = () => {
 
         <div className="flex-1">
           <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             Yazar Yönetimi
           </h2>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <div className="flex bg-white/60 backdrop-blur-xl rounded-xl p-1 border border-gray-200">
               <button
                 onClick={() => setViewMode('table')}
@@ -383,15 +378,13 @@ const AuthorManagementTab: React.FC = () => {
                 <Grid className="w-5 h-5" />
               </button>
             </div>
-            <button onClick={() => setIsBulkModalOpen(true)} className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center text-sm sm:text-base">
-              <Upload className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Toplu Yazar Ekle</span>
-              <span className="sm:hidden">Toplu Ekle</span>
+            <button onClick={() => setIsBulkModalOpen(true)} className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center text-sm min-h-[44px] touch-manipulation">
+              <Upload className="w-4 h-4 mr-2" />
+              Toplu Yazar Ekle
             </button>
-            <button onClick={() => handleOpenModal(null)} className="px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center text-sm sm:text-base">
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Yeni Yazar Ekle</span>
-              <span className="sm:hidden">Yeni Ekle</span>
+            <button onClick={() => handleOpenModal(null)} className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center text-sm min-h-[44px] touch-manipulation">
+              <Plus className="w-4 h-4 mr-2" />
+              Yeni Yazar Ekle
             </button>
             </div>
           </div>
@@ -541,7 +534,14 @@ const AuthorManagementTab: React.FC = () => {
           </div>
           )}
 
-          <div className="mt-6 flex justify-between items-center">
+          <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 font-semibold"
+            >
+              <Filter className="w-5 h-5" />
+              Filtreler
+            </button>
             <div>
               <p className="text-sm text-gray-700">
                 Toplam {filteredAuthors.length} yazar | Sayfa <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>

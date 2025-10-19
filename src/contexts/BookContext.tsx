@@ -571,6 +571,18 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fineStatus: 'pending'
       });
 
+      const statusRef = doc(db, 'bookStatuses', bookId);
+      await setDoc(statusRef, {
+        status: 'borrowed',
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid
+      });
+
+      setBookStatuses(prev => ({
+        ...prev,
+        [bookId]: 'borrowed'
+      }));
+
       await updateDoc(doc(db, 'borrowMessages', borrowMessage.id), {
         status: 'approved'
       });
@@ -833,8 +845,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         [bookId]: 'available'
       }));
 
-      // Update goal progress
-      await updateGoalProgress(1);
+      // Update goal progress for the specific user
+      await updateGoalProgress(1, userId);
 
       // Remove the return message
       const returnMessagesRef = collection(db, 'returnMessages');
@@ -871,7 +883,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error approving return:', error);
       throw error;
     }
-  }, [updateGoalProgress]);
+  }, [user, updateGoalProgress]);
 
   const saveBook = useCallback(async (book: Book) => {
     try {

@@ -257,7 +257,7 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
     
     setIsExporting(true);
     try {
-      // Tüm canvas elementlerinin hazır olmasını bekle
+      const isMobile = window.innerWidth < 768;
       const canvasElements = reportRef.current.querySelectorAll('canvas');
       let retries = 0;
       const maxRetries = 10;
@@ -269,18 +269,22 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
         
         if (allReady || canvasElements.length === 0) break;
         
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, isMobile ? 500 : 300));
         retries++;
       }
       
       const element = reportRef.current;
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: isMobile ? 1.5 : 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#f8f9fa',
+        windowWidth: isMobile ? 1200 : element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        scrollY: -window.scrollY,
+        scrollX: -window.scrollX,
+        allowTaint: true,
         onclone: (clonedDoc) => {
-          // Klonlanan dokümandaki boş canvas'ları gizle
           const clonedCanvases = clonedDoc.querySelectorAll('canvas');
           clonedCanvases.forEach((canvas: any) => {
             if (canvas.width === 0 || canvas.height === 0) {
@@ -290,7 +294,7 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
         }
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -300,13 +304,13 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
       let heightLeft = imgHeight;
       let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, '', 'FAST');
       heightLeft -= pdfHeight;
 
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, '', 'FAST');
         heightLeft -= pdfHeight;
       }
 
@@ -328,7 +332,7 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
       <div className="mb-4 md:mb-8 animate-fadeIn">
         <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 md:p-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
+            <div className="flex-1">
               <h2 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 md:mb-3 flex items-center">
                 <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 md:p-3 rounded-xl mr-2 md:mr-3">
                   <PieChart className="w-5 h-5 md:w-7 md:h-7 text-white" />
@@ -342,7 +346,7 @@ const AdminCollectionDistribution: React.FC<AdminCollectionDistributionProps> = 
             <button
               onClick={exportToPDF}
               disabled={isExporting}
-              className="w-full lg:w-auto px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-semibold text-sm md:text-base"
+              className="w-full lg:w-auto lg:ml-4 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-semibold text-sm md:text-base flex-shrink-0"
             >
               {isExporting ? (
                 <>

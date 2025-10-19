@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Book, Users } from '../../../types';
 import { useBooks } from '../../../contexts/BookContext';
 import { Html5Qrcode, Html5QrcodeScanType } from "html5-qrcode";
-import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X, Filter } from 'lucide-react';
+import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X, Filter, Lightbulb, Loader2 } from 'lucide-react';
 import LendBookModal from '../LendBookModal';
 import EditBookModal from '../EditBookModal';
 import BulkAddBookModal from '../BulkAddBookModal';
+import BulkEditBookModal from '../BulkEditBookModal';
 import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
+import { db, functions } from '../../../firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import Swal from 'sweetalert2';
 
 interface AdminCatalogTabProps {
   catalogBooks: Book[];
@@ -36,6 +39,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [showEditBookModal, setShowEditBookModal] = useState(false);
   const [selectedBookToEdit, setSelectedBookToEdit] = useState<Book | null>(null);
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [showAddBookModal, setShowAddBookModal] = useState(false);
@@ -43,6 +47,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [apiMessage, setApiMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -204,7 +209,11 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
     
     // Zorunlu alanları kontrol et
     if (!newBook.title || !newBook.author || !newBook.category || !newBook.coverImage) {
-      alert('Lütfen tüm zorunlu alanları doldurun: Başlık, Yazar, Kategori, Kapak Resmi');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Eksik Bilgi',
+        text: 'Lütfen tüm zorunlu alanları doldurun: Başlık, Yazar, Kategori, Kapak Resmi'
+      });
       return;
     }
     
@@ -239,10 +248,19 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
       setCatalogBooks(booksData);
       refetchAllBooks();
-      alert('Kitap başarıyla eklendi!');
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Kitap başarıyla eklendi!',
+        timer: 2000
+      });
     } catch (error) {
       console.error('Error adding book:', error);
-      alert('Kitap eklenirken bir hata oluştu.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Kitap eklenirken bir hata oluştu.'
+      });
     }
   };
 
@@ -252,15 +270,35 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   };
 
   const handleDeleteBook = async (bookId: string) => {
-    if (window.confirm('Bu kitabı silmek istediğinizden emin misiniz?')) {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Emin misiniz?',
+      text: 'Bu kitabı silmek istediğinizden emin misiniz?',
+      showCancelButton: true,
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    });
+    
+    if (result.isConfirmed) {
       try {
         await deleteDoc(doc(db, 'books', bookId));
         setCatalogBooks(prev => prev.filter(b => b.id !== bookId));
         refetchAllBooks();
-        alert('Kitap başarıyla silindi.');
+        Swal.fire({
+          icon: 'success',
+          title: 'Silindi!',
+          text: 'Kitap başarıyla silindi.',
+          timer: 2000
+        });
       } catch (error) {
         console.error('Error deleting book: ', error);
-        alert('Kitap silinirken bir hata oluştu.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata!',
+          text: 'Kitap silinirken bir hata oluştu.'
+        });
       }
     }
   };
@@ -272,46 +310,214 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       setCatalogBooks(prev => prev.map(b => b.id === book.id ? book : b));
       refetchAllBooks();
       setShowEditBookModal(false);
-      alert('Kitap başarıyla güncellendi.');
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Kitap başarıyla güncellendi.',
+        timer: 2000
+      });
     } catch (error) {
       console.error('Error saving book: ', error);
-      alert('Kitap güncellenirken bir hata oluştu.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Kitap güncellenirken bir hata oluştu.'
+      });
     }
   };
 
   const handleBulkDelete = async () => {
-    if (window.confirm(`Seçilen ${selectedBookIds.length} kitabı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Emin misiniz?',
+      text: `Seçilen ${selectedBookIds.length} kitabı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      showCancelButton: true,
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    });
+    
+    if (result.isConfirmed) {
       try {
         const deletePromises = selectedBookIds.map(bookId => deleteDoc(doc(db, 'books', bookId)));
         await Promise.all(deletePromises);
         setCatalogBooks(prev => prev.filter(b => !selectedBookIds.includes(b.id)));
         setSelectedBookIds([]);
         refetchAllBooks();
-        alert(`${selectedBookIds.length} kitap başarıyla silindi.`);
+        Swal.fire({
+          icon: 'success',
+          title: 'Silindi!',
+          text: `${selectedBookIds.length} kitap başarıyla silindi.`,
+          timer: 2000
+        });
       } catch (error) {
         console.error('Error bulk deleting books: ', error);
-        alert('Kitaplar silinirken bir hata oluştu.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata!',
+          text: 'Kitaplar silinirken bir hata oluştu.'
+        });
       }
     }
   };
 
   const handleBulkMarkAsLost = async () => {
-    if (window.confirm(`Seçilen ${selectedBookIds.length} kitabı kayıp olarak işaretlemek istediğinizden emin misiniz?`)) {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Emin misiniz?',
+      text: `Seçilen ${selectedBookIds.length} kitabı kayıp olarak işaretlemek istediğinizden emin misiniz?`,
+      showCancelButton: true,
+      confirmButtonText: 'Evet, İşaretle',
+      cancelButtonText: 'İptal',
+      confirmButtonColor: '#f59e0b',
+      cancelButtonColor: '#3085d6'
+    });
+    
+    if (result.isConfirmed) {
       try {
         const markAsLostPromises = selectedBookIds.map(bookId => markBookAsLost(bookId));
         await Promise.all(markAsLostPromises);
         setSelectedBookIds([]);
         refetchAllBooks();
-        alert(`${selectedBookIds.length} kitap başarıyla kayıp olarak işaretlendi.`);
+        Swal.fire({
+          icon: 'success',
+          title: 'İşaretlendi!',
+          text: `${selectedBookIds.length} kitap başarıyla kayıp olarak işaretlendi.`,
+          timer: 2000
+        });
       } catch (error) {
         console.error('Error bulk marking books as lost: ', error);
-        alert('Kitaplar kayıp olarak işaretlenirken bir hata oluştu.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata!',
+          text: 'Kitaplar kayıp olarak işaretlenirken bir hata oluştu.'
+        });
       }
     }
   };
 
   const handleBulkLend = () => {
-    alert('Toplu ödünç verme işlemi henüz uygulanmamıştır.');
+    Swal.fire({
+      icon: 'info',
+      title: 'Bilgi',
+      text: 'Toplu ödünç verme işlemi henüz uygulanmamıştır.'
+    });
+  };
+
+  const handleBulkEdit = () => {
+    const selectedBooks = catalogBooks.filter(b => selectedBookIds.includes(b.id));
+    const firstTitle = selectedBooks[0]?.title;
+    const allSameTitle = selectedBooks.every(b => b.title === firstTitle);
+    
+    if (!allSameTitle) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı',
+        text: 'Toplu düzenleme için seçilen tüm kitapların başlığı aynı olmalıdır.'
+      });
+      return;
+    }
+    
+    if (selectedBooks.length < 2) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı',
+        text: 'Toplu düzenleme için en az 2 kitap seçmelisiniz.'
+      });
+      return;
+    }
+    
+    if (selectedBooks.length > 3) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı',
+        text: 'Toplu düzenleme için maksimum 3 kitap seçebilirsiniz.'
+      });
+      return;
+    }
+    
+    setShowBulkEditModal(true);
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!newBook.title || !newBook.author) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Eksik Bilgi',
+        text: 'Açıklama oluşturmak için kitap başlığı ve yazar bilgisi gerekli.'
+      });
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const generateBookDescription = httpsCallable(functions, 'generateBookDescription');
+      const result: any = await generateBookDescription({
+        title: newBook.title,
+        author: newBook.author
+      });
+
+      setNewBook(prev => ({ ...prev, backCover: result.data.description }));
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: `Açıklama AI tarafından oluşturuldu. Kalan hakkınız: ${result.data.remaining}/10`,
+        timer: 3000
+      });
+    } catch (error: any) {
+      console.error('Error generating description:', error);
+      const errorMessage = error?.message || 'Açıklama oluşturulurken bir hata oluştu.';
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: errorMessage
+      });
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
+  const handleBulkEditSave = async (updatedFields: Partial<Book>) => {
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'Emin misiniz?',
+      text: `Seçilen ${selectedBookIds.length} kitabı güncellemek istediğinizden emin misiniz?`,
+      showCancelButton: true,
+      confirmButtonText: 'Evet, Güncelle',
+      cancelButtonText: 'İptal',
+      confirmButtonColor: '#6366f1',
+      cancelButtonColor: '#3085d6'
+    });
+    
+    if (result.isConfirmed) {
+      try {
+        const updatePromises = selectedBookIds.map(bookId => {
+          const bookRef = doc(db, 'books', bookId);
+          return updateDoc(bookRef, { ...updatedFields });
+        });
+        await Promise.all(updatePromises);
+        setCatalogBooks(prev => prev.map(b => 
+          selectedBookIds.includes(b.id) ? { ...b, ...updatedFields } : b
+        ));
+        setSelectedBookIds([]);
+        setShowBulkEditModal(false);
+        refetchAllBooks();
+        Swal.fire({
+          icon: 'success',
+          title: 'Güncellendi!',
+          text: `${selectedBookIds.length} kitap başarıyla güncellendi.`,
+          timer: 2000
+        });
+      } catch (error) {
+        console.error('Error bulk editing books: ', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata!',
+          text: 'Kitaplar güncellenirken bir hata oluştu.'
+        });
+      }
+    }
   };
 
   const filteredCatalogBooks = catalogBooks.filter(book => {
@@ -372,12 +578,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       </div>
 
       <div className="p-6">
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
-        >
-          <Filter className="w-6 h-6" />
-        </button>
+
 
         {isSidebarOpen && (
           <div
@@ -520,7 +721,14 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
         </div>
 
         {selectedBookIds.length > 0 && (
-          <div className="mb-4 flex items-center space-x-2">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleBulkEdit}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+            >
+              <Edit className="w-5 h-5 mr-2" />
+              Toplu Düzenle ({selectedBookIds.length})
+            </button>
             <button
               onClick={handleBulkDelete}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
@@ -620,31 +828,29 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                       Düzenle
                     </button>
                   </div>
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-2 flex gap-1 sm:gap-2">
                     <button
                       onClick={() => handleDeleteBook(book.id)}
-                      className="flex-1 px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                      className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-w-0"
                     >
-                      <Trash2 className="w-3 h-3 mr-1" />
-                      Sil
+                      <Trash2 className="w-3 h-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Sil</span>
                     </button>
                     {bookStatus === 'lost' ? (
                       <button
                         onClick={() => handleMarkAsFound(book.id)}
-                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-w-0"
                       >
-                        <UserCheck className="w-3 h-3 mr-1" />
+                        <UserCheck className="w-3 h-3 sm:mr-1" />
                         <span className="hidden sm:inline">Bulundu</span>
-                        <span className="sm:hidden">Bul</span>
                       </button>
                     ) : (
                       <button
                         onClick={() => handleMarkAsLost(book.id)}
-                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-w-0"
                       >
-                        <UserX className="w-3 h-3 mr-1" />
+                        <UserX className="w-3 h-3 sm:mr-1" />
                         <span className="hidden sm:inline">Kayıp</span>
-                        <span className="sm:hidden">Kay</span>
                       </button>
                     )}
                   </div>
@@ -657,48 +863,62 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
             }
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="mt-8 flex justify-center items-center space-x-4">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
-                >
-                  Önceki
-                </button>
-                <span className="px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-gray-700 font-semibold shadow-lg">
-                  Sayfa {currentPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
-                >
-                  Sonraki
-                </button>
-              </div>
-            )}
+            <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 font-semibold"
+              >
+                <Filter className="w-5 h-5" />
+                Filtreler
+              </button>
+              {totalPages > 1 && (
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                  >
+                    Önceki
+                  </button>
+                  <span className="px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-gray-700 font-semibold shadow-lg">
+                    Sayfa {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                  >
+                    Sonraki
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {showAddBookModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900">Yeni Kitap Ekle</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden flex flex-col my-4 sm:my-8">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
+                  <BookIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white">Yeni Kitap Ekle</h3>
+              </div>
               <button
                 onClick={() => {
                   setShowAddBookModal(false);
                   setIsScanning(false);
                   setApiMessage(null);
                 }}
-                className="text-gray-400 hover:text-gray-500"
+                className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
-            
+            <div className="p-4 sm:p-6 overflow-y-auto">
             {isScanning && (
               <div className="p-6">
                 <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -733,7 +953,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
               </div>
             )}
             
-            <form onSubmit={handleAddBook} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleAddBook} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {apiMessage && (
                 <div className="md:col-span-2 text-center p-3 rounded-lg bg-blue-100 text-blue-800 text-sm">
                   {apiMessage}
@@ -741,20 +961,20 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
               )}
               
               <div>
-                <label htmlFor="id" className="block text-sm font-medium text-gray-700">Kitap ID</label>
+                <label htmlFor="id" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Kitap ID</label>
                 <input
                   type="text"
                   id="id"
                   name="id"
                   value={newBook.id}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                   placeholder="Örn: TR-HK-001"
                 />
               </div>
               
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="title" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
                   Kitap Adı <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -763,13 +983,13 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   name="title"
                   value={newBook.title}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                   required
                 />
               </div>
               
               <div>
-                <label htmlFor="author" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="author" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
                   Yazar <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -778,13 +998,13 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   name="author"
                   value={newBook.author}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                   required
                 />
               </div>
               
               <div className="md:col-span-2">
-                <label htmlFor="isbn" className="block text-sm font-medium text-gray-700">ISBN</label>
+                <label htmlFor="isbn" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">ISBN</label>
                 <div className="mt-1 flex rounded-md shadow-sm">
                   <input
                     type="text"
@@ -792,13 +1012,13 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                     name="isbn"
                     value={newBook.isbn}
                     onChange={handleNewBookChange}
-                    className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="flex-1 block w-full min-w-0 rounded-none rounded-l-xl border-2 border-gray-300 py-2 sm:py-2.5 px-3 sm:px-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                     placeholder="Manuel ISBN girişi"
                   />
                   <button
                     type="button"
                     onClick={() => setIsScanning(true)}
-                    className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                    className="inline-flex items-center px-3 sm:px-4 rounded-r-xl border-2 border-l-0 border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100 text-xs sm:text-sm font-semibold transition-all"
                   >
                     ISBN Tara
                   </button>
@@ -807,7 +1027,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   <button
                     type="button"
                     onClick={() => fetchBookDataFromISBN(newBook.isbn)}
-                    className="mt-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md text-sm hover:bg-indigo-200 transition-colors"
+                    className="mt-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs sm:text-sm font-semibold hover:bg-indigo-200 transition-colors"
                   >
                     Bu ISBN ile Kitap Bilgilerini Getir
                   </button>
@@ -815,7 +1035,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
               </div>
               
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="category" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
                   Kategori <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -824,51 +1044,51 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   name="category"
                   value={newBook.category}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                   placeholder="Örn: TR-HK, D-RMN"
                   required
                 />
               </div>
               
               <div>
-                <label htmlFor="publisher" className="block text-sm font-medium text-gray-700">Yayıncı</label>
+                <label htmlFor="publisher" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Yayıncı</label>
                 <input
                   type="text"
                   id="publisher"
                   name="publisher"
                   value={newBook.publisher}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
               
               <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700">Konum</label>
+                <label htmlFor="location" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Konum</label>
                 <input
                   type="text"
                   id="location"
                   name="location"
                   value={newBook.location}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                   placeholder="Örn: A-1-15"
                 />
               </div>
               
               <div>
-                <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700">Sayfa Sayısı</label>
+                <label htmlFor="pageCount" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sayfa Sayısı</label>
                 <input
                   type="number"
                   id="pageCount"
                   name="pageCount"
                   value={newBook.pageCount}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
               
               <div className="md:col-span-2">
-                <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="coverImage" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
                   Kapak Resmi URL <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -877,25 +1097,45 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   name="coverImage"
                   value={newBook.coverImage}
                   onChange={handleNewBookChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                   required
                 />
               </div>
               
               <div className="md:col-span-2">
-                <label htmlFor="backCover" className="block text-sm font-medium text-gray-700">Arka Kapak Açıklaması</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="backCover" className="block text-xs sm:text-sm font-semibold text-gray-700">Arka Kapak Açıklaması</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateDescription}
+                    disabled={generatingDescription}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {generatingDescription ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Oluşturuluyor...
+                      </>
+                    ) : (
+                      <>
+                        <Lightbulb className="w-3 h-3" />
+                        AI ile Oluştur
+                      </>
+                    )}
+                  </button>
+                </div>
                 <textarea
                   id="backCover"
                   name="backCover"
                   value={newBook.backCover}
                   onChange={handleNewBookChange}
                   rows={3}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
               
               <div>
-                <label htmlFor="dimensions" className="block text-sm font-medium text-gray-700">Boyut</label>
+                <label htmlFor="dimensions" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Boyut</label>
                 <input
                   type="text"
                   id="dimensions"
@@ -903,12 +1143,12 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   value={newBook.dimensions}
                   onChange={handleNewBookChange}
                   placeholder="örn: 20x13 cm"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
               
               <div>
-                <label htmlFor="weight" className="block text-sm font-medium text-gray-700">Ağırlık</label>
+                <label htmlFor="weight" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Ağırlık</label>
                 <input
                   type="text"
                   id="weight"
@@ -916,12 +1156,12 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   value={newBook.weight}
                   onChange={handleNewBookChange}
                   placeholder="örn: 250g"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
               
               <div>
-                <label htmlFor="binding" className="block text-sm font-medium text-gray-700">Cilt Türü</label>
+                <label htmlFor="binding" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Cilt Türü</label>
                 <input
                   type="text"
                   id="binding"
@@ -929,12 +1169,12 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   value={newBook.binding}
                   onChange={handleNewBookChange}
                   placeholder="örn: Karton Kapak"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
               
               <div className="md:col-span-2">
-                <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Etiketler (virgülle ayırın)</label>
+                <label htmlFor="tags" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Etiketler (virgülle ayırın)</label>
                 <input
                   type="text"
                   id="tags"
@@ -942,11 +1182,12 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   value={newBook.tags}
                   onChange={handleNewBookChange}
                   placeholder="örn: macera, gençlik, fantastik"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
                 />
               </div>
-              
-              <div className="md:col-span-2 flex justify-end space-x-3">
+            </form>
+            </div>
+            <div className="p-4 sm:p-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 bg-gradient-to-t from-white to-transparent">
                 <button
                   type="button"
                   onClick={() => {
@@ -954,18 +1195,18 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                     setIsScanning(false);
                     setApiMessage(null);
                   }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full sm:w-auto px-6 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm sm:text-base min-h-[44px]"
                 >
                   İptal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  onClick={handleAddBook}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-lg text-sm sm:text-base min-h-[44px]"
                 >
                   Kitabı Ekle
                 </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -993,11 +1234,20 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
             try {
               await lendBookToUser(selectedBookToLend.id, userId);
               const lentToUser = users.find(u => u.uid === userId);
-              alert(`'${selectedBookToLend.title}' başarıyla ${lentToUser ? lentToUser.displayName : userId} kullanıcısına ödünç verildi.`);
+              Swal.fire({
+                icon: 'success',
+                title: 'Başarılı!',
+                text: `'${selectedBookToLend.title}' başarıyla ${lentToUser ? lentToUser.displayName : userId} kullanıcısına ödünç verildi.`,
+                timer: 2000
+              });
               refetchAllBooks();
             } catch (error) {
               console.error('Error lending book:', error);
-              alert(`Kitap ödünç verilirken bir hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+              Swal.fire({
+                icon: 'error',
+                title: 'Hata!',
+                text: `Kitap ödünç verilirken bir hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+              });
             } finally {
               setShowLendBookModal(false);
               setSelectedBookToLend(null);
@@ -1015,6 +1265,15 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
           }}
           book={selectedBookToEdit}
           onSave={handleSaveBook}
+        />
+      )}
+
+      {showBulkEditModal && (
+        <BulkEditBookModal
+          isOpen={showBulkEditModal}
+          onClose={() => setShowBulkEditModal(false)}
+          books={catalogBooks.filter(b => selectedBookIds.includes(b.id))}
+          onSave={handleBulkEditSave}
         />
       )}
     </div>

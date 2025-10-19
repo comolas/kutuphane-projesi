@@ -289,20 +289,20 @@ const TeacherReportsPage: React.FC = () => {
           </svg>
           Geri Dön
         </button>
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-              <BarChart className="w-8 h-8 mr-3 text-orange-600" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center">
+              <BarChart className="w-6 h-6 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-orange-600" />
               Sınıf Raporları
             </h1>
-            <p className="text-gray-600">{userData?.teacherData?.assignedClass} Sınıfı</p>
+            <p className="text-sm sm:text-base text-gray-600">{userData?.teacherData?.assignedClass} Sınıfı</p>
           </div>
           <button
             id="pdf-button"
             onClick={handleDownloadPDF}
-            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
           >
-            <FileText className="w-5 h-5 mr-2" />
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             PDF Rapor İndir
           </button>
         </div>
@@ -401,7 +401,7 @@ const TeacherReportsPage: React.FC = () => {
             return (
               <div className="space-y-6">
                 {/* İstatistik Kartları */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
                     <p className="text-purple-600 text-sm font-medium mb-1">Veri Tamamlama</p>
                     <p className="text-3xl font-bold text-purple-700">{Math.round((studentsWithData.length / classStudents.length) * 100)}%</p>
@@ -523,7 +523,7 @@ const TeacherReportsPage: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
@@ -599,7 +599,7 @@ const TeacherReportsPage: React.FC = () => {
           </h2>
           
           {/* Özet Kartlar */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -720,7 +720,7 @@ const TeacherReportsPage: React.FC = () => {
             Okuma Alışkanlıkları
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {/* Hiç Okumayan Öğrenciler */}
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
               <div className="flex items-center justify-between mb-3">
