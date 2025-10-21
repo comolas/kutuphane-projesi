@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, BookOpen, TrendingUp, Search, Award, GitCompare, X, Calendar, Clock, AlertTriangle, FileText } from 'lucide-react';
+import { Users, BookOpen, TrendingUp, Search, Award, GitCompare, X, Calendar, Clock, AlertTriangle, FileText, Save, Trash2 } from 'lucide-react';
 import { Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useBooks } from '../contexts/BookContext';
 
@@ -29,20 +29,49 @@ const MyClassPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<'name' | 'books' | 'level'>('name');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [studentNote, setStudentNote] = useState('');
+  const [noteCategory, setNoteCategory] = useState<'general' | 'behavior' | 'reading'>('general');
+  const [studentNotes, setStudentNotes] = useState<any[]>([]);
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   // Sınıf istatistikleri
-  const classStats = {
-    totalStudents: classStudents.length,
-    activeReaders: classStudents.filter(s => 
-      allBorrowedBooks.some(b => b.borrowedBy === s.uid && b.returnStatus === 'borrowed')
-    ).length,
-    totalBooksRead: allBorrowedBooks.filter(b => 
-      classStudents.some(s => s.uid === b.borrowedBy) && b.returnStatus === 'returned'
-    ).length,
-    averageLevel: classStudents.length > 0 
-      ? Math.round(classStudents.reduce((sum, s) => sum + (s.level || 1), 0) / classStudents.length)
-      : 0
-  };
+  const classStats = (() => {
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    
+    const thisMonthBooksRead = allBorrowedBooks.filter(b => 
+      classStudents.some(s => s.uid === b.borrowedBy) && 
+      b.returnStatus === 'returned' &&
+      b.returnedAt && b.returnedAt >= thisMonthStart
+    ).length;
+    
+    const lastMonthBooksRead = allBorrowedBooks.filter(b => 
+      classStudents.some(s => s.uid === b.borrowedBy) && 
+      b.returnStatus === 'returned' &&
+      b.returnedAt && b.returnedAt >= lastMonthStart && b.returnedAt <= lastMonthEnd
+    ).length;
+    
+    const monthlyProgress = lastMonthBooksRead > 0 
+      ? Math.round(((thisMonthBooksRead - lastMonthBooksRead) / lastMonthBooksRead) * 100)
+      : thisMonthBooksRead > 0 ? 100 : 0;
+    
+    return {
+      totalStudents: classStudents.length,
+      activeReaders: classStudents.filter(s => 
+        allBorrowedBooks.some(b => b.borrowedBy === s.uid && b.returnStatus === 'borrowed')
+      ).length,
+      totalBooksRead: allBorrowedBooks.filter(b => 
+        classStudents.some(s => s.uid === b.borrowedBy) && b.returnStatus === 'returned'
+      ).length,
+      averageLevel: classStudents.length > 0 
+        ? Math.round(classStudents.reduce((sum, s) => sum + (s.level || 1), 0) / classStudents.length)
+        : 0,
+      thisMonthBooksRead,
+      lastMonthBooksRead,
+      monthlyProgress
+    };
+  })();
 
   useEffect(() => {
     if (!isTeacher || !userData?.teacherData?.assignedClass) {
@@ -74,6 +103,132 @@ const MyClassPage: React.FC = () => {
 
     fetchClassStudents();
   }, [userData, isTeacher, navigate]);
+
+  // Öğrenci notlarını yükle
+  const loadStudentNotes = async (studentId: string) => {
+    try {
+      const notesRef = doc(db, 'teacherNotes', studentId);
+      const notesDoc = await getDoc(notesRef);
+      if (notesDoc.exists()) {
+        const data = notesDoc.data();
+        setStudentNotes(data.notes || []);
+      } else {
+        setStudentNotes([]);
+      }
+    } catch (error) {
+      console.error('Error loading notes:', error);
+      setStudentNotes([]);
+    }
+  };
+
+  // Not kaydet
+  const saveStudentNote = async () => {
+    if (!selectedStudent || !studentNote.trim() || !userData) return;
+    
+    setIsSavingNote(true);
+    try {
+      const notesRef = doc(db, 'teacherNotes', selectedStudent.uid);
+      const newNote = {
+        id: Date.now().toString(),
+        text: studentNote.trim(),
+        category: noteCategory,
+        teacherId: userData.uid,
+        teacherName: userData.displayName,
+        createdAt: Timestamp.now(),
+      };
+
+      const notesDoc = await getDoc(notesRef);
+      if (notesDoc.exists()) {
+        await updateDoc(notesRef, {
+          notes: arrayUnion(newNote)
+        });
+      } else {
+        await setDoc(notesRef, {
+          studentId: selectedStudent.uid,
+          notes: [newNote]
+        });
+      }
+
+      setStudentNotes(prev => [newNote, ...prev]);
+      setStudentNote('');
+      setNoteCategory('general');
+      
+      const Swal = (await import('sweetalert2')).default;
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Not başarıyla kaydedildi.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error saving note:', error);
+      const Swal = (await import('sweetalert2')).default;
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Not kaydedilirken bir hata oluştu.',
+      });
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  // Not sil
+  const deleteStudentNote = async (noteId: string) => {
+    if (!selectedStudent) return;
+    
+    const Swal = (await import('sweetalert2')).default;
+    const result = await Swal.fire({
+      title: 'Emin misiniz?',
+      text: 'Bu notu silmek istediğinizden emin misiniz?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'İptal'
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    try {
+      const notesRef = doc(db, 'teacherNotes', selectedStudent.uid);
+      const updatedNotes = studentNotes.filter(note => note.id !== noteId);
+      
+      await updateDoc(notesRef, {
+        notes: updatedNotes
+      });
+
+      setStudentNotes(updatedNotes);
+      
+      const Swal = (await import('sweetalert2')).default;
+      Swal.fire({
+        icon: 'success',
+        title: 'Silindi!',
+        text: 'Not başarıyla silindi.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      const Swal = (await import('sweetalert2')).default;
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Not silinirken bir hata oluştu.',
+      });
+    }
+  };
+
+  // Öğrenci seçildiğinde notları yükle
+  useEffect(() => {
+    if (selectedStudent) {
+      loadStudentNotes(selectedStudent.uid);
+      setStudentNote('');
+      setNoteCategory('general');
+    }
+  }, [selectedStudent]);
 
   // Öğrenci istatistiklerini hesapla
   const getStudentStats = (studentId: string) => {
@@ -122,6 +277,28 @@ const MyClassPage: React.FC = () => {
     const completedBooks = studentBooks.filter(b => b.returnStatus === 'returned');
     const activeBooks = studentBooks.filter(b => b.returnStatus === 'borrowed');
     
+    // Bu ay ve geçen ay karşılaştırması
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    
+    const thisMonthBooks = completedBooks.filter(book => {
+      if (!book.returnedAt) return false;
+      return book.returnedAt >= thisMonthStart;
+    }).length;
+    
+    const lastMonthBooks = completedBooks.filter(book => {
+      if (!book.returnedAt) return false;
+      return book.returnedAt >= lastMonthStart && book.returnedAt <= lastMonthEnd;
+    }).length;
+    
+    const monthlyProgress = lastMonthBooks > 0 
+      ? Math.round(((thisMonthBooks - lastMonthBooks) / lastMonthBooks) * 100)
+      : thisMonthBooks > 0 ? 100 : 0;
+    
+    const progressTrend = thisMonthBooks > lastMonthBooks ? 'up' : thisMonthBooks < lastMonthBooks ? 'down' : 'stable';
+    
     // Kategori dağılımı
     const categoryCount = studentBooks.reduce((acc, book) => {
       const category = book.category || 'Diğer';
@@ -130,10 +307,10 @@ const MyClassPage: React.FC = () => {
     }, {} as Record<string, number>);
 
     // Gecikme analizi
-    const now = new Date();
+    const currentDate = new Date();
     const lateBooks = studentBooks.filter(book => {
       if (book.returnStatus === 'borrowed') {
-        return new Date(book.dueDate) < now;
+        return new Date(book.dueDate) < currentDate;
       }
       if (book.returnStatus === 'returned' && book.returnedAt) {
         return book.returnedAt > new Date(book.dueDate);
@@ -143,7 +320,7 @@ const MyClassPage: React.FC = () => {
 
     const totalFine = lateBooks.reduce((sum, book) => {
       const dueDate = new Date(book.dueDate);
-      const returnDate = book.returnStatus === 'returned' && book.returnedAt ? book.returnedAt : now;
+      const returnDate = book.returnStatus === 'returned' && book.returnedAt ? book.returnedAt : currentDate;
       const daysLate = Math.max(0, Math.ceil((returnDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
       return sum + (daysLate * 1);
     }, 0);
@@ -179,7 +356,11 @@ const MyClassPage: React.FC = () => {
       totalFine,
       monthlyReading,
       lastActivity,
-      allBooks: studentBooks.sort((a, b) => new Date(b.borrowedAt).getTime() - new Date(a.borrowedAt).getTime())
+      allBooks: studentBooks.sort((a, b) => new Date(b.borrowedAt).getTime() - new Date(a.borrowedAt).getTime()),
+      thisMonthBooks,
+      lastMonthBooks,
+      monthlyProgress,
+      progressTrend
     };
   };
 
@@ -221,6 +402,55 @@ const MyClassPage: React.FC = () => {
             Sınıfım - {userData?.teacherData?.assignedClass}
           </h1>
           <p className="text-gray-600">Toplam {classStudents.length} öğrenci</p>
+        </div>
+
+        {/* Aylık Gelişim Özeti */}
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg p-6 mb-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold mb-2 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Sınıf Aylık Gelişim
+              </h3>
+              <div className="flex items-center gap-6">
+                <div>
+                  <p className="text-sm opacity-90">Bu Ay</p>
+                  <p className="text-3xl font-bold">{classStats.thisMonthBooksRead}</p>
+                  <p className="text-xs opacity-75">kitap okundu</p>
+                </div>
+                <div>
+                  <p className="text-sm opacity-90">Geçen Ay</p>
+                  <p className="text-3xl font-bold">{classStats.lastMonthBooksRead}</p>
+                  <p className="text-xs opacity-75">kitap okundu</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-6">
+                {classStats.monthlyProgress > 0 ? (
+                  <>
+                    <span className="text-5xl">↗️</span>
+                    <p className="text-2xl font-bold mt-2">+{classStats.monthlyProgress}%</p>
+                  </>
+                ) : classStats.monthlyProgress < 0 ? (
+                  <>
+                    <span className="text-5xl">↘️</span>
+                    <p className="text-2xl font-bold mt-2">{classStats.monthlyProgress}%</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-5xl">➡️</span>
+                    <p className="text-2xl font-bold mt-2">0%</p>
+                  </>
+                )}
+                <p className="text-xs opacity-75 mt-1">
+                  {classStats.monthlyProgress > 0 && 'Harika gidiş!'}
+                  {classStats.monthlyProgress < 0 && 'Dikkat gerekli'}
+                  {classStats.monthlyProgress === 0 && 'Sabit'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sınıf İstatistikleri */}
@@ -331,6 +561,7 @@ const MyClassPage: React.FC = () => {
           {filteredAndSortedStudents.map((student) => {
             const stats = getStudentStats(student.uid);
             const status = getStudentStatus(student.uid);
+            const detailedStats = getDetailedStudentStats(student.uid);
             const statusColors = {
               green: 'border-l-green-500 bg-green-50/50',
               yellow: 'border-l-yellow-500 bg-yellow-50/50',
@@ -399,6 +630,18 @@ const MyClassPage: React.FC = () => {
                         <span className="text-gray-700">
                           <span className="font-semibold">{student.totalXP || 0}</span> XP
                         </span>
+                      </div>
+                    </div>
+                    {/* Aylık İlerleme Göstergesi */}
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-600">Bu ay:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-semibold text-gray-900">{detailedStats.thisMonthBooks} kitap</span>
+                          {detailedStats.progressTrend === 'up' && <span className="text-green-600">↗️</span>}
+                          {detailedStats.progressTrend === 'down' && <span className="text-red-600">↘️</span>}
+                          {detailedStats.progressTrend === 'stable' && <span className="text-gray-600">➡️</span>}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -475,6 +718,54 @@ const MyClassPage: React.FC = () => {
                 </div>
 
                 <div className="p-6 space-y-6">
+                  {/* Gelişim Takibi */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-lg p-4">
+                    <h3 className="font-semibold text-purple-900 mb-3 flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2" />
+                      Aylık Gelişim Takibi
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-1">Bu Ay</p>
+                        <p className="text-3xl font-bold text-purple-600">{detailedStats.thisMonthBooks}</p>
+                        <p className="text-xs text-gray-500">kitap okudu</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-1">Geçen Ay</p>
+                        <p className="text-3xl font-bold text-gray-600">{detailedStats.lastMonthBooks}</p>
+                        <p className="text-xs text-gray-500">kitap okudu</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-1">İlerleme</p>
+                        <div className="flex items-center justify-center gap-2">
+                          {detailedStats.progressTrend === 'up' && (
+                            <>
+                              <span className="text-3xl">↗️</span>
+                              <p className="text-2xl font-bold text-green-600">+{detailedStats.monthlyProgress}%</p>
+                            </>
+                          )}
+                          {detailedStats.progressTrend === 'down' && (
+                            <>
+                              <span className="text-3xl">↘️</span>
+                              <p className="text-2xl font-bold text-red-600">{detailedStats.monthlyProgress}%</p>
+                            </>
+                          )}
+                          {detailedStats.progressTrend === 'stable' && (
+                            <>
+                              <span className="text-3xl">➡️</span>
+                              <p className="text-2xl font-bold text-gray-600">0%</p>
+                            </>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {detailedStats.progressTrend === 'up' && 'Harika gidiş!'}
+                          {detailedStats.progressTrend === 'down' && 'Dikkat gerekli'}
+                          {detailedStats.progressTrend === 'stable' && 'Sabit'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* İstatistikler */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-blue-50 rounded-lg p-4 text-center">
@@ -583,8 +874,47 @@ const MyClassPage: React.FC = () => {
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
                       <FileText className="w-5 h-5 mr-2 text-orange-600" />
-                      Öğretmen Notu
+                      Öğretmen Notları
                     </h3>
+                    
+                    {/* Not Kategorisi */}
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Not Kategorisi</label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setNoteCategory('general')}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            noteCategory === 'general'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          📝 Genel
+                        </button>
+                        <button
+                          onClick={() => setNoteCategory('behavior')}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            noteCategory === 'behavior'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          😊 Davranış
+                        </button>
+                        <button
+                          onClick={() => setNoteCategory('reading')}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            noteCategory === 'reading'
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          📚 Okuma
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Not Girişi */}
                     <textarea
                       value={studentNote}
                       onChange={(e) => setStudentNote(e.target.value)}
@@ -592,9 +922,67 @@ const MyClassPage: React.FC = () => {
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                       rows={3}
                     />
-                    <button className="mt-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                      Notu Kaydet
+                    <button
+                      onClick={saveStudentNote}
+                      disabled={!studentNote.trim() || isSavingNote}
+                      className="mt-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      {isSavingNote ? 'Kaydediliyor...' : 'Notu Kaydet'}
                     </button>
+
+                    {/* Not Geçmişi */}
+                    {studentNotes.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="font-semibold text-gray-900 mb-3">Not Geçmişi ({studentNotes.length})</h4>
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
+                          {studentNotes.map((note) => {
+                            const categoryColors = {
+                              general: 'bg-blue-50 border-blue-200',
+                              behavior: 'bg-purple-50 border-purple-200',
+                              reading: 'bg-green-50 border-green-200'
+                            };
+                            const categoryIcons = {
+                              general: '📝',
+                              behavior: '😊',
+                              reading: '📚'
+                            };
+                            const categoryLabels = {
+                              general: 'Genel',
+                              behavior: 'Davranış',
+                              reading: 'Okuma'
+                            };
+                            return (
+                              <div
+                                key={note.id}
+                                className={`p-3 rounded-lg border ${categoryColors[note.category as keyof typeof categoryColors]}`}
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">{categoryIcons[note.category as keyof typeof categoryIcons]}</span>
+                                    <span className="text-xs font-semibold text-gray-600">
+                                      {categoryLabels[note.category as keyof typeof categoryLabels]}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() => deleteStudentNote(note.id)}
+                                    className="text-red-500 hover:text-red-700 transition-colors"
+                                    title="Notu Sil"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <p className="text-sm text-gray-800 mb-2">{note.text}</p>
+                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                  <span>{note.teacherName}</span>
+                                  <span>{note.createdAt?.toDate().toLocaleDateString('tr-TR')}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

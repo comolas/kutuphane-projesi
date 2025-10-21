@@ -67,9 +67,10 @@ const SpinWheelModal: React.FC<SpinWheelModalProps> = ({ isOpen, onClose }) => {
         return; // Skip reward modal
       }
 
-      if (result.reward.type === 'penalty-discount' && result.reward.value) {
+      if ((result.reward.type === 'penalty-discount' || result.reward.type === 'shop-discount') && result.reward.value) {
         await createCoupon({
           userId: user.uid,
+          type: result.reward.type,
           discountPercent: result.reward.value as 5 | 10 | 20 | 50 | 100,
           category: result.category || null,
         });

@@ -24,7 +24,9 @@ import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Book as BookIcon, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2, Gift, Search, ChevronDown, ChevronRight } from 'lucide-react'; // Layers ve Gift eklendi
+import { Book as BookIcon, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2, Gift, Search, ChevronDown, ChevronRight, MessageCircle, ShoppingBag } from 'lucide-react';
+import AdminChatTab from '../components/admin/tabs/AdminChatTab';
+import ShopManagementTab from '../components/admin/tabs/ShopManagementTab';
 import { auth, db } from '../firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Book } from '../types'; // Import Book type
@@ -45,7 +47,7 @@ const AdminDashboard: React.FC = () => {
   const { isAdmin } = useAuth();
   const { refetchAllBooks, getBookStatus } = useBooks();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations' | 'blog-management' | 'spin-wheel-management'>(location.state?.activeTab || 'borrowed-books');
+  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations' | 'blog-management' | 'spin-wheel-management' | 'chat' | 'shop-management'>(location.state?.activeTab || 'borrowed-books');
   const [users, setUsers] = useState<UserData[]>([]);
   const [catalogBooks, setCatalogBooks] = useState<Book[]>([]);
   const [badges, setBadges] = useState({ messages: 0, requests: 0, fines: 0, reviews: 0, posts: 0 });
@@ -235,6 +237,18 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </button>
                 )}
+
+                {(!searchQuery || 'sohbet'.includes(searchQuery.toLowerCase())) && (
+                <button
+                  onClick={() => { setActiveTab('chat'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 hover:scale-105 hover:shadow-lg transition-all duration-200 ${
+                    activeTab === 'chat' ? 'bg-indigo-800 scale-105 shadow-lg' : ''
+                  }`}
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span>Sohbet</span>
+                </button>
+                )}
               </div>
               )}
             </div>
@@ -405,6 +419,18 @@ const AdminDashboard: React.FC = () => {
                   <span>Çarkıfelek Yönetimi</span>
                 </button>
                 )}
+
+                {(!searchQuery || 'mağaza yönetimi'.includes(searchQuery.toLowerCase())) && (
+                <button
+                  onClick={() => { setActiveTab('shop-management'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 hover:scale-105 hover:shadow-lg transition-all duration-200 ${
+                    activeTab === 'shop-management' ? 'bg-indigo-800 scale-105 shadow-lg' : ''
+                  }`}
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Mağaza Yönetimi</span>
+                </button>
+                )}
               </div>
               )}
             </div>
@@ -560,6 +586,10 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'blog-management' && <BlogManagementTab />}
 
         {activeTab === 'spin-wheel-management' && <SpinWheelManagementTab />}
+
+        {activeTab === 'chat' && <AdminChatTab />}
+
+        {activeTab === 'shop-management' && <ShopManagementTab />}
 
       </div>
       <AdminChatBot />

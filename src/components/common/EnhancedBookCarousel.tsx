@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Thumbs, Autoplay, EffectCoverflow } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
-import { Calendar, BookOpen, Star } from 'lucide-react';
+import { Calendar, BookOpen, Star, Heart } from 'lucide-react';
 import { Book } from '../../types';
 
 // Import Swiper styles
@@ -15,9 +15,11 @@ import 'swiper/css/effect-coverflow';
 interface EnhancedBookCarouselProps {
   books: Book[];
   onBorrowBook: (book: Book) => void;
+  favoriteBookIds?: string[];
+  onToggleFavorite?: (bookId: string) => void;
 }
 
-const EnhancedBookCarousel: React.FC<EnhancedBookCarouselProps> = ({ books, onBorrowBook }) => {
+const EnhancedBookCarousel: React.FC<EnhancedBookCarouselProps> = ({ books, onBorrowBook, favoriteBookIds = [], onToggleFavorite }) => {
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
 
   if (books.length === 0) {
@@ -78,12 +80,27 @@ const EnhancedBookCarousel: React.FC<EnhancedBookCarouselProps> = ({ books, onBo
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   
+                  {/* Favorite Heart Icon */}
+                  {onToggleFavorite && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite(book.id);
+                      }}
+                      className="absolute top-4 right-4 z-10 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:scale-110 transition-all shadow-lg"
+                    >
+                      <Heart className={`w-5 h-5 ${favoriteBookIds.includes(book.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+                    </button>
+                  )}
+                  
                   {/* New Badge */}
-                  <div className="absolute top-4 right-4 z-10">
-                    <div className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold rounded-full shadow-lg animate-pulse">
-                      ✨ Yeni
+                  {!onToggleFavorite && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <div className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold rounded-full shadow-lg animate-pulse">
+                        ✨ Yeni
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Rating Badge */}
                   {book.averageRating && book.averageRating > 0 && (

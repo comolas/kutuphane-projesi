@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
-import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, Search, PieChart, MapPin, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart } from 'lucide-react';
+import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, Search, PieChart, MapPin, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart, ShoppingBag, Package } from 'lucide-react';
 import { useSpinWheel } from '../contexts/SpinWheelContext';
 import SpinWheelModal from '../components/user/SpinWheelModal';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
@@ -18,7 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGoals } from '../contexts/GoalsContext';
 import { useAuthors } from '../contexts/AuthorContext';
 import { useEvents } from '../contexts/EventContext';
-import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { getDailyQuote } from '../utils/quotes';
 import { Event, Survey, Announcement, Request as RequestType, Book as BookType } from '../types';
@@ -31,6 +31,7 @@ const UserDashboard: React.FC = () => {
   const { showAlert } = useAlert();
   
   const { borrowedBooks, allBooks, borrowBook, recommendedBooks, fetchRecommendedBooks, getBookStatus } = useBooks();
+  const [favoriteBookIds, setFavoriteBookIds] = useState<string[]>([]);
   const { monthlyGoal, yearlyGoal, fetchGoals, showConfetti, resetConfetti } = useGoals();
   const { featuredAuthor, featuredAuthorBooks } = useAuthors();
   const { allItems, fetchAllItems, joinedEvents, joinEvent } = useEvents();
@@ -142,6 +143,18 @@ const UserDashboard: React.FC = () => {
   }, [fetchRecommendedBooks, fetchGoals, fetchAllItems]);
 
   useEffect(() => {
+    const fetchFavorites = async () => {
+      if (!user) return;
+      const favoritesRef = collection(db, 'favorites');
+      const q = query(favoritesRef, where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const bookIds = querySnapshot.docs.map(doc => doc.data().bookId);
+      setFavoriteBookIds(bookIds);
+    };
+    fetchFavorites();
+  }, [user]);
+
+  useEffect(() => {
     if (showConfetti) {
       setShowCongratulatoryModal(true);
       const timer = setTimeout(() => {
@@ -194,6 +207,33 @@ const UserDashboard: React.FC = () => {
     } catch (error: any) {
       showAlert('Hata', `Kitap ödünç alınırken bir hata oluştu: ${error.message}`, 'error');
       console.error(error);
+    }
+  };
+
+  const handleToggleFavorite = async (bookId: string) => {
+    if (!user) return;
+    try {
+      const isFavorite = favoriteBookIds.includes(bookId);
+      if (isFavorite) {
+        const favoritesRef = collection(db, 'favorites');
+        const q = query(favoritesRef, where('userId', '==', user.uid), where('bookId', '==', bookId));
+        const querySnapshot = await getDocs(q);
+        const batch = db.batch ? db.batch() : null;
+        querySnapshot.docs.forEach(doc => {
+          if (batch) batch.delete(doc.ref);
+        });
+        if (batch) await batch.commit();
+        setFavoriteBookIds(prev => prev.filter(id => id !== bookId));
+      } else {
+        await addDoc(collection(db, 'favorites'), {
+          userId: user.uid,
+          bookId,
+          favoritedAt: Timestamp.now()
+        });
+        setFavoriteBookIds(prev => [...prev, bookId]);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -365,9 +405,21 @@ const UserDashboard: React.FC = () => {
               <MessageSquare className="w-5 h-5" />
               <span>Kuponlarım</span>
             </Link>
+            <Link to="/chat" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+              <MessageSquare className="w-5 h-5" />
+              <span>Sohbet</span>
+            </Link>
             <Link to="/favorites" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <Heart className="w-5 h-5" />
               <span>Favorilerim</span>
+            </Link>
+            <Link to="/shop" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+              <ShoppingBag className="w-5 h-5" />
+              <span>Mağaza</span>
+            </Link>
+            <Link to="/my-orders" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+              <Package className="w-5 h-5" />
+              <span>Siparişlerim</span>
             </Link>
             <Link to="/collection-distribution" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <PieChart className="w-5 h-5" />
@@ -662,117 +714,44 @@ const UserDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Reading Goals - Left Column */}
-            <section className="lg:col-span-4 flex flex-col">
-              <div className="flex justify-between items-center mb-3 sm:mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
-                  <Target className="w-6 h-6 mr-2 text-blue-500" />
-                  Okuma Hedefim
-                </h2>
-                <button
-                  onClick={() => setShowReadingGoalsModal(true)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
-                >
-                  Düzenle
-                </button>
-              </div>
-              <div className="bg-indigo-50 rounded-xl shadow-sm p-6 space-y-6 flex-grow border border-indigo-200">
-                {monthlyGoal ? (
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="text-lg font-semibold text-gray-800">
-                        Bu Ayki Hedef: {monthlyGoal.goal} Kitap
-                      </p>
-                      <p className="text-lg font-bold text-indigo-600">{`${monthlyGoal.progress} / ${monthlyGoal.goal}`}</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-4">
-                      <div
-                        className="bg-indigo-600 h-4 rounded-full"
-                        style={{ width: `${Math.min((monthlyGoal.progress / monthlyGoal.goal) * 100, 100)}%` }}
-                      ></div>
-                    </div>
-                    {monthlyGoal.progress >= monthlyGoal.goal && (
-                      <div className="mt-2 text-sm text-green-600 font-medium">
-                        🎉 Tebrikler! Bu ayın hedefini tamamladınız!
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-500">
-                    <p>Bu ay için bir hedef belirlemedin.</p>
-                  </div>
-                )}
-                {yearlyGoal ? (
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="text-lg font-semibold text-gray-800">
-                        Bu Yılki Hedef: {yearlyGoal.goal} Kitap
-                      </p>
-                      <p className="text-lg font-bold text-indigo-600">{`${yearlyGoal.progress} / ${yearlyGoal.goal}`}</p>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-4">
-                      <div
-                        className="bg-indigo-600 h-4 rounded-full"
-                        style={{ width: `${Math.min((yearlyGoal.progress / yearlyGoal.goal) * 100, 100)}%` }}
-                      ></div>
-                    </div>
-                    {yearlyGoal.progress >= yearlyGoal.goal && (
-                      <div className="mt-2 text-sm text-green-600 font-medium">
-                        🎉 Harika! Bu yılın hedefini tamamladınız!
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-500">
-                    <p>Bu yıl için bir hedef belirlemedin.</p>
-                  </div>
-                )}
-                {!monthlyGoal && !yearlyGoal && (
-                   <div className="text-center">
-                      <p className="text-gray-600 mb-4">Henüz bir okuma hedefin yok.</p>
-                      <button
-                      onClick={() => setShowReadingGoalsModal(true)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                      >
-                      Hemen Oluştur
-                      </button>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Recommendations - Right Column */}
-            <section className="lg:col-span-8">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
-                <Heart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-red-500" />
-                Sana Özel Öneriler
-              </h2>
-              {recommendedBooks.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                  {recommendedBooks.slice(0, 4).map(book => (
-                    <div key={book.id} className="group">
-                      <div className="relative overflow-hidden rounded-lg aspect-[2/3] mb-3">
-                        <img
-                          src={book.coverImage}
-                          alt={book.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="absolute bottom-0 left-0 right-0 p-3">
-                            <button
-                              onClick={() => handleBorrowBook(book as BookType)}
-                              className="w-full px-3 py-2 rounded-lg text-xs font-medium bg-white text-gray-900 hover:bg-gray-100 transition-colors"
-                            >
-                              Ödünç Al
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">{book.title}</h3>
-                      <p className="text-xs text-gray-600">{book.author}</p>
-                    </div>
-                  ))}
+            {/* Recommendations - Full Width */}
+            <section className="lg:col-span-12 mt-20">
+              <div className="mb-6 flex justify-center">
+                <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-red-500 via-pink-500 to-purple-600 rounded-2xl shadow-xl">
+                  <Heart className="w-10 h-10 text-white fill-white animate-pulse" />
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
+                    Sana Özel Öneriler
+                  </h2>
                 </div>
+              </div>
+              <div className="mb-6">
+                {recommendedBooks.length > 0 && (() => {
+                  const completedBooks = borrowedBooks.filter(b => b.returnStatus === 'returned');
+                  const categoryCount = completedBooks.reduce((acc, book) => {
+                    acc[book.category] = (acc[book.category] || 0) + 1;
+                    return acc;
+                  }, {} as Record<string, number>);
+                  const favoriteCategory = Object.keys(categoryCount).sort((a, b) => categoryCount[b] - categoryCount[a])[0];
+                  const totalRead = completedBooks.length;
+                  
+                  const messages = [
+                    `${userData?.displayName}, senin için ${favoriteCategory || 'sevdiğin kategorilerden'} özel kitaplar seçtik! 📚`,
+                    `Okuma zevkine göre ${totalRead > 5 ? 'deneyimli bir okuyucu olarak' : ''} sana en uygun kitapları bulduk ✨`,
+                    `${favoriteCategory ? favoriteCategory + ' kategorisini seviyorsun,' : 'Okuma geçmişine göre'} bu kitaplar tam sana göre! 🎯`,
+                    `Seni tanıyoruz ${userData?.displayName}! Bu kitaplar senin tarzına çok uygun 💫`
+                  ];
+                  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                  
+                  return <p className="text-gray-600 text-center">{randomMessage}</p>;
+                })()}
+              </div>
+              {recommendedBooks.length > 0 ? (
+                <EnhancedBookCarousel 
+                  books={recommendedBooks} 
+                  onBorrowBook={handleBorrowBook}
+                  favoriteBookIds={favoriteBookIds}
+                  onToggleFavorite={handleToggleFavorite}
+                />
               ) : (
                 <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center min-h-[280px] border border-white/20">
                   <Heart className="w-12 h-12 text-gray-300 mb-4" />
@@ -786,7 +765,15 @@ const UserDashboard: React.FC = () => {
             </section>
 
             {/* Leaderboard - Full Width */}
-            <section className="lg:col-span-12">
+            <section className="lg:col-span-12 mt-20">
+              <div className="mb-6 flex justify-center">
+                <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl shadow-xl">
+                  <BarChart className="w-10 h-10 text-white animate-pulse" />
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
+                    Bu Ayın Kitap Kurtları
+                  </h2>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <Leaderboard />
               </div>
@@ -895,23 +882,28 @@ const UserDashboard: React.FC = () => {
             </section>
 
             {/* New Books - Full Width */}
-            <section className="lg:col-span-12">
-              <div className="mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
-                  <BookPlus className="w-6 h-6 mr-2 text-green-500" />
-                  Yeni Eklenen Kitaplar
-                </h2>
-                <p className="text-gray-600 mt-2">Kütüphanemize yeni eklenen kitapları keşfedin</p>
+            <section className="lg:col-span-12 mt-20">
+              <div className="mb-6 flex justify-center">
+                <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 rounded-2xl shadow-xl">
+                  <BookPlus className="w-10 h-10 text-white animate-pulse" />
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
+                    Yeni Eklenen Kitaplar
+                  </h2>
+                </div>
               </div>
               <EnhancedBookCarousel books={newBooks} onBorrowBook={handleBorrowBook} />
             </section>
 
             {/* Events - Full Width */}
-            <section className="lg:col-span-12">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
-                <Calendar className="w-6 h-6 mr-2 text-purple-500" />
-                Etkinlikler, Anketler ve Duyurular
-              </h2>
+            <section className="lg:col-span-12 mt-20">
+              <div className="mb-6 flex justify-center">
+                <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-600 rounded-2xl shadow-xl">
+                  <Calendar className="w-10 h-10 text-white animate-pulse" />
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
+                    Etkinlikler, Anketler ve Duyurular
+                  </h2>
+                </div>
+              </div>
               
               {/* Tabs */}
               <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">

@@ -1,4 +1,4 @@
-export type RewardType = 'category' | 'penalty-discount' | 'borrow-extension' | 'pass' | 'spin-again';
+export type RewardType = 'category' | 'penalty-discount' | 'shop-discount' | 'borrow-extension' | 'pass' | 'spin-again';
 
 export interface SpinReward {
   id: string;

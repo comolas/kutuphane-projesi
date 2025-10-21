@@ -23,6 +23,8 @@ import { AlertProvider } from './contexts/AlertContext';
 import { SpinWheelProvider } from './contexts/SpinWheelContext';
 import { CouponProvider } from './contexts/CouponContext';
 import { LocalNotificationProvider } from './contexts/LocalNotificationContext';
+import { ChatProvider } from './contexts/ChatContext';
+import { ShopProvider } from './contexts/ShopContext';
 import { useContentNotifications } from './hooks/useContentNotifications';
 import { useMobileUpdate } from './hooks/useMobileUpdate';
 import MobileUpdateModal from './components/common/MobileUpdateModal';
@@ -60,6 +62,9 @@ const MyCoupons = lazy(() => import('./pages/user/MyCoupons'));
 const MyClassPage = lazy(() => import('./pages/MyClassPage'));
 const TeacherReportsPage = lazy(() => import('./pages/TeacherReportsPage'));
 const StudentComparePage = lazy(() => import('./pages/StudentComparePage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const ShopPage = lazy(() => import('./pages/ShopPage'));
+const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage'));
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -134,6 +139,10 @@ const AppContent = () => {
           <Route path="/my-class" element={<PrivateRoute><MyClassPage /></PrivateRoute>} />
           <Route path="/teacher/reports" element={<PrivateRoute><TeacherReportsPage /></PrivateRoute>} />
           <Route path="/student-compare" element={<PrivateRoute><StudentComparePage /></PrivateRoute>} />
+          <Route path="/chat" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
+          <Route path="/chat/:conversationId" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
+          <Route path="/shop" element={<PrivateRoute><ShopPage /></PrivateRoute>} />
+          <Route path="/my-orders" element={<PrivateRoute><MyOrdersPage /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
         </Suspense>
@@ -184,41 +193,45 @@ function App() {
       <Router>
         <AlertProvider>
         <AuthProvider>
-          <SpinWheelProvider>
-            <CouponProvider>
-              <AuthorProvider>
-                <EventProvider>
-                  <GoalsProvider>
-                    <BookProvider>
-                      <LocalNotificationProvider>
-                        <TaskProvider>
-                          <AssistantProvider>
-                            <ThemeProvider>
-                              <SettingsProvider>
-                                <ReviewProvider>
-                                  <MagazineProvider>
-                                    <CollectionProvider>
-                                      <BudgetProvider>
-                                        <GameProvider>
-                                          <GameReservationProvider>
-                                            <AppContent />
-                                          </GameReservationProvider>
-                                        </GameProvider>
-                                      </BudgetProvider>
-                                    </CollectionProvider>
-                                  </MagazineProvider>
-                                </ReviewProvider>
-                              </SettingsProvider>
-                            </ThemeProvider>
-                          </AssistantProvider>
-                        </TaskProvider>
-                      </LocalNotificationProvider>
-                    </BookProvider>
-                  </GoalsProvider>
-                </EventProvider>
-              </AuthorProvider>
-            </CouponProvider>
-          </SpinWheelProvider>
+          <ShopProvider>
+            <ChatProvider>
+              <SpinWheelProvider>
+                <CouponProvider>
+                  <AuthorProvider>
+                    <EventProvider>
+                      <GoalsProvider>
+                        <BookProvider>
+                          <LocalNotificationProvider>
+                            <TaskProvider>
+                              <AssistantProvider>
+                                <ThemeProvider>
+                                  <SettingsProvider>
+                                    <ReviewProvider>
+                                      <MagazineProvider>
+                                        <CollectionProvider>
+                                          <BudgetProvider>
+                                            <GameProvider>
+                                              <GameReservationProvider>
+                                                <AppContent />
+                                              </GameReservationProvider>
+                                            </GameProvider>
+                                          </BudgetProvider>
+                                        </CollectionProvider>
+                                      </MagazineProvider>
+                                    </ReviewProvider>
+                                  </SettingsProvider>
+                                </ThemeProvider>
+                              </AssistantProvider>
+                            </TaskProvider>
+                          </LocalNotificationProvider>
+                        </BookProvider>
+                      </GoalsProvider>
+                    </EventProvider>
+                  </AuthorProvider>
+                </CouponProvider>
+              </SpinWheelProvider>
+            </ChatProvider>
+          </ShopProvider>
         </AuthProvider>
         </AlertProvider>
       </Router>
