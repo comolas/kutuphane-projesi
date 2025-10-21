@@ -3,12 +3,13 @@ import { Timestamp } from 'firebase/firestore';
 export interface UserCoupon {
   id: string;
   userId: string;
-  type: 'penalty-discount' | 'extension';
+  type: 'penalty-discount' | 'shop-discount' | 'extension';
   discountPercent?: 5 | 10 | 20 | 50 | 100;
   category: string | null; // null ise tüm kategorilerde geçerli
   isUsed: boolean;
   usedAt: Date | null;
   usedForPenaltyId: string | null;
+  usedForOrderId?: string | null;
   createdAt: Date;
   expiryDate: Date;
   wonFromSpin: boolean;
@@ -17,7 +18,7 @@ export interface UserCoupon {
 
 export interface CouponCreateData {
   userId: string;
-  type: 'penalty-discount' | 'extension';
+  type: 'penalty-discount' | 'shop-discount' | 'extension';
   discountPercent?: 5 | 10 | 20 | 50 | 100;
   category: string | null;
   expiryDays?: number; // Varsayılan 30 gün

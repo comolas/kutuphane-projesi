@@ -329,30 +329,63 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchRecommendedBooks = useCallback(async () => {
     if (!user) return;
 
-    const borrowedCategories = borrowedBooks.map(book => book.category);
-    const borrowedAuthors = borrowedBooks.map(book => book.author);
-
-    const unreadBooks = allBooks.filter(book => !borrowedBooks.some(borrowed => borrowed.id === book.id));
-
-    let recommendations = unreadBooks.filter(book => 
-      borrowedCategories.includes(book.category) || borrowedAuthors.includes(book.author)
+    const completedBooks = borrowedBooks.filter(b => b.returnStatus === 'returned');
+    const unreadBooks = allBooks.filter(book => 
+      !borrowedBooks.some(borrowed => borrowed.id === book.id) &&
+      getBookStatus(book.id) === 'available'
     );
 
-    if (recommendations.length === 0) {
-        const popularBooks = allBorrowedBooks
-            .map(b => b.id)
-            .reduce((acc, id) => {
-                acc[id] = (acc[id] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
-        
-        const sortedPopularBooks = Object.keys(popularBooks).sort((a, b) => popularBooks[b] - popularBooks[a]);
-        const top5 = sortedPopularBooks.slice(0, 5);
-        recommendations = allBooks.filter(b => top5.includes(b.id));
+    if (unreadBooks.length === 0) {
+      setRecommendedBooks([]);
+      return;
     }
 
-    setRecommendedBooks(recommendations.slice(0, 5));
-  }, [user, borrowedBooks, allBooks]);
+    const categoryCount = completedBooks.reduce((acc, book) => {
+      acc[book.category] = (acc[book.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const favoriteCategories = Object.keys(categoryCount).sort((a, b) => categoryCount[b] - categoryCount[a]);
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentBorrows = allBorrowedBooks.filter(b => 
+      b.borrowedAt && new Date(b.borrowedAt) >= thirtyDaysAgo
+    );
+    const popularityCount = recentBorrows.reduce((acc, book) => {
+      acc[book.id] = (acc[book.id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const scoredBooks = unreadBooks.map(book => {
+      let score = 0;
+
+      const categoryIndex = favoriteCategories.indexOf(book.category);
+      if (categoryIndex !== -1) {
+        score += (40 * (1 - categoryIndex / Math.max(favoriteCategories.length, 1)));
+      }
+
+      const borrowCount = popularityCount[book.id] || 0;
+      const maxBorrowCount = Math.max(...Object.values(popularityCount), 1);
+      score += (30 * (borrowCount / maxBorrowCount));
+
+      if (book.averageRating && book.reviewCount && book.reviewCount >= 3) {
+        score += (20 * (book.averageRating / 5));
+      }
+
+      const hasReadSameAuthor = completedBooks.some(b => b.author === book.author);
+      if (hasReadSameAuthor) {
+        score += 10;
+      }
+
+      return { ...book, score };
+    });
+
+    const topRecommendations = scoredBooks
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12);
+
+    setRecommendedBooks(topRecommendations);
+  }, [user, borrowedBooks, allBooks, allBorrowedBooks, getBookStatus]);
 
   const lendBookToUser = useCallback(async (bookId: string, userId: string) => {
     try {

@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Bell, BellOff, User, Award, Calendar, Mail, GraduationCap, Hash, Clock } from 'lucide-react';
+import { ChevronLeft, Bell, BellOff, User, Award, Calendar, Mail, GraduationCap, Hash, Clock, Target } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useGoals } from '../contexts/GoalsContext';
+import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, userData } = useAuth();
+  const { monthlyGoal, yearlyGoal, fetchGoals } = useGoals();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isNative, setIsNative] = useState(false);
+  const [showReadingGoalsModal, setShowReadingGoalsModal] = useState(false);
 
   useEffect(() => {
     const checkNotificationStatus = async () => {
@@ -20,7 +24,8 @@ const SettingsPage: React.FC = () => {
       }
     };
     checkNotificationStatus();
-  }, []);
+    fetchGoals();
+  }, [fetchGoals]);
 
   const toggleNotifications = async () => {
     if (!isNative) return;
@@ -245,6 +250,87 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Okuma Hedefim */}
+        <div className="mt-6 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">
+          <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Target className="w-5 h-5 mr-2 text-indigo-600" />
+              Okuma Hedefim
+            </h3>
+            <button
+              onClick={() => setShowReadingGoalsModal(true)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+            >
+              Düzenle
+            </button>
+          </div>
+          <div className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {monthlyGoal ? (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-lg font-semibold text-gray-800">
+                      Bu Ayki Hedef: {monthlyGoal.goal} Kitap
+                    </p>
+                    <p className="text-lg font-bold text-indigo-600">{`${monthlyGoal.progress} / ${monthlyGoal.goal}`}</p>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-4">
+                    <div
+                      className="bg-indigo-600 h-4 rounded-full"
+                      style={{ width: `${Math.min((monthlyGoal.progress / monthlyGoal.goal) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  {monthlyGoal.progress >= monthlyGoal.goal && (
+                    <div className="mt-2 text-sm text-green-600 font-medium">
+                      🎉 Tebrikler! Bu ayın hedefini tamamladınız!
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500">
+                  <p>Bu ay için bir hedef belirlemedin.</p>
+                </div>
+              )}
+              {yearlyGoal ? (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-lg font-semibold text-gray-800">
+                      Bu Yılki Hedef: {yearlyGoal.goal} Kitap
+                    </p>
+                    <p className="text-lg font-bold text-indigo-600">{`${yearlyGoal.progress} / ${yearlyGoal.goal}`}</p>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-4">
+                    <div
+                      className="bg-indigo-600 h-4 rounded-full"
+                      style={{ width: `${Math.min((yearlyGoal.progress / yearlyGoal.goal) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  {yearlyGoal.progress >= yearlyGoal.goal && (
+                    <div className="mt-2 text-sm text-green-600 font-medium">
+                      🎉 Harika! Bu yılın hedefini tamamladınız!
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500">
+                  <p>Bu yıl için bir hedef belirlemedin.</p>
+                </div>
+              )}
+              {!monthlyGoal && !yearlyGoal && (
+                <div className="text-center">
+                  <p className="text-gray-600 mb-4">Henüz bir okuma hedefin yok.</p>
+                  <button
+                    onClick={() => setShowReadingGoalsModal(true)}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    Hemen Oluştur
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Bildirim Ayarları */}
         {isNative && (
           <div className="mt-6 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">
@@ -301,6 +387,12 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ReadingGoalsModal
+        isOpen={showReadingGoalsModal}
+        onClose={() => setShowReadingGoalsModal(false)}
+        onGoalSaved={fetchGoals}
+      />
     </div>
   );
 };

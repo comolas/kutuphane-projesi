@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+import { Capacitor } from '@capacitor/core';
 import { useBooks } from '../contexts/BookContext';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -249,145 +252,168 @@ const FinesPage: React.FC = () => {
                             )}
                           </div>
                           <button
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
-                              const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
-                              const pageWidth = 80;
-                              const tr = (text: string) => text.replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
-                              const receiptNo = `MKB-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-                              
-                              // Border
-                              doc.setDrawColor(79, 70, 229);
-                              doc.setLineWidth(1);
-                              doc.rect(2, 2, pageWidth - 4, 196, 'S');
-                              
-                              // Header
-                              doc.setFillColor(79, 70, 229);
-                              doc.rect(2, 2, pageWidth - 4, 25, 'F');
-                              doc.setTextColor(255, 255, 255);
-                              doc.setFontSize(16);
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('ÖDEME MAKBUZU'), pageWidth / 2, 12, { align: 'center' });
-                              doc.setFontSize(9);
-                              doc.setFont('helvetica', 'normal');
-                              doc.text(tr('Data Koleji Kütüphanesi'), pageWidth / 2, 20, { align: 'center' });
-                              
-                              // Receipt Info
-                              doc.setTextColor(0, 0, 0);
-                              doc.setFontSize(7);
-                              doc.text(`Makbuz No: ${receiptNo}`, pageWidth - 5, 32, { align: 'right' });
-                              doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`, pageWidth - 5, 37, { align: 'right' });
-                              doc.text(`Saat: ${new Date().toLocaleTimeString('tr-TR')}`, pageWidth - 5, 42, { align: 'right' });
-                              
-                              // Watermark
-                              doc.setTextColor(34, 197, 94);
-                              doc.setFontSize(40);
-                              doc.setFont('helvetica', 'bold');
-                              doc.saveGraphicsState();
-                              doc.setGState(new doc.GState({ opacity: 0.1 }));
-                              doc.text(tr('ODENDI'), pageWidth / 2, 100, { align: 'center', angle: 45 });
-                              doc.restoreGraphicsState();
-                              
-                              // Content
-                              doc.setTextColor(0, 0, 0);
-                              let y = 50;
-                              
-                              doc.setFontSize(8);
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('Kitap Adi:'), 5, y);
-                              doc.setFont('helvetica', 'normal');
-                              const titleLines = doc.splitTextToSize(tr(book.title), pageWidth - 10);
-                              doc.text(titleLines, 5, y + 4);
-                              y += 4 + (titleLines.length * 4);
-                              
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('Yazar:'), 5, y);
-                              doc.setFont('helvetica', 'normal');
-                              doc.text(tr(book.author), 5, y + 4);
-                              y += 10;
-                              
-                              doc.setDrawColor(200, 200, 200);
-                              doc.line(5, y, pageWidth - 5, y);
-                              y += 6;
-                              
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('Son Teslim:'), 5, y);
-                              doc.setFont('helvetica', 'normal');
-                              doc.text(new Date(book.dueDate).toLocaleDateString('tr-TR'), pageWidth - 5, y, { align: 'right' });
-                              y += 6;
-                              
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('Gecikme Suresi:'), 5, y);
-                              doc.setFont('helvetica', 'normal');
-                              doc.text(tr(`${daysOverdue} gun`), pageWidth - 5, y, { align: 'right' });
-                              y += 6;
-                              
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('Gunluk Ceza:'), 5, y);
-                              doc.setFont('helvetica', 'normal');
-                              doc.text(`${fineRate} TL`, pageWidth - 5, y, { align: 'right' });
-                              y += 6;
-                              
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr('Odeme Tarihi:'), 5, y);
-                              doc.setFont('helvetica', 'normal');
-                              doc.text(book.paymentDate ? new Date(book.paymentDate).toLocaleDateString('tr-TR') : '-', pageWidth - 5, y, { align: 'right' });
-                              y += 8;
-                              
-                              doc.line(5, y, pageWidth - 5, y);
-                              y += 6;
-                              
-                              // Discount section
-                              if (book.appliedDiscount) {
+                              try {
+                                const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
+                                const pageWidth = 80;
+                                const tr = (text: string) => text.replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
+                                const receiptNo = `MKB-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+                                
+                                // Border
+                                doc.setDrawColor(79, 70, 229);
+                                doc.setLineWidth(1);
+                                doc.rect(2, 2, pageWidth - 4, 196, 'S');
+                                
+                                // Header
+                                doc.setFillColor(79, 70, 229);
+                                doc.rect(2, 2, pageWidth - 4, 25, 'F');
+                                doc.setTextColor(255, 255, 255);
+                                doc.setFontSize(16);
                                 doc.setFont('helvetica', 'bold');
-                                doc.text(tr('Ceza Tutari:'), 5, y);
+                                doc.text(tr('ÖDEME MAKBUZU'), pageWidth / 2, 12, { align: 'center' });
+                                doc.setFontSize(9);
                                 doc.setFont('helvetica', 'normal');
-                                doc.text(`${book.appliedDiscount.originalAmount} TL`, pageWidth - 5, y, { align: 'right' });
+                                doc.text(tr('Data Koleji Kütüphanesi'), pageWidth / 2, 20, { align: 'center' });
+                                
+                                // Receipt Info
+                                doc.setTextColor(0, 0, 0);
+                                doc.setFontSize(7);
+                                doc.text(`Makbuz No: ${receiptNo}`, pageWidth - 5, 32, { align: 'right' });
+                                doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`, pageWidth - 5, 37, { align: 'right' });
+                                doc.text(`Saat: ${new Date().toLocaleTimeString('tr-TR')}`, pageWidth - 5, 42, { align: 'right' });
+                                
+                                // Watermark
+                                doc.setTextColor(34, 197, 94);
+                                doc.setFontSize(40);
+                                doc.setFont('helvetica', 'bold');
+                                doc.saveGraphicsState();
+                                doc.setGState(new doc.GState({ opacity: 0.1 }));
+                                doc.text(tr('ODENDI'), pageWidth / 2, 100, { align: 'center', angle: 45 });
+                                doc.restoreGraphicsState();
+                                
+                                // Content
+                                doc.setTextColor(0, 0, 0);
+                                let y = 50;
+                                
+                                doc.setFontSize(8);
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr('Kitap Adi:'), 5, y);
+                                doc.setFont('helvetica', 'normal');
+                                const titleLines = doc.splitTextToSize(tr(book.title), pageWidth - 10);
+                                doc.text(titleLines, 5, y + 4);
+                                y += 4 + (titleLines.length * 4);
+                                
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr('Yazar:'), 5, y);
+                                doc.setFont('helvetica', 'normal');
+                                doc.text(tr(book.author), 5, y + 4);
+                                y += 10;
+                                
+                                doc.setDrawColor(200, 200, 200);
+                                doc.line(5, y, pageWidth - 5, y);
                                 y += 6;
                                 
                                 doc.setFont('helvetica', 'bold');
-                                doc.text(tr('Indirim Kuponu:'), 5, y);
+                                doc.text(tr('Son Teslim:'), 5, y);
                                 doc.setFont('helvetica', 'normal');
-                                doc.setTextColor(34, 197, 94);
-                                doc.text(`-${book.appliedDiscount.discountAmount} TL`, pageWidth - 5, y, { align: 'right' });
-                                doc.setTextColor(0, 0, 0);
-                                y += 4;
+                                doc.text(new Date(book.dueDate).toLocaleDateString('tr-TR'), pageWidth - 5, y, { align: 'right' });
+                                y += 6;
                                 
-                                doc.setFontSize(7);
-                                doc.text(tr(`(%${book.appliedDiscount.discountPercent} - ${book.appliedDiscount.category || 'Tum Kategoriler'})`), 5, y);
-                                doc.setFontSize(8);
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr('Gecikme Suresi:'), 5, y);
+                                doc.setFont('helvetica', 'normal');
+                                doc.text(tr(`${daysOverdue} gun`), pageWidth - 5, y, { align: 'right' });
+                                y += 6;
+                                
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr('Gunluk Ceza:'), 5, y);
+                                doc.setFont('helvetica', 'normal');
+                                doc.text(`${fineRate} TL`, pageWidth - 5, y, { align: 'right' });
+                                y += 6;
+                                
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr('Odeme Tarihi:'), 5, y);
+                                doc.setFont('helvetica', 'normal');
+                                doc.text(book.paymentDate ? new Date(book.paymentDate).toLocaleDateString('tr-TR') : '-', pageWidth - 5, y, { align: 'right' });
                                 y += 8;
                                 
                                 doc.line(5, y, pageWidth - 5, y);
                                 y += 6;
+                                
+                                // Discount section
+                                if (book.appliedDiscount) {
+                                  doc.setFont('helvetica', 'bold');
+                                  doc.text(tr('Ceza Tutari:'), 5, y);
+                                  doc.setFont('helvetica', 'normal');
+                                  doc.text(`${book.appliedDiscount.originalAmount} TL`, pageWidth - 5, y, { align: 'right' });
+                                  y += 6;
+                                  
+                                  doc.setFont('helvetica', 'bold');
+                                  doc.text(tr('Indirim Kuponu:'), 5, y);
+                                  doc.setFont('helvetica', 'normal');
+                                  doc.setTextColor(34, 197, 94);
+                                  doc.text(`-${book.appliedDiscount.discountAmount} TL`, pageWidth - 5, y, { align: 'right' });
+                                  doc.setTextColor(0, 0, 0);
+                                  y += 4;
+                                  
+                                  doc.setFontSize(7);
+                                  doc.text(tr(`(%${book.appliedDiscount.discountPercent} - ${book.appliedDiscount.category || 'Tum Kategoriler'})`), 5, y);
+                                  doc.setFontSize(8);
+                                  y += 8;
+                                  
+                                  doc.line(5, y, pageWidth - 5, y);
+                                  y += 6;
+                                }
+                                
+                                // Total
+                                doc.setFillColor(79, 70, 229);
+                                doc.rect(5, y - 3, pageWidth - 10, 10, 'F');
+                                doc.setTextColor(255, 255, 255);
+                                doc.setFontSize(10);
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(tr(book.appliedDiscount ? 'TOPLAM ODENEN:' : 'TOPLAM:'), 8, y + 3);
+                                doc.text(`${fineAmount} TL`, pageWidth - 8, y + 3, { align: 'right' });
+                                y += 15;
+                                
+                                // Signature
+                                doc.setTextColor(0, 0, 0);
+                                doc.setFontSize(7);
+                                doc.setFont('helvetica', 'normal');
+                                y = 175;
+                                doc.line(pageWidth - 35, y, pageWidth - 5, y);
+                                doc.text(tr('Yetkili Imza'), pageWidth - 20, y + 4, { align: 'center' });
+                                
+                                // Footer
+                                doc.setFillColor(79, 70, 229);
+                                doc.rect(2, 188, pageWidth - 4, 10, 'F');
+                                doc.setTextColor(255, 255, 255);
+                                doc.setFontSize(6);
+                                doc.text(tr('Data Koleji Kutuphanesi'), pageWidth / 2, 194, { align: 'center' });
+                                
+                                const fileName = `makbuz-${receiptNo}.pdf`;
+                                
+                                if (Capacitor.isNativePlatform()) {
+                                  const pdfBase64 = doc.output('datauristring').split(',')[1];
+                                  const result = await Filesystem.writeFile({
+                                    path: fileName,
+                                    data: pdfBase64,
+                                    directory: Directory.Cache
+                                  });
+                                  
+                                  await Share.share({
+                                    title: 'Ödeme Makbuzu',
+                                    text: 'Ceza ödeme makbuzunuz',
+                                    url: result.uri,
+                                    dialogTitle: 'Makbuzu Paylaş'
+                                  });
+                                } else {
+                                  doc.save(fileName);
+                                }
+                              } catch (error) {
+                                console.error('PDF oluşturma hatası:', error);
+                                alert('Makbuz oluşturulurken bir hata oluştu.');
                               }
-                              
-                              // Total
-                              doc.setFillColor(79, 70, 229);
-                              doc.rect(5, y - 3, pageWidth - 10, 10, 'F');
-                              doc.setTextColor(255, 255, 255);
-                              doc.setFontSize(10);
-                              doc.setFont('helvetica', 'bold');
-                              doc.text(tr(book.appliedDiscount ? 'TOPLAM ODENEN:' : 'TOPLAM:'), 8, y + 3);
-                              doc.text(`${fineAmount} TL`, pageWidth - 8, y + 3, { align: 'right' });
-                              y += 15;
-                              
-                              // Signature
-                              doc.setTextColor(0, 0, 0);
-                              doc.setFontSize(7);
-                              doc.setFont('helvetica', 'normal');
-                              y = 175;
-                              doc.line(pageWidth - 35, y, pageWidth - 5, y);
-                              doc.text(tr('Yetkili Imza'), pageWidth - 20, y + 4, { align: 'center' });
-                              
-                              // Footer
-                              doc.setFillColor(79, 70, 229);
-                              doc.rect(2, 188, pageWidth - 4, 10, 'F');
-                              doc.setTextColor(255, 255, 255);
-                              doc.setFontSize(6);
-                              doc.text(tr('Data Koleji Kutuphanesi'), pageWidth / 2, 194, { align: 'center' });
-                              
-                              doc.save(`makbuz-${receiptNo}.pdf`);
                             }}
                             className="w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-medium hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center touch-manipulation min-h-[40px]"
                           >

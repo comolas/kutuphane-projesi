@@ -216,3 +216,44 @@ export interface BorrowedBook extends Book {
     returnStatus: 'borrowed' | 'returned';
     userId: string;
 }
+
+
+export interface Product {
+  id: string;
+  name: string;
+  category: 'aksesuar' | 'kiyafet' | 'kirtasiye';
+  price: number;
+  stock: number;
+  image: string;
+  description: string;
+  createdAt: any;
+}
+
+export interface CartItem {
+  productId: string;
+  quantity: number;
+}
+
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  paymentMethod: 'eft' | 'havale' | 'iyzico' | 'cash';
+  paymentStatus: 'waiting' | 'paid';
+  createdAt: any;
+  notes?: string;
+  paymentProof?: string;
+  couponId?: string;
+  discountAmount?: number;
+}

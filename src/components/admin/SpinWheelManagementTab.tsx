@@ -660,13 +660,14 @@ const SpinWheelManagementTab: React.FC = () => {
                   className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
                   <option value="penalty-discount">Ceza İndirimi</option>
+                  <option value="shop-discount">Mağaza İndirimi</option>
                   <option value="category">Kategori Keşfi</option>
                   <option value="borrow-extension">Ödünç Süresi Uzatma</option>
                   <option value="spin-again">Yeniden Çevir</option>
                   <option value="pass">Pas</option>
                 </select>
               </div>
-              {newReward.type === 'penalty-discount' && (
+              {(newReward.type === 'penalty-discount' || newReward.type === 'shop-discount') && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">İndirim Oranı (%)</label>
                   <input

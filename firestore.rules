@@ -19,11 +19,21 @@ service cloud.firestore {
     function isTeacher() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
+    
+    function canChatWith(otherUserId) {
+      let currentUser = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let otherUser = get(/databases/$(database)/documents/users/$(otherUserId)).data;
+      
+      return currentUser.role == 'admin' || 
+             otherUser.role == 'admin' ||
+             (currentUser.role == 'teacher' && 'teacherData' in currentUser && 'assignedClass' in currentUser.teacherData && 'studentClass' in otherUser && currentUser.teacherData.assignedClass == otherUser.studentClass) ||
+             (otherUser.role == 'teacher' && 'teacherData' in otherUser && 'assignedClass' in otherUser.teacherData && 'studentClass' in currentUser && otherUser.teacherData.assignedClass == currentUser.studentClass);
+    }
 
     // Users collection rules
     match /users/{userId} {
-      // Allow users to read their own data, admins to read any user data, and teachers to read their class students
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin() || isTeacher());
+      // Allow authenticated users to read user data for chat purposes
+      allow read: if isAuthenticated();
       
       // Allow user creation during registration
       allow create: if request.auth.uid == userId &&
@@ -449,6 +459,82 @@ service cloud.firestore {
       
       // Allow admins to update and delete messages
       allow update, delete: if isAdmin();
+    }
+
+    // Teacher Notes collection rules
+    match /teacherNotes/{studentId} {
+      // Allow teachers to read and write notes for their students
+      allow read, write: if isAuthenticated() && isTeacher();
+      
+      // Allow admins to read and write all notes
+      allow read, write: if isAdmin();
+    }
+
+    // Products collection rules
+    match /products/{productId} {
+      // Allow all authenticated users to read products
+      allow read: if isAuthenticated();
+      
+      // Only admins can create, update, or delete products
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Orders collection rules
+    match /orders/{orderId} {
+      // Allow users to read their own orders, admins can read all
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+      
+      // Allow authenticated users to create their own orders
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      
+      // Allow admins to update all orders, users can only update status to 'cancelled' for their own pending orders
+      allow update: if isAdmin() || 
+        (isAuthenticated() && 
+         resource.data.userId == request.auth.uid && 
+         resource.data.status == 'pending' &&
+         request.resource.data.status == 'cancelled' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+      
+      // Only admins can delete orders
+      allow delete: if isAdmin();
+    }
+
+    // Budget collection rules
+    match /budget/{budgetId} {
+      // Allow all authenticated users to read budget entries
+      allow read: if isAuthenticated();
+      
+      // Only admins can create, update, or delete budget entries
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Conversations collection rules
+    match /conversations/{conversationId} {
+      // Allow read if user is a participant
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.participants;
+      
+      // Allow create if user is a participant and can chat with the other participant
+      allow create: if isAuthenticated() && 
+        request.auth.uid in request.resource.data.participants &&
+        request.resource.data.participants.size() == 2 &&
+        canChatWith(request.resource.data.participants[0] == request.auth.uid ? request.resource.data.participants[1] : request.resource.data.participants[0]);
+      
+      // Allow update if user is a participant
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.participants;
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Allow read if user is a participant of the conversation
+        allow read: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        
+        // Allow create if user is the sender and a participant
+        allow create: if isAuthenticated() && 
+          request.auth.uid == request.resource.data.senderId &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        
+        // Allow update for marking as read
+        allow update: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+      }
     }
   }
 }

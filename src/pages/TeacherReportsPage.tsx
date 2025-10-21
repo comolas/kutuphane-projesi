@@ -9,6 +9,10 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+import { Dialog } from '@capacitor/dialog';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, LineElement, PointElement);
 
@@ -236,7 +240,6 @@ const TeacherReportsPage: React.FC = () => {
     if (!element) return;
 
     try {
-      // Butonu gizle
       const button = document.getElementById('pdf-button');
       if (button) button.style.display = 'none';
 
@@ -257,7 +260,6 @@ const TeacherReportsPage: React.FC = () => {
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
       const imgY = 0;
 
-      // Sayfa sayısını hesapla
       const totalPages = Math.ceil((imgHeight * ratio) / pdfHeight);
 
       for (let i = 0; i < totalPages; i++) {
@@ -266,9 +268,43 @@ const TeacherReportsPage: React.FC = () => {
         pdf.addImage(imgData, 'PNG', imgX, imgY + yOffset, imgWidth * ratio, imgHeight * ratio);
       }
 
-      pdf.save(`sinif-raporu-${userData?.teacherData?.assignedClass}-${new Date().toISOString().split('T')[0]}.pdf`);
+      const platform = Capacitor.getPlatform();
+      const fileName = `sinif-raporu-${userData?.teacherData?.assignedClass}-${new Date().toISOString().split('T')[0]}.pdf`;
 
-      // Butonu tekrar göster
+      if (platform === 'android' || platform === 'ios') {
+        const pdfBlob = pdf.output('blob');
+        const reader = new FileReader();
+        
+        reader.onloadend = async () => {
+          const base64data = reader.result as string;
+          
+          try {
+            const result = await Filesystem.writeFile({
+              path: fileName,
+              data: base64data.split(',')[1],
+              directory: Directory.Cache,
+            });
+        
+            await Share.share({
+              title: 'Sınıf Raporu',
+              text: `${userData?.teacherData?.assignedClass} Sınıf Raporu`,
+              url: result.uri,
+              dialogTitle: 'PDF Paylaş'
+            });
+          } catch (error) {
+            console.error('File sharing error:', error);
+            await Dialog.alert({
+              title: 'Hata',
+              message: 'PDF paylaşılırken bir hata oluştu. Lütfen tekrar deneyin.',
+            });
+          }
+        };
+        
+        reader.readAsDataURL(pdfBlob);
+      } else {
+        pdf.save(fileName);
+      }
+
       if (button) button.style.display = 'flex';
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);

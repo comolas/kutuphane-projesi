@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import OptimizedImage from '../components/common/OptimizedImage';
-import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Star, Heart, MessageSquare } from 'lucide-react';
+import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Star, Heart, MessageSquare, UserPlus } from 'lucide-react';
 import { Book } from '../types';
 import { useBooks } from '../contexts/BookContext';
 import { db } from '../firebase/config';
@@ -10,6 +10,7 @@ import { collection, getDocs, addDoc, deleteDoc, query, where, Timestamp } from 
 import { useAuth } from '../contexts/AuthContext';
 import ReviewModal from '../components/common/ReviewModal';
 import StoryTray from '../components/catalog/StoryTray';
+import RecommendBookModal from '../components/teacher/RecommendBookModal';
 import Swal from 'sweetalert2';
 
 // Add borrowMessages to the import from useBooks
@@ -17,7 +18,7 @@ const CatalogPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { allBooks, borrowBook, isBorrowed, getBookStatus, borrowMessages } = useBooks();
-  const { user } = useAuth();
+  const { user, isTeacher } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [tagQuery, setTagQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -26,6 +27,8 @@ const CatalogPage: React.FC = () => {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showBookDetails, setShowBookDetails] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showRecommendModal, setShowRecommendModal] = useState(false);
+  const [bookToRecommend, setBookToRecommend] = useState<Book | null>(null);
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -540,6 +543,15 @@ const CatalogPage: React.FC = () => {
                               <MessageSquare className="w-3 h-3 mr-1" />
                               Yorumlar
                             </button>
+                            {isTeacher && (
+                              <button
+                                onClick={() => { setBookToRecommend(book); setShowRecommendModal(true); }}
+                                className="w-full px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                              >
+                                <UserPlus className="w-3 h-3 mr-1" />
+                                Öğrenciye Öner
+                              </button>
+                            )}
                             {bookStatus === 'available' && !hasPendingRequest && (
                               <>
                                 <button
@@ -792,6 +804,14 @@ const CatalogPage: React.FC = () => {
           bookId={selectedBook.id}
           bookTitle={selectedBook.title}
           onClose={() => setShowReviewModal(false)}
+        />
+      )}
+
+      {/* Recommend Book Modal */}
+      {showRecommendModal && bookToRecommend && (
+        <RecommendBookModal
+          book={bookToRecommend}
+          onClose={() => { setShowRecommendModal(false); setBookToRecommend(null); }}
         />
       )}
     </div>
