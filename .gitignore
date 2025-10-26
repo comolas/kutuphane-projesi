@@ -18,3 +18,6 @@ ios/
 
 # Gemini CLI temporary project
 project-bolt-sb1-vae5dgoc/.firebase/hosting.ZGlzdA.cache 
+
+# Firebase Service Account Key - GÜVENLİK AÇISINDAN ASLA COMMIT ETMEYİN!
+serviceAccountKey.json
