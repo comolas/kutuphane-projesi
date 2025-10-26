@@ -24,17 +24,18 @@ const EventContext = createContext<EventContextType | undefined>(undefined);
 
 // Create the provider component
 export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin, campusId } = useAuth();
   const [allItems, setAllItems] = useState<(Event | Survey | Announcement)[]>([]);
   const [joinedEvents, setJoinedEvents] = useState<string[]>([]);
 
   const fetchAllItems = useCallback(async () => {
     try {
       const eventsCollectionRef = collection(db, 'events');
+      const eventsQuery = isSuperAdmin ? eventsCollectionRef : query(eventsCollectionRef, where('campusId', '==', campusId));
       const announcementsCollectionRef = collection(db, 'announcements');
 
       const [eventsAndSurveysSnapshot, announcementsSnapshot] = await Promise.all([
-        getDocs(eventsCollectionRef),
+        getDocs(eventsQuery),
         getDocs(announcementsCollectionRef),
       ]);
 
@@ -49,7 +50,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } catch (error) {
       console.error("Error fetching items:", error);
     }
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   const fetchJoinedEvents = useCallback(async () => {
     if (!user) return;

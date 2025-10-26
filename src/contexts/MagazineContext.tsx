@@ -25,7 +25,7 @@ export const useMagazines = () => {
 
 export const MagazineProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [magazines, setMagazines] = useState<Magazine[]>([]);
-  const { user } = useAuth();
+  const { user, isSuperAdmin, campusId } = useAuth();
 
   const fetchMagazines = useCallback(async () => {
     if (!user) {
@@ -34,11 +34,14 @@ export const MagazineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     try {
       const magazinesCollectionRef = collection(db, "magazines");
+      const magazinesQuery = isSuperAdmin ? magazinesCollectionRef : query(magazinesCollectionRef, where('campusId', '==', campusId));
       const reviewsCollectionRef = collection(db, "reviews");
-      const approvedReviewsQuery = query(reviewsCollectionRef, where("status", "==", "approved"));
+      const approvedReviewsQuery = isSuperAdmin
+        ? query(reviewsCollectionRef, where("status", "==", "approved"))
+        : query(reviewsCollectionRef, where("status", "==", "approved"), where('campusId', '==', campusId));
 
       const [magazinesSnapshot, reviewsSnapshot] = await Promise.all([
-        getDocs(magazinesCollectionRef),
+        getDocs(magazinesQuery),
         user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] })
       ]);
 
@@ -62,7 +65,7 @@ export const MagazineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error("Error fetching magazines:", error);
     }
-  }, [user]);
+  }, [user, isSuperAdmin, campusId]);
 
   useEffect(() => {
     if (user) {

@@ -54,6 +54,46 @@ export const setAdminRole = onCall(async (request: any) => {
   }
 });
 
+// İLK SÜPER ADMIN OLUŞTURMA FONKSİYONU
+export const initializeFirstSuperAdmin = onCall(async (request: any) => {
+  const db = admin.firestore();
+  
+  // Sistemde süper admin var mı kontrol et
+  const superAdminsSnapshot = await db.collection("users").where("role", "==", "superadmin").limit(1).get();
+  
+  if (!superAdminsSnapshot.empty) {
+    throw new HttpsError(
+      "already-exists",
+      "Sistemde zaten süper admin kullanıcı mevcut. Bu fonksiyon devre dışı bırakıldı."
+    );
+  }
+  
+  const email = request.data.email;
+  
+  // Email validation
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.valid) {
+    throw new HttpsError("invalid-argument", emailValidation.error!);
+  }
+  
+  try {
+    const user = await admin.auth().getUserByEmail(email);
+    await admin.auth().setCustomUserClaims(user.uid, { role: "superadmin" });
+    
+    await db.collection("users").doc(user.uid).update({
+      role: "superadmin",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    logger.info("İlk süper admin kullanıcı oluşturuldu");
+    return { message: `${email} ilk süper admin olarak atandı. Bu fonksiyonu artık kullanmayın.` };
+  } catch (error) {
+    const err = error as any;
+    logger.error("İlk süper admin oluşturma hatası", { code: err.code });
+    throw new HttpsError("internal", "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
+  }
+});
+
 // İLK ADMIN OLUŞTURMA FONKSİYONU (Sadece bir kez kullanılmalı, sonra silinmeli veya devre dışı bırakılmalı)
 // KULLANIM: Firebase Console > Functions > initializeFirstAdmin çalıştır
 export const initializeFirstAdmin = onCall(async (request: any) => {
@@ -123,6 +163,533 @@ export const deleteUser = onCall(async (request: any) => {
       "internal",
       "Bir hata oluştu. Lütfen daha sonra tekrar deneyin."
     );
+  }
+});
+
+// Süper admin tarafından bir kullanıcının rolünü ayarlayan fonksiyon
+export const setRole = onCall(async (request: any) => {
+  const context = request;
+  const data = request.data || {};
+
+  // 1. Güvenlik Kontrolü: Çağrıyı yapan kullanıcının süper admin olup olmadığını kontrol et.
+  if (context.auth?.token.role !== "superadmin") {
+    throw new HttpsError(
+      "permission-denied",
+      "Bu işlemi sadece süper adminler yapabilir."
+    );
+  }
+
+  const { userId, newRole, campusId } = data;
+
+  // 2. Veri Doğrulama
+  if (!userId || !newRole) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Kullanıcı ID (userId) ve yeni rol (newRole) gereklidir."
+    );
+  }
+
+  if (newRole === "admin" && !campusId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Admin rolü için kampüs ID (campusId) gereklidir."
+    );
+  }
+
+  try {
+    // 3. Custom Claims Ayarlama
+    const claims: { [key: string]: any } = {
+      role: newRole,
+    };
+
+    if (newRole === "admin") {
+      claims.campusId = campusId;
+    } else {
+      // Eğer rol admin değilse, olası bir campusId claim'ini kaldır
+      claims.campusId = null;
+    }
+
+    // Süper adminlik rolünü koruma
+    const userToUpdate = await admin.auth().getUser(userId);
+    if (userToUpdate.customClaims?.role === "superadmin" && newRole !== "superadmin") {
+      throw new HttpsError(
+        "permission-denied",
+        "Süper admin rolü bu fonksiyonla değiştirilemez."
+      );
+    }
+
+    await admin.auth().setCustomUserClaims(userId, claims);
+
+    // 4. Firestore'daki kullanıcı belgesini de güncelle
+    await admin.firestore().collection("users").doc(userId).update({
+      role: newRole,
+      campusId: newRole === "admin" ? campusId : null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      status: "success",
+      message: `Kullanıcı ${userId} için rol ${newRole} olarak ayarlandı.`,
+    };
+  } catch (error) {
+    const err = error as any;
+    logger.error("Rol atama sırasında hata:", { code: err.code, message: err.message });
+    throw new HttpsError(
+      "internal",
+      "Rol atama sırasında bir sunucu hatası oluştu."
+    );
+  }
+});
+
+// Süper adminlerin global rapor oluşturmasını sağlayan fonksiyon
+export const generateGlobalReport = onCall(async (request: any) => {
+  // Güvenlik Kontrolü: Sadece süper adminler rapor oluşturabilir.
+  if (request.auth?.token.role !== "superadmin") {
+    throw new HttpsError(
+      "permission-denied",
+      "Bu işlemi sadece süper adminler yapabilir."
+    );
+  }
+
+  const { reportType } = request.data || {};
+
+  if (!reportType) {
+    throw new HttpsError("invalid-argument", "Rapor tipi (reportType) belirtilmelidir.");
+  }
+
+  const db = admin.firestore();
+
+  switch (reportType) {
+    case "bookActivityByCampus":
+      try {
+        const campusesSnapshot = await db.collection("campuses").get();
+        const borrowedBooksSnapshot = await db.collection("borrowedBooks").get();
+
+        const campusData = new Map<string, { name: string; borrowCount: number }>();
+        campusesSnapshot.forEach(doc => {
+          campusData.set(doc.id, { name: doc.data().name, borrowCount: 0 });
+        });
+
+        borrowedBooksSnapshot.forEach(doc => {
+          const campusId = doc.data().campusId;
+          if (campusId && campusData.has(campusId)) {
+            const currentData = campusData.get(campusId)!;
+            currentData.borrowCount += 1;
+          }
+        });
+
+        const reportData = Array.from(campusData.values()).sort((a, b) => b.borrowCount - a.borrowCount);
+
+        return {
+          title: "Kampüs Bazında Kitap Aktivitesi",
+          data: reportData,
+        };
+
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
+    case "userGrowth":
+      try {
+        const campusesSnapshot = await db.collection("campuses").get();
+        const usersSnapshot = await db.collection("users").get();
+        
+        const campusNames = new Map<string, string>();
+        campusesSnapshot.forEach(doc => {
+          campusNames.set(doc.id, doc.data().name);
+        });
+
+        const monthlyData = new Map<string, any>();
+
+        usersSnapshot.forEach(doc => {
+          const data = doc.data();
+          const createdAt = data.createdAt?.toDate();
+          const campusId = data.campusId;
+          
+          if (createdAt) {
+            const monthKey = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!monthlyData.has(monthKey)) {
+              monthlyData.set(monthKey, { month: monthKey });
+            }
+            
+            const monthData = monthlyData.get(monthKey);
+            
+            if (campusId && campusNames.has(campusId)) {
+              const campusName = campusNames.get(campusId)!;
+              monthData[campusName] = (monthData[campusName] || 0) + 1;
+            } else {
+              monthData["Atanmamış"] = (monthData["Atanmamış"] || 0) + 1;
+            }
+          }
+        });
+
+        const sortedData = Array.from(monthlyData.values())
+          .sort((a, b) => a.month.localeCompare(b.month))
+          .slice(-12);
+
+        const campusList = Array.from(new Set(
+          sortedData.flatMap(item => Object.keys(item).filter(key => key !== 'month'))
+        ));
+
+        return {
+          title: "Kullanıcı Büyüme Trendi (Son 12 Ay)",
+          data: sortedData,
+          campuses: campusList,
+        };
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
+    case "categoryPopularity":
+      try {
+        const booksSnapshot = await db.collection("books").get();
+        const borrowedBooksSnapshot = await db.collection("borrowedBooks").get();
+        const campusesSnapshot = await db.collection("campuses").get();
+
+        // Get all unique categories from books collection
+        const allCategoriesSet = new Set<string>();
+        booksSnapshot.forEach(doc => {
+          const category = doc.data().category;
+          if (category) allCategoriesSet.add(category);
+        });
+
+        const campusNames = new Map<string, string>();
+        campusesSnapshot.forEach(doc => {
+          campusNames.set(doc.id, doc.data().name);
+        });
+
+        const now = new Date();
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+
+        // Basic popularity data
+        const categoryData = new Map<string, number>();
+        // Campus-based data
+        const categoryCampusData = new Map<string, any>();
+        // Time-based data
+        const monthlyData = new Map<string, any>();
+        // Comparison data
+        const categoryStats = new Map<string, any>();
+
+        borrowedBooksSnapshot.forEach(doc => {
+          const data = doc.data();
+          const category = data.bookCategory || "Diğer";
+          const campusId = data.campusId;
+          const userId = data.userId;
+          const borrowedAt = data.borrowedAt?.toDate();
+
+          // Basic count
+          categoryData.set(category, (categoryData.get(category) || 0) + 1);
+
+          // Campus distribution
+          if (!categoryCampusData.has(category)) {
+            categoryCampusData.set(category, { category });
+          }
+          const campusData = categoryCampusData.get(category);
+          if (campusId && campusNames.has(campusId)) {
+            const campusName = campusNames.get(campusId)!;
+            campusData[campusName] = (campusData[campusName] || 0) + 1;
+          }
+
+          // Time-based trend (last 6 months)
+          if (borrowedAt && borrowedAt >= sixMonthsAgo) {
+            const monthKey = `${borrowedAt.getFullYear()}-${String(borrowedAt.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthlyData.has(monthKey)) {
+              monthlyData.set(monthKey, { month: monthKey });
+            }
+            const monthData = monthlyData.get(monthKey);
+            monthData[category] = (monthData[category] || 0) + 1;
+          }
+
+          // Comparison stats
+          if (!categoryStats.has(category)) {
+            categoryStats.set(category, {
+              name: category,
+              totalBorrows: 0,
+              uniqueUsers: new Set(),
+              campusDistribution: new Map(),
+            });
+          }
+          const stats = categoryStats.get(category);
+          stats.totalBorrows += 1;
+          if (userId) stats.uniqueUsers.add(userId);
+          if (campusId && campusNames.has(campusId)) {
+            const campusName = campusNames.get(campusId)!;
+            stats.campusDistribution.set(campusName, (stats.campusDistribution.get(campusName) || 0) + 1);
+          }
+        });
+
+        // Process basic popularity
+        const allCategories = Array.from(categoryData.entries())
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count);
+        const top10 = allCategories.slice(0, 10);
+        const totalBorrows = allCategories.reduce((sum, cat) => sum + cat.count, 0);
+
+        // Process campus-based data
+        const campusAnalysis = Array.from(categoryCampusData.values())
+          .map(item => {
+            const total = Object.keys(item).filter(k => k !== 'category').reduce((sum, k) => sum + (item[k] || 0), 0);
+            return { ...item, total };
+          })
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 10);
+        const campusList = Array.from(new Set(
+          campusAnalysis.flatMap(item => Object.keys(item).filter(key => key !== 'category' && key !== 'total'))
+        ));
+
+        // Process time-based data
+        const trendData = Array.from(monthlyData.values()).sort((a, b) => a.month.localeCompare(b.month));
+        const categoryTotals = new Map<string, number>();
+        trendData.forEach(monthData => {
+          Object.keys(monthData).filter(k => k !== 'month').forEach(category => {
+            categoryTotals.set(category, (categoryTotals.get(category) || 0) + monthData[category]);
+          });
+        });
+        const topTrendCategories = Array.from(categoryTotals.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([cat]) => cat);
+
+        // Process comparison data
+        const comparisonCategories = Array.from(categoryStats.entries())
+          .map(([name, stats]) => ({
+            name,
+            totalBorrows: stats.totalBorrows,
+            uniqueUsers: stats.uniqueUsers.size,
+            avgBorrowsPerUser: (stats.totalBorrows / stats.uniqueUsers.size).toFixed(1),
+            campusDistribution: Array.from(stats.campusDistribution.entries()).map((entry: any) => ({ campus: entry[0], count: entry[1] })),
+          }))
+          .sort((a, b) => b.totalBorrows - a.totalBorrows);
+
+        return {
+          title: "Kategori Popülerliği Analizi",
+          // Basic popularity
+          data: top10,
+          totalCategories: allCategories.length,
+          totalBorrows: totalBorrows,
+          topCategory: allCategories[0],
+          // Campus analysis
+          campusAnalysis: campusAnalysis,
+          campuses: campusList,
+          // Trend analysis
+          trendData: trendData,
+          trendCategories: topTrendCategories,
+          // Comparison
+          comparisonCategories: comparisonCategories,
+        };
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
+    case "activeUsers":
+      try {
+        const usersSnapshot = await db.collection("users").get();
+        const borrowedBooksSnapshot = await db.collection("borrowedBooks").get();
+
+        const userActivity = new Map<string, { name: string; email: string; borrowCount: number; level: number }>();
+
+        usersSnapshot.forEach(doc => {
+          const data = doc.data();
+          userActivity.set(doc.id, {
+            name: data.displayName || "İsimsiz",
+            email: data.email || "",
+            borrowCount: 0,
+            level: data.level || 1,
+          });
+        });
+
+        borrowedBooksSnapshot.forEach(doc => {
+          const userId = doc.data().userId;
+          if (userId && userActivity.has(userId)) {
+            userActivity.get(userId)!.borrowCount += 1;
+          }
+        });
+
+        const reportData = Array.from(userActivity.values())
+          .filter(user => user.borrowCount > 0)
+          .sort((a, b) => b.borrowCount - a.borrowCount)
+          .slice(0, 20)
+          .map((user, index) => ({ rank: index + 1, ...user }));
+
+        return {
+          title: "En Aktif Kullanıcılar (Top 20)",
+          data: reportData,
+        };
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
+    case "campusCategoryAnalysis":
+      try {
+        const campusesSnapshot = await db.collection("campuses").get();
+        const borrowedBooksSnapshot = await db.collection("borrowedBooks").get();
+
+        const campusNames = new Map<string, string>();
+        campusesSnapshot.forEach(doc => {
+          campusNames.set(doc.id, doc.data().name);
+        });
+
+        const categoryData = new Map<string, any>();
+
+        borrowedBooksSnapshot.forEach(doc => {
+          const data = doc.data();
+          const category = data.bookCategory || "Diğer";
+          const campusId = data.campusId;
+
+          if (!categoryData.has(category)) {
+            categoryData.set(category, { category });
+          }
+
+          const catData = categoryData.get(category);
+
+          if (campusId && campusNames.has(campusId)) {
+            const campusName = campusNames.get(campusId)!;
+            catData[campusName] = (catData[campusName] || 0) + 1;
+          } else {
+            catData["Atanmamış"] = (catData["Atanmamış"] || 0) + 1;
+          }
+        });
+
+        const sortedData = Array.from(categoryData.values())
+          .map(item => {
+            const total = Object.keys(item).filter(k => k !== 'category').reduce((sum, k) => sum + (item[k] || 0), 0);
+            return { ...item, total };
+          })
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 10);
+
+        const campusList = Array.from(new Set(
+          sortedData.flatMap(item => Object.keys(item).filter(key => key !== 'category' && key !== 'total'))
+        ));
+
+        return {
+          title: "Kampüs Bazında Kategori Analizi (Top 10)",
+          data: sortedData,
+          campuses: campusList,
+        };
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
+    case "categoryTrend":
+      try {
+        const borrowedBooksSnapshot = await db.collection("borrowedBooks").get();
+        const now = new Date();
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+
+        const monthlyData = new Map<string, any>();
+        const allCategories = new Set<string>();
+
+        borrowedBooksSnapshot.forEach(doc => {
+          const data = doc.data();
+          const borrowedAt = data.borrowedAt?.toDate();
+          const category = data.bookCategory || "Diğer";
+
+          if (borrowedAt && borrowedAt >= sixMonthsAgo) {
+            const monthKey = `${borrowedAt.getFullYear()}-${String(borrowedAt.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!monthlyData.has(monthKey)) {
+              monthlyData.set(monthKey, { month: monthKey });
+            }
+
+            const monthData = monthlyData.get(monthKey);
+            monthData[category] = (monthData[category] || 0) + 1;
+            allCategories.add(category);
+          }
+        });
+
+        const sortedData = Array.from(monthlyData.values())
+          .sort((a, b) => a.month.localeCompare(b.month));
+
+        // Get top 5 categories by total borrows
+        const categoryTotals = new Map<string, number>();
+        sortedData.forEach(monthData => {
+          Object.keys(monthData).filter(k => k !== 'month').forEach(category => {
+            categoryTotals.set(category, (categoryTotals.get(category) || 0) + monthData[category]);
+          });
+        });
+
+        const topCategories = Array.from(categoryTotals.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([cat]) => cat);
+
+        return {
+          title: "Kategori Popülerlik Trendi (Son 6 Ay)",
+          data: sortedData,
+          categories: topCategories,
+        };
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
+    case "categoryComparison":
+      try {
+        const borrowedBooksSnapshot = await db.collection("borrowedBooks").get();
+        const campusesSnapshot = await db.collection("campuses").get();
+
+        const campusNames = new Map<string, string>();
+        campusesSnapshot.forEach(doc => {
+          campusNames.set(doc.id, doc.data().name);
+        });
+
+        // Get all categories
+        const categoryStats = new Map<string, any>();
+
+        borrowedBooksSnapshot.forEach(doc => {
+          const data = doc.data();
+          const category = data.bookCategory || "Diğer";
+          const userId = data.userId;
+          const campusId = data.campusId;
+
+          if (!categoryStats.has(category)) {
+            categoryStats.set(category, {
+              name: category,
+              totalBorrows: 0,
+              uniqueUsers: new Set(),
+              campusDistribution: new Map(),
+            });
+          }
+
+          const stats = categoryStats.get(category);
+          stats.totalBorrows += 1;
+          if (userId) stats.uniqueUsers.add(userId);
+          
+          if (campusId && campusNames.has(campusId)) {
+            const campusName = campusNames.get(campusId)!;
+            stats.campusDistribution.set(campusName, (stats.campusDistribution.get(campusName) || 0) + 1);
+          }
+        });
+
+        // Convert to array and get top categories
+        const allCategories = Array.from(categoryStats.entries())
+          .map(([name, stats]) => ({
+            name,
+            totalBorrows: stats.totalBorrows,
+            uniqueUsers: stats.uniqueUsers.size,
+            avgBorrowsPerUser: (stats.totalBorrows / stats.uniqueUsers.size).toFixed(1),
+            campusDistribution: Array.from(stats.campusDistribution.entries()).map((entry: any) => ({ campus: entry[0], count: entry[1] })),
+          }))
+          .sort((a, b) => b.totalBorrows - a.totalBorrows);
+
+        return {
+          title: "Kategori Karşılaştırma",
+          categories: allCategories,
+        };
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
+    default:
+      throw new HttpsError("not-found", `'${reportType}' adında bir rapor bulunamadı.`);
   }
 });
 
@@ -1385,7 +1952,7 @@ async function getAdminContext() {
 
 // Admin sohbet fonksiyonu
 export const chatWithAdminAssistant = onCall(
-  { cors: true, secrets: [awsAccessKeyId, awsSecretAccessKey] },
+  { secrets: [awsAccessKeyId, awsSecretAccessKey] },
   async (request: any) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");

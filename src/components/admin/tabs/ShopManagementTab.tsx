@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Package, DollarSign, Filter, X, Search, ShoppingBag, TrendingUp, AlertTriangle, XCircle, Award, Minus, Eye, Calendar, ShoppingCart, Upload, Clock, CheckCircle, CreditCard, ChevronDown, ChevronUp, User, Mail, Tag } from 'lucide-react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { Product, Order } from '../../../types';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const ShopManagementTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [activeView, setActiveView] = useState<'products' | 'orders'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -47,12 +49,16 @@ const ShopManagementTab: React.FC = () => {
   }, []);
 
   const fetchProducts = async () => {
-    const snapshot = await getDocs(collection(db, 'products'));
+    const productsCollection = collection(db, 'products');
+    const productsQuery = isSuperAdmin ? productsCollection : query(productsCollection, where('campusId', '==', campusId));
+    const snapshot = await getDocs(productsQuery);
     setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
   };
 
   const fetchOrders = async () => {
-    const snapshot = await getDocs(collection(db, 'orders'));
+    const ordersCollection = collection(db, 'orders');
+    const ordersQuery = isSuperAdmin ? ordersCollection : query(ordersCollection, where('campusId', '==', campusId));
+    const snapshot = await getDocs(ordersQuery);
     setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order)));
   };
 

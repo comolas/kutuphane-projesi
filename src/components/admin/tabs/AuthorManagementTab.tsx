@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc, writeBatch, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Plus, Search, Edit, Trash2, Star, Upload, Users, Award, Calendar, Grid, List, Filter, X } from 'lucide-react';
 import AuthorModal from '../AuthorModal';
 import BulkAddAuthorModal from '../BulkAddAuthorModal';
@@ -8,6 +9,7 @@ import { Author } from '../../../types';
 import Swal from 'sweetalert2';
 
 const AuthorManagementTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [authors, setAuthors] = useState<Author[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,7 +27,8 @@ const AuthorManagementTab: React.FC = () => {
     setLoading(true);
     try {
       const authorsCollection = collection(db, 'authors');
-      const authorSnapshot = await getDocs(authorsCollection);
+      const authorsQuery = isSuperAdmin ? authorsCollection : query(authorsCollection, where('campusId', '==', campusId));
+      const authorSnapshot = await getDocs(authorsQuery);
       const authorsList = authorSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Author));
       setAuthors(authorsList.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {

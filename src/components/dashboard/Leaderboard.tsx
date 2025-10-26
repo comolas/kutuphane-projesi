@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
 import { Trophy, Award, Medal, Crown } from 'lucide-react';
@@ -13,21 +13,71 @@ interface LeaderboardEntry {
 const Leaderboard: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, userData } = useAuth();
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
+      if (!userData?.campusId) return;
+      
       setLoading(true);
       try {
-        const leaderboardDocRef = doc(db, 'leaderboards', 'monthly');
+        // Kampüs bazlı lider tablosu için doküman ID'si
+        const leaderboardDocRef = doc(db, 'leaderboards', `monthly_${userData.campusId}`);
         const docSnap = await getDoc(leaderboardDocRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data();
           setLeaderboard(data.leaderboard || []);
         } else {
-          console.log("Lider tablosu verisi bulunamadı.");
-          setLeaderboard([]);
+          // Eğer kampüs bazlı lider tablosu yoksa, kampüsteki kullanıcıları manuel hesapla
+          const usersQuery = query(collection(db, 'users'), where('campusId', '==', userData.campusId));
+          const borrowedQuery = query(collection(db, 'borrowedBooks'), where('campusId', '==', userData.campusId), where('returnStatus', '==', 'returned'));
+          
+          const [usersSnapshot, borrowedSnapshot] = await Promise.all([
+            getDocs(usersQuery),
+            getDocs(borrowedQuery)
+          ]);
+          
+          const userCounts: { [userId: string]: { name: string; count: number } } = {};
+          
+          // Kullanıcıları initialize et
+          usersSnapshot.docs.forEach(doc => {
+            const userData = doc.data();
+            if (userData.role === 'user' || userData.role === 'teacher') {
+              userCounts[doc.id] = {
+                name: userData.displayName || 'İsimsiz Kullanıcı',
+                count: 0
+              };
+            }
+          });
+          
+          // Bu ay iade edilen kitapları say
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+          
+          borrowedSnapshot.docs.forEach(doc => {
+            const borrowData = doc.data();
+            const returnDate = borrowData.returnDate?.toDate();
+            
+            if (returnDate && 
+                returnDate.getMonth() === currentMonth && 
+                returnDate.getFullYear() === currentYear &&
+                userCounts[borrowData.userId]) {
+              userCounts[borrowData.userId].count++;
+            }
+          });
+          
+          // Sırala ve leaderboard formatına çevir
+          const sortedLeaderboard = Object.entries(userCounts)
+            .map(([userId, data]) => ({
+              userId,
+              name: data.name,
+              count: data.count
+            }))
+            .filter(entry => entry.count > 0)
+            .sort((a, b) => b.count - a.count);
+          
+          setLeaderboard(sortedLeaderboard);
         }
       } catch (error) {
         console.error("Lider tablosu verisi çekilirken hata:", error);
@@ -37,7 +87,7 @@ const Leaderboard: React.FC = () => {
     };
 
     fetchLeaderboard();
-  }, []);
+  }, [userData?.campusId]);
 
   const topTen = leaderboard.slice(0, 10);
 

@@ -3,6 +3,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useNavigate } from 'react-router-dom';
 import { User, AlertTriangle, Search, Library, Book as BookIcon, ArrowDownUp, Users as UsersIcon, Filter, X } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
 
 // Interfaces
 interface UserData {
@@ -34,6 +35,7 @@ interface UserWithBorrows extends UserData {
 }
 
 const BorrowedBooksTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [usersWithBorrows, setUsersWithBorrows] = useState<UserWithBorrows[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,11 +52,18 @@ const BorrowedBooksTab: React.FC = () => {
     const fetchUsersWithBorrows = async () => {
       setLoading(true);
       try {
-        const borrowsQuery = query(
-          collection(db, 'borrowedBooks'), 
-          where('returnStatus', '==', 'borrowed'),
-          where('borrowStatus', '==', 'approved')
-        );
+        const borrowsQuery = isSuperAdmin 
+          ? query(
+              collection(db, 'borrowedBooks'), 
+              where('returnStatus', '==', 'borrowed'),
+              where('borrowStatus', '==', 'approved')
+            )
+          : query(
+              collection(db, 'borrowedBooks'), 
+              where('returnStatus', '==', 'borrowed'),
+              where('borrowStatus', '==', 'approved'),
+              where('campusId', '==', campusId)
+            );
         const borrowsSnapshot = await getDocs(borrowsQuery);
         const borrows = borrowsSnapshot.docs.map(doc => doc.data() as BorrowedBookDoc);
 
@@ -92,7 +101,7 @@ const BorrowedBooksTab: React.FC = () => {
     };
 
     fetchUsersWithBorrows();
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   const fetchCollectionData = async (ids: string[], collectionName: string): Promise<UserData[]> => {
     const data: UserData[] = [];

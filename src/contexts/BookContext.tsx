@@ -94,7 +94,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [allBooks, setAllBooks] = useState<Book[]>([]);
   const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
   const [bookStatuses, setBookStatuses] = useState<Record<string, 'available' | 'borrowed' | 'lost'>>({});
-  const { user, userData } = useAuth();
+  const { user, userData, isSuperAdmin, campusId } = useAuth();
   const { updateGoalProgress } = useGoals();
 
   useEffect(() => {
@@ -107,15 +107,22 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    if (!isSuperAdmin && !campusId) {
+      return;
+    }
+
     const fetchAllBooks = async () => {
       try {
         const booksCollectionRef = collection(db, "books");
+        const booksQuery = isSuperAdmin ? query(booksCollectionRef) : query(booksCollectionRef, where('campusId', '==', campusId));
         const reviewsCollectionRef = collection(db, "reviews");
-        const approvedReviewsQuery = query(reviewsCollectionRef, where("status", "==", "approved"));
+        const approvedReviewsQuery = isSuperAdmin 
+          ? query(reviewsCollectionRef, where("status", "==", "approved"))
+          : query(reviewsCollectionRef, where("status", "==", "approved"), where('campusId', '==', campusId));
 
         const [booksSnapshot, reviewsSnapshot] = await Promise.all([
-          getDocs(booksCollectionRef),
-          user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] }),
+          getDocs(booksQuery),
+          user ? getDocs(approvedReviewsQuery) : Promise.resolve({ docs: [] })
         ]);
 
         const reviewsData = reviewsSnapshot.docs.map((doc) => doc.data());
@@ -205,7 +212,8 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!userData || (userData.role !== 'admin' && userData.role !== 'teacher')) return;
         try {
           const borrowedBooksRef = collection(db, "borrowedBooks");
-          const querySnapshot = await getDocs(borrowedBooksRef);
+          const borrowedQuery = isSuperAdmin ? query(borrowedBooksRef) : query(borrowedBooksRef, where('campusId', '==', campusId));
+          const querySnapshot = await getDocs(borrowedQuery);
     
           const userPromises = querySnapshot.docs.map(doc => {
             const data = doc.data();
@@ -257,7 +265,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchBorrowMessages = async () => {
       try {
         const messagesRef = collection(db, "borrowMessages");
-        const q = query(messagesRef, where("status", "==", "pending"));
+        const q = isSuperAdmin 
+          ? query(messagesRef, where("status", "==", "pending"))
+          : query(messagesRef, where("status", "==", "pending"), where('campusId', '==', campusId));
         const querySnapshot = await getDocs(q);
 
         const messages: BorrowMessage[] = [];
@@ -287,18 +297,19 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     executeFetches();
-  }, [user, userData]);
+  }, [user, userData, isSuperAdmin, campusId]);
 
   const refetchAllBooks = useCallback(async () => {
     try {
       const booksCollectionRef = collection(db, "books");
-      const querySnapshot = await getDocs(booksCollectionRef);
+      const booksQuery = isSuperAdmin ? query(booksCollectionRef) : query(booksCollectionRef, where('campusId', '==', campusId));
+      const querySnapshot = await getDocs(booksQuery);
       const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
       setAllBooks(booksData);
     } catch (error) {
       console.error("Error refetching all books:", error);
     }
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   const getBookStatus = useCallback((bookId: string): 'available' | 'borrowed' | 'lost' => {
     // Check if book is marked as lost in bookStatuses

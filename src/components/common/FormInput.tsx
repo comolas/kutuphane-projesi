@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes, SelectHTMLAttributes, ReactNode } from 'react';
-import { Mail, Lock, User, BookOpen, CreditCard } from 'lucide-react';
+import { Mail, Lock, User, BookOpen, CreditCard, Building } from 'lucide-react';
 
 // Define props for standard input elements
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -42,6 +42,8 @@ const FormInput: React.FC<FormInputProps> = ({
         return <BookOpen size={20} />;
       case 'id-card':
         return <CreditCard size={20} />;
+      case 'building':
+        return <Building size={20} />;
       default:
         return null;
     }

@@ -2,17 +2,21 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
+import Swal from 'sweetalert2';
 
 interface UserData {
   uid: string;
   email: string;
   displayName?: string;
-  role: 'user' | 'admin' | 'teacher';
+  role: 'user' | 'admin' | 'teacher' | 'superadmin';
   createdAt: Date;
   lastLogin: Date;
   studentClass: string;
   studentNumber: string;
+  campusId?: string;
   hasCompletedOnboarding?: boolean;
+  hasCompletedPersonalization?: boolean;
+  isBlocked?: boolean;
   teacherData?: {
     assignedClass: string;
     subject?: string;
@@ -23,16 +27,20 @@ interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
   isTeacher: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
   userData: UserData | null;
+  campusId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAdmin: false,
   isTeacher: false,
+  isSuperAdmin: false,
   loading: true,
   userData: null,
+  campusId: null,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -41,8 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [campusId, setCampusId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -73,6 +83,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           // Update last login and get existing data
           const existingData = userDoc.data() as UserData;
+          
+          // Check if user is blocked
+          if (existingData.isBlocked) {
+            await auth.signOut();
+            await Swal.fire({
+              icon: 'error',
+              title: 'Erişim Engellendi',
+              text: 'Uygulamaya girişiniz engellendi',
+              confirmButtonText: 'Tamam'
+            });
+            setLoading(false);
+            return;
+          }
+          
           await setDoc(userRef, {
             lastLogin: new Date(),
           }, { merge: true });
@@ -85,12 +109,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } as UserData;
         }
         setUserData(currentUserData);
-        setIsAdmin(currentUserData.role === 'admin');
+        setIsSuperAdmin(currentUserData.role === 'superadmin');
+        setIsAdmin(currentUserData.role === 'admin' || currentUserData.role === 'superadmin');
         setIsTeacher(currentUserData.role === 'teacher');
+        setCampusId(currentUserData.campusId || null);
       } else {
         setUserData(null);
         setIsAdmin(false);
         setIsTeacher(false);
+        setIsSuperAdmin(false);
+        setCampusId(null);
       }
       
       setLoading(false);
@@ -103,8 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     isAdmin,
     isTeacher,
+    isSuperAdmin,
     loading,
     userData,
+    campusId,
   };
 
   return (

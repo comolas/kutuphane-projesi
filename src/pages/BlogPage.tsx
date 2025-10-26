@@ -4,6 +4,7 @@ import { db } from '../firebase/config';
 import { Post } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
 import PostCard from '../components/blog/PostCard';
+import PageAccessGuard from '../components/PageAccessGuard';
 import { Search, X, SlidersHorizontal, FileText, FolderOpen, Heart, MessageCircle, BookOpen, TrendingUp, Clock, Tag, ArrowUp, ChevronLeft } from 'lucide-react';
 
 const BlogPage: React.FC = () => {
@@ -125,6 +126,7 @@ const BlogPage: React.FC = () => {
   }, [searchTerm, categoryFilter, sortBy, selectedTag, posts]);
 
   return (
+    <PageAccessGuard pageId="blog">
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-4">
@@ -633,6 +635,7 @@ const BlogPage: React.FC = () => {
         </button>
       )}
     </div>
+    </PageAccessGuard>
   );
 };
 

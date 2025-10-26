@@ -3,6 +3,7 @@ import { useBooks } from '../../../contexts/BookContext';
 import { useSettings } from '../../../contexts/SettingsContext';
 import { useBudget } from '../../../contexts/BudgetContext';
 import { useCoupons } from '../../../contexts/CouponContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import SetFineModal from '../SetFineModal';
 import ApplyDiscountModal from '../ApplyDiscountModal';
 import { DollarSign, Search, Filter, SortAsc, SortDesc, Users, Settings, Ticket, X } from 'lucide-react';

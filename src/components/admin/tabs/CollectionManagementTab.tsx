@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Layers, Edit, Trash2, Eye, EyeOff, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
-import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, deleteDoc, doc, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { useAuth } from '../../../contexts/AuthContext';
 import CollectionModal, { StoryCollection } from '../CollectionModal';
 import Swal from 'sweetalert2';
 
 const CollectionManagementTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [collections, setCollections] = useState<StoryCollection[]>([]);
   const [editingCollection, setEditingCollection] = useState<StoryCollection | null>(null);
@@ -49,7 +51,9 @@ const CollectionManagementTab: React.FC = () => {
   const fetchCollections = useCallback(async () => {
     setIsLoading(true);
     try {
-      const q = query(collection(db, 'collections'), orderBy('order', 'asc'));
+      const q = isSuperAdmin 
+        ? query(collection(db, 'collections'), orderBy('order', 'asc'))
+        : query(collection(db, 'collections'), where('campusId', '==', campusId), orderBy('order', 'asc'));
       const querySnapshot = await getDocs(q);
       const collectionsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StoryCollection));
       setCollections(collectionsData);
@@ -58,13 +62,15 @@ const CollectionManagementTab: React.FC = () => {
       Swal.fire('Hata!', 'Koleksiyonlar getirilirken bir hata oluştu.', 'error');
     }
     setIsLoading(false);
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   useEffect(() => {
     fetchCollections();
     const fetchBooks = async () => {
       try {
-        const booksSnapshot = await getDocs(collection(db, 'books'));
+        const booksCollection = collection(db, 'books');
+        const booksQuery = isSuperAdmin ? booksCollection : query(booksCollection, where('campusId', '==', campusId));
+        const booksSnapshot = await getDocs(booksQuery);
         const booksList = booksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setAllLibraryBooks(booksList);
       } catch (error) {

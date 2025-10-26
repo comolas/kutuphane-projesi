@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { db } from '../firebase/config';
-import { collection, addDoc, getDocs, Timestamp, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, Timestamp, query, orderBy, doc, updateDoc, deleteDoc, where } from 'firebase/firestore';
+import { useAuth } from './AuthContext';
 import { Transaction, BudgetSummary } from '../types';
 
 interface BudgetContextType {
@@ -15,6 +16,7 @@ interface BudgetContextType {
 const BudgetContext = createContext<BudgetContextType | undefined>(undefined);
 
 export const BudgetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [kumbaraValue, setKumbaraValue] = useState(0);
   const [summary, setSummary] = useState<BudgetSummary>({
@@ -52,7 +54,9 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const fetchData = async () => {
       setLoading(true);
       try {
-        const borrowedBooksSnapshot = await getDocs(collection(db, 'borrowedBooks'));
+        const borrowedBooksCollection = collection(db, 'borrowedBooks');
+        const borrowedBooksQuery = isSuperAdmin ? borrowedBooksCollection : query(borrowedBooksCollection, where('campusId', '==', campusId));
+        const borrowedBooksSnapshot = await getDocs(borrowedBooksQuery);
         const allBorrowedData = borrowedBooksSnapshot.docs.map(doc => doc.data());
         const currentKumbaraValue = allBorrowedData
           .filter(book => book.fineStatus === 'paid' && book.fineAmount)
@@ -60,7 +64,9 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setKumbaraValue(currentKumbaraValue);
 
         const transactionsCollection = collection(db, 'transactions');
-        const q = query(transactionsCollection, orderBy('date', 'desc'));
+        const q = isSuperAdmin 
+          ? query(transactionsCollection, orderBy('date', 'desc'))
+          : query(transactionsCollection, where('campusId', '==', campusId), orderBy('date', 'desc'));
         const querySnapshot = await getDocs(q);
         const transactionsData = querySnapshot.docs.map(doc => ({
           id: doc.id,
@@ -77,7 +83,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     fetchData();
-  }, [calculateSummary]);
+  }, [calculateSummary, isSuperAdmin, campusId]);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'> & { date: Date }) => {
     try {

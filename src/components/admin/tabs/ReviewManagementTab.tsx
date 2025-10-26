@@ -2,11 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from "../../../firebase/config";
 import { Review, Book as BookType } from '../../types';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Check, X, Trash2, AlertCircle, MessageSquare, Star, ThumbsUp, Clock, Search, Filter, User, Book, ChevronLeft, ChevronRight, CheckSquare, Square, BarChart3, TrendingUp, BookOpen } from 'lucide-react';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import Swal from 'sweetalert2';
 
 const ReviewManagementTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [books, setBooks] = useState<Record<string, BookType>>({});
   const [loading, setLoading] = useState(true);
@@ -22,10 +24,9 @@ const ReviewManagementTab: React.FC = () => {
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const q = query(
-        collection(db, 'reviews'),
-        orderBy('createdAt', 'desc')
-      );
+      const q = isSuperAdmin
+        ? query(collection(db, 'reviews'), orderBy('createdAt', 'desc'))
+        : query(collection(db, 'reviews'), where('campusId', '==', campusId), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const fetchedReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
       setReviews(fetchedReviews);
@@ -33,7 +34,7 @@ const ReviewManagementTab: React.FC = () => {
       // Fetch books
       const bookIds = [...new Set(fetchedReviews.map(r => r.bookId).filter(Boolean))];
       if (bookIds.length > 0) {
-        const booksQuery = query(collection(db, 'books'));
+        const booksQuery = isSuperAdmin ? query(collection(db, 'books')) : query(collection(db, 'books'), where('campusId', '==', campusId));
         const booksSnapshot = await getDocs(booksQuery);
         const booksData: Record<string, BookType> = {};
         booksSnapshot.docs.forEach(doc => {

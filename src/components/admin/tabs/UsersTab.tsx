@@ -7,6 +7,7 @@ import EditUserModal from '../EditUserModal';
 import Swal from 'sweetalert2';
 import { useBooks } from '../../../contexts/BookContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface UserData {
   uid: string;
@@ -25,6 +26,7 @@ interface UserData {
 }
 
 const UsersTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const { allBorrowedBooks } = useBooks();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -48,7 +50,8 @@ const UsersTab: React.FC = () => {
     try {
       setLoading(true);
       const usersRef = collection(db, 'users');
-      const querySnapshot = await getDocs(usersRef);
+      const usersQuery = isSuperAdmin ? usersRef : query(usersRef, where('campusId', '==', campusId));
+      const querySnapshot = await getDocs(usersQuery);
       
       const usersData: UserData[] = [];
       querySnapshot.forEach((doc) => {
@@ -70,7 +73,7 @@ const UsersTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   useEffect(() => {
     fetchUsers();

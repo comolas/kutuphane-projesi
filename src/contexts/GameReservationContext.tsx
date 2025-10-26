@@ -40,7 +40,7 @@ interface GameReservationProviderProps {
 }
 
 export const GameReservationProvider: React.FC<GameReservationProviderProps> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin, campusId } = useAuth();
 
   const getReservationsForGame = async (gameId: string, date: Date) => {
     const startOfDay = new Date(date);
@@ -110,10 +110,9 @@ export const GameReservationProvider: React.FC<GameReservationProviderProps> = (
   };
 
   const getAllReservations = async () => {
-    const q = query(
-      collection(firestore, 'gameReservations'),
-      orderBy('startTime', 'desc')
-    );
+    const q = isSuperAdmin
+      ? query(collection(firestore, 'gameReservations'), orderBy('startTime', 'desc'))
+      : query(collection(firestore, 'gameReservations'), where('campusId', '==', campusId), orderBy('startTime', 'desc'));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GameReservation));
   };

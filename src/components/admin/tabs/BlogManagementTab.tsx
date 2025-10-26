@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { useAuth } from '../../../contexts/AuthContext';
 import { CheckCircle, XCircle, Trash2, Eye, FileText, Clock, ThumbsUp, X, Search, Filter, Calendar, User, Tag, ArrowUpDown, ChevronLeft, ChevronRight, BarChart3, TrendingUp, CheckSquare, Square, Edit2, Save, Heart, EyeIcon } from 'lucide-react';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 
@@ -22,6 +23,7 @@ interface Post {
 }
 
 const BlogManagementTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingPost, setViewingPost] = useState<Post | null>(null);
@@ -48,7 +50,9 @@ const BlogManagementTab: React.FC = () => {
 
   const fetchPosts = async () => {
     try {
-      const postsSnapshot = await getDocs(collection(db, 'posts'));
+      const postsCollection = collection(db, 'posts');
+      const postsQuery = isSuperAdmin ? postsCollection : query(postsCollection, where('campusId', '==', campusId));
+      const postsSnapshot = await getDocs(postsQuery);
       const postsData = postsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()

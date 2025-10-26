@@ -5,8 +5,10 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { ReturnMessage } from '../../../types';
 import Swal from 'sweetalert2';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const MessagesTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const { borrowMessages, approveBorrow, rejectBorrow, approveReturn } = useBooks();
   const [returnMessages, setReturnMessages] = useState<ReturnMessage[]>([]);
   const [messagesSearchQuery, setMessagesSearchQuery] = useState('');
@@ -22,7 +24,9 @@ const MessagesTab: React.FC = () => {
     try {
       setLoading(true);
       const messagesRef = collection(db, 'returnMessages');
-      const q = query(messagesRef, where('status', '==', 'pending'));
+      const q = isSuperAdmin 
+        ? query(messagesRef, where('status', '==', 'pending'))
+        : query(messagesRef, where('status', '==', 'pending'), where('campusId', '==', campusId));
       const querySnapshot = await getDocs(q);
       
       const messages: ReturnMessage[] = [];
@@ -51,7 +55,7 @@ const MessagesTab: React.FC = () => {
 
   useEffect(() => {
     fetchReturnMessages();
-  }, [fetchReturnMessages]);
+  }, [fetchReturnMessages, isSuperAdmin, campusId]);
 
   useEffect(() => {
     setMessagesCurrentPage(1);

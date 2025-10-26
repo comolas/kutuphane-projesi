@@ -53,7 +53,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
       const userRole = userData?.role || 'user';
       
       // Navigate based on role
-      if (userRole === 'admin') {
+      if (userRole === 'superadmin') {
+        navigate('/super-admin');
+      } else if (userRole === 'admin') {
         navigate('/admin');
       } else if (userRole === 'teacher') {
         navigate('/teacher-dashboard');
@@ -74,7 +76,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
     email: string,
     password: string,
     studentClass: string,
-    studentNumber: string
+    studentNumber: string,
+    campusId: string
   ) => {
     setIsLoading(true);
     setError('');
@@ -94,6 +97,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         displayName: name,
         studentClass: studentClass || '',
         studentNumber: studentNumber || '',
+        campusId: campusId,
         role: 'user',
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
@@ -228,13 +232,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
             />
           )}
           {isLoading && (
-            <div className="w-full mt-4 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg text-sm text-center shadow-lg">
-              <div className="flex items-center justify-center space-x-3">
-                <div className="relative">
-                  <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <div className="absolute top-0 left-0 w-8 h-8 border-4 border-transparent border-t-pink-300 rounded-full animate-spin animation-delay-150"></div>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 mx-4 max-w-sm w-full border border-white/20">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-purple-400 rounded-full animate-spin" style={{ animationDelay: '150ms', animationDirection: 'reverse' }}></div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1">İşlem Gerçekleştiriliyor</h3>
+                    <p className="text-sm text-gray-600">Lütfen bekleyin...</p>
+                  </div>
                 </div>
-                <span className="animate-pulse">İşlem gerçekleştiriliyor, lütfen bekleyin...</span>
               </div>
             </div>
           )}
@@ -250,10 +259,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
             <div className="absolute w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-blob animation-delay-4000 bottom-0 left-20"></div>
           </div>
           <div className="relative z-10">
-            <h2 className="text-2xl xl:text-3xl font-bold mb-6">{animatedTitle}<span className="animate-pulse">|</span></h2>
-            <p className="text-indigo-200 mb-8 max-w-md text-sm xl:text-base">
+            <h2 className="text-3xl xl:text-4xl font-bold mb-6 bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">
+              {animatedTitle}<span className="animate-pulse text-white">|</span>
+            </h2>
+            <p className="text-indigo-100 mb-8 max-w-md text-base xl:text-lg leading-relaxed">
               Dijital kütüphanemizde binlerce kitaba erişim sağlayın. 
-              Keşfedin, ödünç alın ve bilgi dünyasını keşfedin.
+              Keşfedin, ödünç alın ve bilgi dünyasını keşfedin. 📚
             </p>
             
             <div className="space-y-4 mb-8">
@@ -263,9 +274,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
                 'Kişiselleştirilmiş öneriler alın',
                 'Okuma topluluklarına katılın'
               ].map((feature, index) => (
-                <div key={index} className="flex items-center text-sm xl:text-base bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/20 hover:scale-105 transition-all duration-300 animate-stagger" style={{ animationDelay: `${index * 150}ms` }}>
-                  <ChevronRight className="text-white mr-2 flex-shrink-0" size={20} />
-                  <span>{feature}</span>
+                <div key={index} className="flex items-center text-sm xl:text-base bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 hover:scale-105 transition-all duration-300 animate-stagger border border-white/20" style={{ animationDelay: `${index * 150}ms` }}>
+                  <div className="w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span className="font-medium">{feature}</span>
                 </div>
               ))}
             </div>

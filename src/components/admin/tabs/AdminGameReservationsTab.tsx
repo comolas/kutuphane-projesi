@@ -4,11 +4,13 @@ import { useGameReservations } from '../../../contexts/GameReservationContext';
 import { ChevronLeft, ChevronRight, Calendar, Clock, Users, XCircle, CheckCircle, Gamepad2, Search, Filter, User, ArrowUpDown, BarChart3, TrendingUp, CheckSquare, Square, X } from 'lucide-react';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import { db } from '../../../firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const ITEMS_PER_PAGE = 10;
 
 const AdminGameReservationsTab = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const { getAllReservations, cancelReservationByAdmin } = useGameReservations();
   const [reservations, setReservations] = useState([]);
   const [users, setUsers] = useState({});
@@ -27,7 +29,8 @@ const AdminGameReservationsTab = () => {
     const fetchData = async () => {
       setLoading(true);
       const usersCol = collection(db, 'users');
-      const userSnapshot = await getDocs(usersCol);
+      const usersQuery = isSuperAdmin ? usersCol : query(usersCol, where('campusId', '==', campusId));
+      const userSnapshot = await getDocs(usersQuery);
       const usersData = {};
       userSnapshot.forEach(doc => {
         usersData[doc.id] = doc.data().displayName;

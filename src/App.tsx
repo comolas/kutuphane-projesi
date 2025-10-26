@@ -35,6 +35,12 @@ import LoginPage from './pages/LoginPage';
 
 // Lazy loaded pages
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const SuperAdminDashboard = lazy(() => import('./pages/admin/SuperAdminDashboard'));
+const CampusManagementPage = lazy(() => import('./pages/admin/CampusManagementPage'));
+const UserManagementPage = lazy(() => import('./pages/admin/UserManagementPage'));
+const GlobalReportsPage = lazy(() => import('./pages/admin/GlobalReportsPage'));
+const GlobalSettingsPage = lazy(() => import('./pages/admin/GlobalSettingsPage'));
+const PageManagementPage = lazy(() => import('./pages/admin/PageManagementPage'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
 const MyEventsPage = lazy(() => import('./pages/MyEventsPage'));
@@ -87,8 +93,9 @@ const AppContent = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const isAdminPath = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
-  const showHeader = location.pathname !== '/login' && !isAdminPath && !location.pathname.startsWith('/teacher');
-  const showAdminHeader = isAdminPath;
+  const isSuperAdminPath = location.pathname.startsWith('/super-admin');
+  const showHeader = location.pathname !== '/login' && !isAdminPath && !isSuperAdminPath && !location.pathname.startsWith('/teacher');
+  const showAdminHeader = isAdminPath && !isSuperAdminPath;
   
   useContentNotifications();
   const { updateInfo, showModal, handleUpdate, handleClose } = useMobileUpdate();
@@ -112,6 +119,12 @@ const AppContent = () => {
           <Routes>
           <Route path="/login" element={<LoginPage isDarkMode={theme === 'dark'} />} />
           <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+          <Route path="/super-admin" element={<PrivateRoute><SuperAdminDashboard /></PrivateRoute>} />
+          <Route path="/super-admin/campuses" element={<PrivateRoute><CampusManagementPage /></PrivateRoute>} />
+          <Route path="/super-admin/users" element={<PrivateRoute><UserManagementPage /></PrivateRoute>} />
+          <Route path="/super-admin/reports" element={<PrivateRoute><GlobalReportsPage /></PrivateRoute>} />
+          <Route path="/super-admin/page-management" element={<PrivateRoute><PageManagementPage /></PrivateRoute>} />
+          <Route path="/super-admin/settings" element={<PrivateRoute><GlobalSettingsPage /></PrivateRoute>} />
           <Route path="/dashboard" element={<PrivateRoute><UserDashboard /></PrivateRoute>} />
           <Route path="/my-events" element={<PrivateRoute><MyEventsPage /></PrivateRoute>} />
           <Route path="/requests" element={<PrivateRoute><RequestsPage /></PrivateRoute>} />

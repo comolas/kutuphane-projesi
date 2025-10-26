@@ -15,12 +15,12 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transform transition-transform duration-150 ease-in-out active:scale-95';
+  const baseClasses = 'inline-flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transform transition-all duration-300 ease-out active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
-    secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800 focus:ring-gray-500',
-    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500',
+    primary: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white focus:ring-indigo-500 shadow-lg hover:shadow-xl',
+    secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800 focus:ring-gray-500 shadow-md hover:shadow-lg',
+    outline: 'border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 focus:ring-indigo-500 shadow-md hover:shadow-lg',
   };
   
   return (

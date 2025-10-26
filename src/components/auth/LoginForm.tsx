@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+
 import { Eye, EyeOff, X } from 'lucide-react';
 import Button from '../common/Button';
 import FormInput from '../common/FormInput';
@@ -20,22 +20,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberedEmail') !== null);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; captcha?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0, answer: 0 });
-
-  React.useEffect(() => {
-    generateCaptcha();
-  }, []);
-
-  const generateCaptcha = () => {
-    const num1 = Math.floor(Math.random() * 10) + 1;
-    const num2 = Math.floor(Math.random() * 10) + 1;
-    setCaptchaQuestion({ num1, num2, answer: num1 + num2 });
-    setCaptchaAnswer('');
-  };
 
   const validateField = (fieldName: string, value: string) => {
     let errorMessage = '';
@@ -69,9 +56,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       newErrors.password = 'Şifre gereklidir';
     }
     
-    if (parseInt(captchaAnswer) !== captchaQuestion.answer) {
-      newErrors.captcha = 'Güvenlik doğrulaması hatalı';
-    }
+
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -86,9 +71,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
         localStorage.removeItem('rememberedEmail');
       }
       onSubmit(email, password);
-      generateCaptcha();
-    } else {
-      generateCaptcha();
     }
   };
 
@@ -98,19 +80,24 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <>
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-6 sm:p-8 mx-auto hover:shadow-3xl transition-all duration-300">
-        <div className="flex justify-center mb-6">
-          <img src="https://r.resimlink.com/BJq8au6HpG.png" alt="Data Koleji Logo" className="w-36 h-36 rounded-full border-4 border-indigo-400" />
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-xl border border-white/30 rounded-3xl shadow-2xl p-8 mx-auto hover:shadow-3xl hover:scale-[1.02] transition-all duration-500 group">
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <img src="https://r.resimlink.com/BJq8au6HpG.png" alt="Data Koleji Logo" className="w-20 h-20 rounded-2xl border-3 border-indigo-400/50 group-hover:border-indigo-500 transition-all duration-300 shadow-lg" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </div>
         </div>
         
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 text-center">
-          Data Koleji Kütüphanesi
-        </h2>
-        <p className="text-sm sm:text-base text-gray-600 text-center mb-6 sm:mb-8">
-          Bilgiye erişimin en kolay yolu.
-        </p>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 tracking-tight">
+            Data Koleji Kütüphanesi
+          </h2>
+          <p className="text-gray-600 font-medium">
+            Bilgiye erişimin en kolay yolu ✨
+          </p>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <FormInput
             label="E-posta Adresiniz"
             type="email"
@@ -140,30 +127,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Güvenlik Doğrulaması</label>
-            <div className="flex items-center space-x-3">
-              <div className="flex-1 flex items-center justify-center bg-gradient-to-r from-indigo-100 to-purple-100 border-2 border-indigo-300 rounded-lg p-4">
-                <span className="text-2xl font-bold text-indigo-900">{captchaQuestion.num1} + {captchaQuestion.num2} = ?</span>
-              </div>
-              <button
-                type="button"
-                onClick={generateCaptcha}
-                className="p-3 bg-indigo-100 hover:bg-indigo-200 rounded-lg transition-colors"
-                title="Yeni soru"
-              >
-                <RefreshCw className="w-5 h-5 text-indigo-600" />
-              </button>
-            </div>
-            <input
-              type="number"
-              value={captchaAnswer}
-              onChange={(e) => setCaptchaAnswer(e.target.value)}
-              placeholder="Cevabınız"
-              className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            />
-            {errors.captcha && <p className="mt-1 text-sm text-red-600">{errors.captcha}</p>}
-          </div>
+
 
           <div className="flex items-center justify-between">
             <label className="flex items-center cursor-pointer group">
@@ -184,18 +148,21 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </button>
           </div>
 
-          <Button type="submit" fullWidth>
-            Giriş Yap
+          <Button type="submit" fullWidth className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl">
+            <span className="flex items-center justify-center gap-2">
+              Giriş Yap
+              <span className="text-lg">→</span>
+            </span>
           </Button>
         </form>
         
-        <div className="mt-4 sm:mt-6 text-center">
+        <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             Hesabınız yok mu?{' '}
             <button
               type="button"
               onClick={onRegisterClick}
-              className="text-blue-600 hover:text-blue-500 font-medium"
+              className="text-indigo-600 hover:text-purple-600 font-semibold hover:underline transition-all duration-300"
             >
               Kayıt olun
             </button>

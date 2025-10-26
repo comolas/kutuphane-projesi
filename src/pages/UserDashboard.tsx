@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, Search, PieChart, MapPin, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart, ShoppingBag, Package } from 'lucide-react';
 import { useSpinWheel } from '../contexts/SpinWheelContext';
-import SpinWheelModal from '../components/user/SpinWheelModal';
-import OnboardingTour from '../components/onboarding/OnboardingTour';
-import PersonalizationQuestions from '../components/PersonalizationQuestions';
-import ItemDetailsModal from '../components/common/ItemDetailsModal';
-import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
-import ItemSlider from '../components/common/ItemSlider';
-import Leaderboard from '../components/dashboard/Leaderboard'; // Lider tablosu import edildi
-import UpdateButton from '../components/common/UpdateButton'; // Added import
-import ChatBot from '../components/ChatBot'; // Chat bot import edildi
-import EnhancedBookCarousel from '../components/common/EnhancedBookCarousel';
+import UpdateButton from '../components/common/UpdateButton';
+
+const SpinWheelModal = lazy(() => import('../components/user/SpinWheelModal'));
+const OnboardingTour = lazy(() => import('../components/onboarding/OnboardingTour'));
+const PersonalizationQuestions = lazy(() => import('../components/PersonalizationQuestions'));
+const ItemDetailsModal = lazy(() => import('../components/common/ItemDetailsModal'));
+const ReadingGoalsModal = lazy(() => import('../components/common/ReadingGoalsModal'));
+const ItemSlider = lazy(() => import('../components/common/ItemSlider'));
+const Leaderboard = lazy(() => import('../components/dashboard/Leaderboard'));
+const ChatBot = lazy(() => import('../components/ChatBot'));
+const EnhancedBookCarousel = lazy(() => import('../components/common/EnhancedBookCarousel'));
 
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useGoals } from '../contexts/GoalsContext';
 import { useAuthors } from '../contexts/AuthorContext';
 import { useEvents } from '../contexts/EventContext';
-import { doc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { getDailyQuote } from '../utils/quotes';
 import { Event, Survey, Announcement, Request as RequestType, Book as BookType } from '../types';
@@ -43,13 +44,29 @@ const UserDashboard: React.FC = () => {
   const [showCongratulatoryModal, setShowCongratulatoryModal] = useState(false);
   const [dailyQuote, setDailyQuote] = useState<{text: string, author: string, book: string} | null>(null);
   const [currentRecSlide, setCurrentRecSlide] = useState(0);
-  const [newBooks, setNewBooks] = useState<Book[]>([]);
+
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showPersonalization, setShowPersonalization] = useState(false);
   const [showItemDetailsModal, setShowItemDetailsModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Event | Survey | Announcement | null>(null);
   const [showSpinModal, setShowSpinModal] = useState(false);
   const { canSpin } = useSpinWheel();
+  const [campusName, setCampusName] = useState<string>('');
+
+  useEffect(() => {
+    if (!userData?.campusId) return;
+    const fetchCampusName = async () => {
+      try {
+        const campusDoc = await getDoc(doc(db, 'campuses', userData.campusId));
+        if (campusDoc.exists()) {
+          setCampusName(campusDoc.data().name || '');
+        }
+      } catch (error) {
+        console.error('Kampüs bilgisi alınırken hata:', error);
+      }
+    };
+    fetchCampusName();
+  }, [userData?.campusId]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -58,7 +75,6 @@ const UserDashboard: React.FC = () => {
     return '🌙 İyi Akşamlar';
   };
 
-  // Fetch user-specific requests
   useEffect(() => {
     if (!user) return;
     const fetchUserRequests = async () => {
@@ -69,7 +85,7 @@ const UserDashboard: React.FC = () => {
       setUserRequests(requestsData);
     };
     fetchUserRequests();
-  }, [user]);
+  }, [user?.uid]);
 
   const summaryStats = useMemo(() => {
     const activeBooks = borrowedBooks.filter(b => b.returnStatus !== 'returned');
@@ -124,27 +140,25 @@ const UserDashboard: React.FC = () => {
     setShowItemDetailsModal(false);
   };
   
-  useEffect(() => {
-    if (allBooks.length > 0) {
-      const sortedBooks = [...allBooks].sort((a, b) => {
-        const dateA = a.addedDate ? (a.addedDate as any).seconds * 1000 : 0;
-        const dateB = b.addedDate ? (b.addedDate as any).seconds * 1000 : 0;
-        return dateB - dateA;
-      });
-      const latestBooks = sortedBooks.slice(0, 12);
-      setNewBooks(latestBooks);
-    }
+  const newBooks = useMemo(() => {
+    if (allBooks.length === 0) return [];
+    const sortedBooks = [...allBooks].sort((a, b) => {
+      const dateA = a.addedDate ? (a.addedDate as any).seconds * 1000 : 0;
+      const dateB = b.addedDate ? (b.addedDate as any).seconds * 1000 : 0;
+      return dateB - dateA;
+    });
+    return sortedBooks.slice(0, 12);
   }, [allBooks]);
 
   useEffect(() => {
     fetchRecommendedBooks();
     fetchGoals();
     fetchAllItems();
-  }, [fetchRecommendedBooks, fetchGoals, fetchAllItems]);
+  }, []);
 
   useEffect(() => {
+    if (!user) return;
     const fetchFavorites = async () => {
-      if (!user) return;
       const favoritesRef = collection(db, 'favorites');
       const q = query(favoritesRef, where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
@@ -152,7 +166,7 @@ const UserDashboard: React.FC = () => {
       setFavoriteBookIds(bookIds);
     };
     fetchFavorites();
-  }, [user]);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (showConfetti) {
@@ -171,11 +185,7 @@ const UserDashboard: React.FC = () => {
   }, [userData]);
 
   useEffect(() => {
-    const fetchQuote = async () => {
-      const quote = await getDailyQuote();
-      setDailyQuote(quote);
-    };
-    fetchQuote();
+    getDailyQuote().then(setDailyQuote);
   }, []);
 
   const handleOnboardingComplete = async (dontShowAgain: boolean) => {
@@ -184,7 +194,8 @@ const UserDashboard: React.FC = () => {
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        hasCompletedOnboarding: true
+        hasCompletedOnboarding: true,
+        hasCompletedPersonalization: false
       });
       setShowOnboarding(false);
       // Show personalization questions after onboarding
@@ -195,11 +206,22 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  const handlePersonalizationComplete = () => {
-    setShowPersonalization(false);
+  const handlePersonalizationComplete = async () => {
+    if (!user) return;
+    
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        hasCompletedPersonalization: true
+      });
+      setShowPersonalization(false);
+    } catch (error) {
+      console.error('Error updating personalization status:', error);
+      setShowPersonalization(false);
+    }
   };
 
-  const handleBorrowBook = async (book: BookType) => {
+  const handleBorrowBook = useCallback(async (book: BookType) => {
     try {
       await borrowBook(book);
       await fetchGoals();
@@ -208,9 +230,9 @@ const UserDashboard: React.FC = () => {
       showAlert('Hata', `Kitap ödünç alınırken bir hata oluştu: ${error.message}`, 'error');
       console.error(error);
     }
-  };
+  }, [borrowBook, fetchGoals, showAlert]);
 
-  const handleToggleFavorite = async (bookId: string) => {
+  const handleToggleFavorite = useCallback(async (bookId: string) => {
     if (!user) return;
     try {
       const isFavorite = favoriteBookIds.includes(bookId);
@@ -235,7 +257,7 @@ const UserDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
-  };
+  }, [user, favoriteBookIds]);
 
 
 
@@ -573,6 +595,7 @@ const UserDashboard: React.FC = () => {
                     <img
                       src={userData.photoURL}
                       alt="Profil"
+                      loading="lazy"
                       className="w-20 h-20 rounded-full border-4 border-white/30 shadow-lg object-cover"
                     />
                   ) : (
@@ -588,7 +611,14 @@ const UserDashboard: React.FC = () => {
                 </div>
                 <div className="flex flex-col items-center">
                   <p className={`text-lg ${isTeacher ? 'text-orange-200' : 'text-indigo-200'} mb-1`}>{getGreeting()}</p>
-                  <h1 className="text-3xl font-bold mb-2">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <h1 className="text-3xl font-bold">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
+                    {campusName && (
+                      <span className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-full">
+                        {campusName}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center space-x-2">
                     <div className={`${isTeacher ? 'bg-orange-800' : 'bg-indigo-800'} rounded-full h-2 w-48`}>
                       <div
@@ -725,6 +755,7 @@ const UserDashboard: React.FC = () => {
                 </div>
               </div>
               <div className="mb-6">
+                <Suspense fallback={<div className="h-8"></div>}>
                 {recommendedBooks.length > 0 && (() => {
                   const completedBooks = borrowedBooks.filter(b => b.returnStatus === 'returned');
                   const categoryCount = completedBooks.reduce((acc, book) => {
@@ -744,14 +775,21 @@ const UserDashboard: React.FC = () => {
                   
                   return <p className="text-gray-600 text-center">{randomMessage}</p>;
                 })()}
+                </Suspense>
               </div>
               {recommendedBooks.length > 0 ? (
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-[280px]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                  </div>
+                }>(
                 <EnhancedBookCarousel 
                   books={recommendedBooks} 
                   onBorrowBook={handleBorrowBook}
                   favoriteBookIds={favoriteBookIds}
                   onToggleFavorite={handleToggleFavorite}
                 />
+                </Suspense>
               ) : (
                 <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center min-h-[280px] border border-white/20">
                   <Heart className="w-12 h-12 text-gray-300 mb-4" />
@@ -775,7 +813,13 @@ const UserDashboard: React.FC = () => {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <Leaderboard />
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+                  </div>
+                }>
+                  <Leaderboard />
+                </Suspense>
               </div>
             </section>
 
@@ -788,6 +832,7 @@ const UserDashboard: React.FC = () => {
                     <img
                       src={featuredAuthor.image}
                       alt={featuredAuthor.name}
+                      loading="lazy"
                       className="w-full h-full object-cover blur-sm scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
@@ -842,6 +887,7 @@ const UserDashboard: React.FC = () => {
                                   <img
                                     src={book.coverImage}
                                     alt={book.title}
+                                    loading="lazy"
                                     className="w-full h-full object-cover"
                                   />
                                   {/* Hover Button */}
@@ -891,7 +937,13 @@ const UserDashboard: React.FC = () => {
                   </h2>
                 </div>
               </div>
-              <EnhancedBookCarousel books={newBooks} onBorrowBook={handleBorrowBook} />
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-[280px]">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+                </div>
+              }>
+                <EnhancedBookCarousel books={newBooks} onBorrowBook={handleBorrowBook} />
+              </Suspense>
             </section>
 
             {/* Events - Full Width */}
@@ -954,17 +1006,23 @@ const UserDashboard: React.FC = () => {
                 
                 {/* Tab Content */}
                 <div className="p-6">
-                  <ItemSlider 
-                    items={activeTab === 'all' ? allItems : allItems.filter(item => {
-                      if (activeTab === 'events') return item.type === 'event';
-                      if (activeTab === 'surveys') return item.type === 'survey';
-                      if (activeTab === 'announcements') return item.type === 'announcement';
-                      return true;
-                    })}
-                    onOpenItemModal={handleOpenItemModal} 
-                    joinedEvents={joinedEvents} 
-                    onJoinEvent={joinEvent} 
-                  />
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center min-h-[200px]">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                    </div>
+                  }>
+                    <ItemSlider 
+                      items={activeTab === 'all' ? allItems : allItems.filter(item => {
+                        if (activeTab === 'events') return item.type === 'event';
+                        if (activeTab === 'surveys') return item.type === 'survey';
+                        if (activeTab === 'announcements') return item.type === 'announcement';
+                        return true;
+                      })}
+                      onOpenItemModal={handleOpenItemModal} 
+                      joinedEvents={joinedEvents} 
+                      onJoinEvent={joinEvent} 
+                    />
+                  </Suspense>
                 </div>
               </div>
             </section>
@@ -974,38 +1032,60 @@ const UserDashboard: React.FC = () => {
         </div>
       </div>
 
+      <Suspense fallback={null}>
       <OnboardingTour
         isOpen={showOnboarding}
-        onClose={(dontShowAgain) => {
-          setShowOnboarding(false);
-          if (!dontShowAgain) {
+        onClose={async (dontShowAgain) => {
+          if (!user) return;
+          
+          try {
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, {
+              hasCompletedOnboarding: true,
+              hasCompletedPersonalization: false
+            });
+            setShowOnboarding(false);
             setShowPersonalization(true);
+          } catch (error) {
+            console.error('Error updating onboarding status:', error);
+            setShowOnboarding(false);
           }
         }}
         onComplete={handleOnboardingComplete}
       />
+      </Suspense>
 
       {showPersonalization && (
-        <PersonalizationQuestions onComplete={handlePersonalizationComplete} />
+        <Suspense fallback={null}>
+          <PersonalizationQuestions onComplete={handlePersonalizationComplete} />
+        </Suspense>
       )}
     
 
-      <ReadingGoalsModal
-        isOpen={showReadingGoalsModal}
-        onClose={() => setShowReadingGoalsModal(false)}
-        onGoalSaved={fetchGoals}
-      />
+      <Suspense fallback={null}>
+        <ReadingGoalsModal
+          isOpen={showReadingGoalsModal}
+          onClose={() => setShowReadingGoalsModal(false)}
+          onGoalSaved={fetchGoals}
+        />
+      </Suspense>
 
-      <ItemDetailsModal
-        isOpen={showItemDetailsModal}
-        onClose={handleCloseItemModal}
-        item={selectedItem}
-      />
+      <Suspense fallback={null}>
+        <ItemDetailsModal
+          isOpen={showItemDetailsModal}
+          onClose={handleCloseItemModal}
+          item={selectedItem}
+        />
+      </Suspense>
 
-      <SpinWheelModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
+      <Suspense fallback={null}>
+        <SpinWheelModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
+      </Suspense>
       
       {/* Chat Bot */}
-      <ChatBot />
+      <Suspense fallback={null}>
+        <ChatBot />
+      </Suspense>
     </div>
   );
 };

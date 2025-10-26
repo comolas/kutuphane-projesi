@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { collection, query, where, getDocs, limit, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Book, Author } from '../types';
+import { useAuth } from './AuthContext';
 
 interface AuthorContextType {
   authors: Author[];
@@ -25,6 +26,7 @@ export const useAuthors = () => {
 };
 
 export const AuthorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [authors, setAuthors] = useState<Author[]>([]);
   const [featuredAuthor, setFeaturedAuthor] = useState<Author | null>(null);
   const [featuredAuthorBooks, setFeaturedAuthorBooks] = useState<Book[]>([]);
@@ -32,14 +34,14 @@ export const AuthorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const fetchAllAuthors = useCallback(async () => {
     try {
       const authorsRef = collection(db, 'authors');
-      const q = query(authorsRef);
+      const q = isSuperAdmin ? query(authorsRef) : query(authorsRef, where('campusId', '==', campusId));
       const querySnapshot = await getDocs(q);
       const allAuthors = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Author[];
       setAuthors(allAuthors);
     } catch (error) {
       console.error('Error fetching all authors:', error);
     }
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   const fetchAuthorById = useCallback(async (id: string) => {
     try {
@@ -60,19 +62,23 @@ export const AuthorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const getAuthorBooks = useCallback(async (authorName: string) => {
     try {
       const booksRef = collection(db, 'books');
-      const q = query(booksRef, where('author', '==', authorName));
+      const q = isSuperAdmin 
+        ? query(booksRef, where('author', '==', authorName))
+        : query(booksRef, where('author', '==', authorName), where('campusId', '==', campusId));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
     } catch (error) {
       console.error('Error fetching author books:', error);
       return [];
     }
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   const fetchFeaturedAuthor = useCallback(async () => {
     try {
       const authorsRef = collection(db, 'authors');
-      const q = query(authorsRef, where('featured', '==', true), limit(1));
+      const q = isSuperAdmin 
+        ? query(authorsRef, where('featured', '==', true), limit(1))
+        : query(authorsRef, where('featured', '==', true), where('campusId', '==', campusId), limit(1));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
@@ -92,7 +98,7 @@ export const AuthorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setFeaturedAuthor(null);
       setFeaturedAuthorBooks([]);
     }
-  }, [getAuthorBooks]);
+  }, [getAuthorBooks, isSuperAdmin, campusId]);
 
   const bulkAddAuthors = useCallback(async (authorsData: Omit<Author, 'id'>[]) => {
     const batch = writeBatch(db);

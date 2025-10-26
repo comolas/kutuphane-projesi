@@ -1,35 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import RequestsTab from '../components/admin/RequestsTab';
-import UsersTab from '../components/admin/tabs/UsersTab';
-import AdminCollectionDistribution from '../components/admin/tabs/AdminCollectionDistribution';
-import AdminCatalogTab from '../components/admin/tabs/AdminCatalogTab';
-import FinesTab from '../components/admin/tabs/FinesTab';
-import BorrowedBooksTab from '../components/admin/tabs/BorrowedBooksTab';
-import MessagesTab from '../components/admin/tabs/MessagesTab';
-import EventManagementTab from '../components/admin/tabs/EventManagementTab';
-import ReportsTab from '../components/admin/tabs/ReportsTab';
-import QuoteManagementTab from '../components/admin/tabs/QuoteManagementTab';
-import AuthorManagementTab from '../components/admin/tabs/AuthorManagementTab'; // Import edildi
-import ReviewManagementTab from '../components/admin/tabs/ReviewManagementTab';
-import AdminMagazinesTab from '../components/admin/tabs/AdminMagazinesTab';
-import CollectionManagementTab from '../components/admin/tabs/CollectionManagementTab'; // Yeni eklendi
-import BudgetTab from '../components/admin/tabs/BudgetTab';
-import GameManagementTab from '../components/admin/tabs/GameManagementTab';
-import AdminGameReservationsTab from '../components/admin/tabs/AdminGameReservationsTab';
-import BlogManagementTab from '../components/admin/tabs/BlogManagementTab';
-import SpinWheelManagementTab from '../components/admin/SpinWheelManagementTab'; // Yeni eklendi
-import UpdateButton from '../components/common/UpdateButton'; // Added import
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import UpdateButton from '../components/common/UpdateButton';
 import AdminChatBot from '../components/admin/AdminChatBot';
 import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Book as BookIcon, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2, Gift, Search, ChevronDown, ChevronRight, MessageCircle, ShoppingBag } from 'lucide-react';
-import AdminChatTab from '../components/admin/tabs/AdminChatTab';
-import ShopManagementTab from '../components/admin/tabs/ShopManagementTab';
+
+const BorrowedBooksTab = lazy(() => import('../components/admin/tabs/BorrowedBooksTab'));
+const MessagesTab = lazy(() => import('../components/admin/tabs/MessagesTab'));
+const RequestsTab = lazy(() => import('../components/admin/RequestsTab'));
+const ReportsTab = lazy(() => import('../components/admin/tabs/ReportsTab'));
+const FinesTab = lazy(() => import('../components/admin/tabs/FinesTab'));
+const UsersTab = lazy(() => import('../components/admin/tabs/UsersTab'));
+const AdminCatalogTab = lazy(() => import('../components/admin/tabs/AdminCatalogTab'));
+const AdminCollectionDistribution = lazy(() => import('../components/admin/tabs/AdminCollectionDistribution'));
+const EventManagementTab = lazy(() => import('../components/admin/tabs/EventManagementTab'));
+const QuoteManagementTab = lazy(() => import('../components/admin/tabs/QuoteManagementTab'));
+const AuthorManagementTab = lazy(() => import('../components/admin/tabs/AuthorManagementTab'));
+const ReviewManagementTab = lazy(() => import('../components/admin/tabs/ReviewManagementTab'));
+const AdminMagazinesTab = lazy(() => import('../components/admin/tabs/AdminMagazinesTab'));
+const CollectionManagementTab = lazy(() => import('../components/admin/tabs/CollectionManagementTab'));
+const BudgetTab = lazy(() => import('../components/admin/tabs/BudgetTab'));
+const GameManagementTab = lazy(() => import('../components/admin/tabs/GameManagementTab'));
+const AdminGameReservationsTab = lazy(() => import('../components/admin/tabs/AdminGameReservationsTab'));
+const BlogManagementTab = lazy(() => import('../components/admin/tabs/BlogManagementTab'));
+const SpinWheelManagementTab = lazy(() => import('../components/admin/SpinWheelManagementTab'));
+const AdminChatTab = lazy(() => import('../components/admin/tabs/AdminChatTab'));
+const ShopManagementTab = lazy(() => import('../components/admin/tabs/ShopManagementTab'));
 import { auth, db } from '../firebase/config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { Book } from '../types'; // Import Book type
+import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
+import { Book } from '../types';
+import { debounce } from '../utils/debounce';
 
 interface UserData {
   uid: string;
@@ -44,15 +46,28 @@ interface UserData {
 
 const AdminDashboard: React.FC = () => {
   const location = useLocation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin, campusId } = useAuth();
   const { refetchAllBooks, getBookStatus } = useBooks();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations' | 'blog-management' | 'spin-wheel-management' | 'chat' | 'shop-management'>(location.state?.activeTab || 'borrowed-books');
   const [users, setUsers] = useState<UserData[]>([]);
   const [catalogBooks, setCatalogBooks] = useState<Book[]>([]);
-  const [badges, setBadges] = useState({ messages: 0, requests: 0, fines: 0, reviews: 0, posts: 0 });
+  const [badgeData, setBadgeData] = useState({ messages: 0, requests: 0, borrowedBooks: [], reviews: 0, posts: 0 });
+  const [campusName, setCampusName] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({ main: true, management: true, reports: true });
+
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => setDebouncedSearchQuery(value), 300),
+    []
+  );
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    debouncedSearch(value);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -60,11 +75,51 @@ const AdminDashboard: React.FC = () => {
     }
   }, [location.state]);
 
+  const badges = useMemo(() => {
+    const unpaidFines = badgeData.borrowedBooks.filter(doc => {
+      const daysOverdue = Math.ceil((new Date().getTime() - doc.dueDate?.getTime()) / (1000 * 60 * 60 * 24));
+      return daysOverdue > 0 && doc.fineStatus !== 'paid';
+    }).length;
+
+    return {
+      messages: badgeData.messages,
+      requests: badgeData.requests,
+      fines: unpaidFines,
+      reviews: badgeData.reviews,
+      posts: badgeData.posts
+    };
+  }, [badgeData]);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
+        if (!isSuperAdmin && campusId) {
+          const campusDoc = await getDocs(query(collection(db, 'campuses'), where('__name__', '==', campusId)));
+          if (!campusDoc.empty) {
+            setCampusName(campusDoc.docs[0].data().name || '');
+          }
+        }
+
         const usersRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(usersRef);
+        const usersQuery = isSuperAdmin ? usersRef : query(usersRef, where('campusId', '==', campusId));
+        const booksCollectionRef = collection(db, "books");
+        const booksQuery = isSuperAdmin ? booksCollectionRef : query(booksCollectionRef, where('campusId', '==', campusId));
+        const messagesQuery = isSuperAdmin ? query(collection(db, 'messages'), where('read', '==', false)) : query(collection(db, 'messages'), where('read', '==', false), where('campusId', '==', campusId));
+        const requestsQuery = isSuperAdmin ? query(collection(db, 'requests'), where('status', '==', 'pending')) : query(collection(db, 'requests'), where('status', '==', 'pending'), where('campusId', '==', campusId));
+        const borrowedQuery = isSuperAdmin ? collection(db, 'borrowedBooks') : query(collection(db, 'borrowedBooks'), where('campusId', '==', campusId));
+        const reviewsQuery = isSuperAdmin ? query(collection(db, 'reviews'), where('status', '==', 'pending')) : query(collection(db, 'reviews'), where('status', '==', 'pending'), where('campusId', '==', campusId));
+        const postsQuery = isSuperAdmin ? query(collection(db, 'posts'), where('status', '==', 'pending')) : query(collection(db, 'posts'), where('status', '==', 'pending'), where('campusId', '==', campusId));
+        
+        const [usersSnapshot, booksSnapshot, messagesSnap, requestsSnap, borrowedSnap, reviewsSnap, postsSnap] = await Promise.all([
+          getDocs(usersQuery),
+          getDocs(booksQuery),
+          getDocs(messagesQuery),
+          getDocs(requestsQuery),
+          getDocs(borrowedQuery),
+          getDocs(reviewsQuery),
+          getDocs(postsQuery)
+        ]);
+
         const usersData: UserData[] = [];
         usersSnapshot.forEach((doc) => {
           const data = doc.data();
@@ -79,30 +134,18 @@ const AdminDashboard: React.FC = () => {
         });
         setUsers(usersData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
 
-        const booksCollectionRef = collection(db, "books");
-        const booksSnapshot = await getDocs(booksCollectionRef);
         const booksData = booksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
         setCatalogBooks(booksData);
 
-        // Fetch badge counts
-        const [messagesSnap, requestsSnap, borrowedSnap, reviewsSnap, postsSnap] = await Promise.all([
-          getDocs(query(collection(db, 'messages'), where('read', '==', false))),
-          getDocs(query(collection(db, 'requests'), where('status', '==', 'pending'))),
-          getDocs(collection(db, 'borrowedBooks')),
-          getDocs(query(collection(db, 'reviews'), where('status', '==', 'pending'))),
-          getDocs(query(collection(db, 'posts'), where('status', '==', 'pending')))
-        ]);
+        const borrowedBooksData = borrowedSnap.docs.map(doc => ({
+          dueDate: doc.data().dueDate?.toDate(),
+          fineStatus: doc.data().fineStatus
+        }));
 
-        const unpaidFines = borrowedSnap.docs.filter(doc => {
-          const data = doc.data();
-          const daysOverdue = Math.ceil((new Date().getTime() - data.dueDate?.toDate().getTime()) / (1000 * 60 * 60 * 24));
-          return daysOverdue > 0 && data.fineStatus !== 'paid';
-        }).length;
-
-        setBadges({
+        setBadgeData({
           messages: messagesSnap.size,
           requests: requestsSnap.size,
-          fines: unpaidFines,
+          borrowedBooks: borrowedBooksData,
           reviews: reviewsSnap.size,
           posts: postsSnap.size
         });
@@ -113,7 +156,7 @@ const AdminDashboard: React.FC = () => {
     };
 
     fetchInitialData();
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   if (!isAdmin) {
     return <Navigate to="/login" replace />;
@@ -151,7 +194,7 @@ const AdminDashboard: React.FC = () => {
                 type="text"
                 placeholder="Menüde ara..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
                 className="w-full pl-8 sm:pl-9 pr-2 sm:pr-3 py-1.5 sm:py-2 bg-indigo-800 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
               />
             </div>
@@ -519,6 +562,15 @@ const AdminDashboard: React.FC = () => {
                 <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
               <h1 className="text-lg sm:text-2xl font-bold ml-2 sm:ml-4">Admin Paneli</h1>
+              {isSuperAdmin ? (
+                <span className="ml-2 sm:ml-3 px-2 sm:px-3 py-1 bg-purple-500 text-white text-xs sm:text-sm font-semibold rounded-full">
+                  Tüm Kampüsler
+                </span>
+              ) : campusName ? (
+                <span className="ml-2 sm:ml-3 px-2 sm:px-3 py-1 bg-blue-500 text-white text-xs sm:text-sm font-semibold rounded-full">
+                  {campusName}
+                </span>
+              ) : null}
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <UpdateButton />
@@ -536,61 +588,45 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-        
-        {activeTab === 'borrowed-books' && <BorrowedBooksTab />}
-
-        {activeTab === 'messages' && <MessagesTab />}
-
-        {activeTab === 'requests' && (
-          <RequestProvider>
-            <RequestsTab />
-          </RequestProvider>
-        )}
-
-        {activeTab === 'reports' && <ReportsTab />}
-
-        {activeTab === 'fines' && <FinesTab />}
-
-        {activeTab === 'users' && <UsersTab />}
-
-        {activeTab === 'catalog' && (
-          <AdminCatalogTab
-            catalogBooks={catalogBooks}
-            setCatalogBooks={setCatalogBooks}
-            refetchAllBooks={refetchAllBooks}
-            getBookStatus={getBookStatus}
-            users={users}
-          />
-        )}
-
-        {activeTab === 'collection-distribution' && <AdminCollectionDistribution catalogBooks={catalogBooks} getBookStatus={getBookStatus} />}
-
-        {activeTab === 'user-events' && <EventManagementTab />}
-
-        {activeTab === 'quote-management' && <QuoteManagementTab />}
-
-        {activeTab === 'author-management' && <AuthorManagementTab />}
-
-        {activeTab === 'review-management' && <ReviewManagementTab />}
-
-        {activeTab === 'magazine-management' && <AdminMagazinesTab />}
-
-        {activeTab === 'collection-management' && <CollectionManagementTab />}
-
-        {activeTab === 'budget' && <BudgetTab />}
-
-        {activeTab === 'game-management' && <GameManagementTab />}
-
-        {activeTab === 'game-reservations' && <AdminGameReservationsTab />}
-
-        {activeTab === 'blog-management' && <BlogManagementTab />}
-
-        {activeTab === 'spin-wheel-management' && <SpinWheelManagementTab />}
-
-        {activeTab === 'chat' && <AdminChatTab />}
-
-        {activeTab === 'shop-management' && <ShopManagementTab />}
-
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        }>
+          {activeTab === 'borrowed-books' && <BorrowedBooksTab />}
+          {activeTab === 'messages' && <MessagesTab />}
+          {activeTab === 'requests' && (
+            <RequestProvider>
+              <RequestsTab />
+            </RequestProvider>
+          )}
+          {activeTab === 'reports' && <ReportsTab />}
+          {activeTab === 'fines' && <FinesTab />}
+          {activeTab === 'users' && <UsersTab />}
+          {activeTab === 'catalog' && (
+            <AdminCatalogTab
+              catalogBooks={catalogBooks}
+              setCatalogBooks={setCatalogBooks}
+              refetchAllBooks={refetchAllBooks}
+              getBookStatus={getBookStatus}
+              users={users}
+            />
+          )}
+          {activeTab === 'collection-distribution' && <AdminCollectionDistribution catalogBooks={catalogBooks} getBookStatus={getBookStatus} />}
+          {activeTab === 'user-events' && <EventManagementTab />}
+          {activeTab === 'quote-management' && <QuoteManagementTab />}
+          {activeTab === 'author-management' && <AuthorManagementTab />}
+          {activeTab === 'review-management' && <ReviewManagementTab />}
+          {activeTab === 'magazine-management' && <AdminMagazinesTab />}
+          {activeTab === 'collection-management' && <CollectionManagementTab />}
+          {activeTab === 'budget' && <BudgetTab />}
+          {activeTab === 'game-management' && <GameManagementTab />}
+          {activeTab === 'game-reservations' && <AdminGameReservationsTab />}
+          {activeTab === 'blog-management' && <BlogManagementTab />}
+          {activeTab === 'spin-wheel-management' && <SpinWheelManagementTab />}
+          {activeTab === 'chat' && <AdminChatTab />}
+          {activeTab === 'shop-management' && <ShopManagementTab />}
+        </Suspense>
       </div>
       <AdminChatBot />
     </div>

@@ -28,7 +28,7 @@ interface ShopContextType {
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, userData } = useAuth();
+  const { user, userData, isSuperAdmin, campusId } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -36,7 +36,8 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProducts = async () => {
     const productsRef = collection(db, 'products');
-    const snapshot = await getDocs(productsRef);
+    const productsQuery = isSuperAdmin ? productsRef : query(productsRef, where('campusId', '==', campusId));
+    const snapshot = await getDocs(productsQuery);
     const productsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
     setProducts(productsData);
   };

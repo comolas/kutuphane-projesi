@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import OptimizedImage from '../components/common/OptimizedImage';
@@ -8,6 +8,7 @@ import { useBooks } from '../contexts/BookContext';
 import { db } from '../firebase/config';
 import { collection, getDocs, addDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import { debounce } from '../utils/debounce';
 import ReviewModal from '../components/common/ReviewModal';
 import StoryTray from '../components/catalog/StoryTray';
 import RecommendBookModal from '../components/teacher/RecommendBookModal';
@@ -20,7 +21,9 @@ const CatalogPage: React.FC = () => {
   const { allBooks, borrowBook, isBorrowed, getBookStatus, borrowMessages } = useBooks();
   const { user, isTeacher } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [tagQuery, setTagQuery] = useState('');
+  const [debouncedTagQuery, setDebouncedTagQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [availability, setAvailability] = useState<'all' | 'available' | 'borrowed' | 'lost'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -37,24 +40,46 @@ const CatalogPage: React.FC = () => {
   const [recommendedBooksForModal, setRecommendedBooksForModal] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => setDebouncedSearchQuery(value), 300),
+    []
+  );
+
+  const debouncedTagSearch = useMemo(
+    () => debounce((value: string) => setDebouncedTagQuery(value), 300),
+    []
+  );
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    debouncedSearch(value);
+  }, [debouncedSearch]);
+
+  const handleTagChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTagQuery(value);
+    debouncedTagSearch(value);
+  }, [debouncedTagSearch]);
+
   useEffect(() => {
-    if (user) {
-      const fetchUserFavorites = async () => {
-        try {
-          const favoritesRef = collection(db, 'favorites');
-          const q = query(favoritesRef, where('userId', '==', user.uid));
-          const querySnapshot = await getDocs(q);
-          const favoriteBookIds = querySnapshot.docs.map(doc => doc.data().bookId as string);
-          setUserFavorites(favoriteBookIds);
-        } catch (error) {
-          console.error('Error fetching user favorites:', error);
-        }
-      };
-      fetchUserFavorites();
-    } else {
-      setUserFavorites([]); // Clear favorites if user logs out
+    if (!user) {
+      setUserFavorites([]);
+      return;
     }
-  }, [user]);
+    const fetchUserFavorites = async () => {
+      try {
+        const favoritesRef = collection(db, 'favorites');
+        const q = query(favoritesRef, where('userId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+        const favoriteBookIds = querySnapshot.docs.map(doc => doc.data().bookId as string);
+        setUserFavorites(favoriteBookIds);
+      } catch (error) {
+        console.error('Error fetching user favorites:', error);
+      }
+    };
+    fetchUserFavorites();
+  }, [user?.uid]);
 
   useEffect(() => {
     // Simulate loading for books
@@ -76,7 +101,7 @@ const CatalogPage: React.FC = () => {
   // Get unique categories
   const categories = Array.from(new Set(allBooks.map(book => book.category)));
 
-  const handleBorrowRequest = async (book: Book) => {
+  const handleBorrowRequest = useCallback(async (book: Book) => {
     try {
       await borrowBook(book);
       Swal.fire('Başarılı!', 'Kitap başarıyla ödünç alındı!', 'success');
@@ -84,9 +109,9 @@ const CatalogPage: React.FC = () => {
       console.error('Error borrowing book:', error);
       Swal.fire('Hata!', error.message || 'Kitap ödünç alınırken bir hata oluştu.', 'error');
     }
-  };
+  }, [borrowBook]);
 
-  const handleToggleFavorite = async (bookId: string) => {
+  const handleToggleFavorite = useCallback(async (bookId: string) => {
     if (!user) {
       Swal.fire({
         icon: 'error',
@@ -123,7 +148,7 @@ const CatalogPage: React.FC = () => {
       console.error('Error toggling favorite:', error);
       Swal.fire('Hata!', 'Favori işlemi sırasında bir hata oluştu.', 'error');
     }
-  };
+  }, [user, userFavorites]);
 
   const generateBookDetailsUrl = (bookId: string) => {
     const baseUrl = 'https://drive.google.com/file/d/';
@@ -183,37 +208,39 @@ const CatalogPage: React.FC = () => {
     }
   }, [selectedBook, allBooks]);
 
-  const filteredAndSortedBooks = allBooks.filter(book => {
-    const matchesSearch = book.title.toLocaleLowerCase('tr-TR').includes(searchQuery.toLocaleLowerCase('tr-TR')) ||
-      book.author.toLocaleLowerCase('tr-TR').includes(searchQuery.toLocaleLowerCase('tr-TR'));
+  const filteredAndSortedBooks = useMemo(() => {
+    return allBooks.filter(book => {
+      const matchesSearch = book.title.toLocaleLowerCase('tr-TR').includes(debouncedSearchQuery.toLocaleLowerCase('tr-TR')) ||
+        book.author.toLocaleLowerCase('tr-TR').includes(debouncedSearchQuery.toLocaleLowerCase('tr-TR'));
 
-    const matchesTag = !tagQuery || (book.tags && book.tags.some(tag => typeof tag === 'string' && tag.toLocaleLowerCase('tr-TR').includes(tagQuery.toLocaleLowerCase('tr-TR'))));
+      const matchesTag = !debouncedTagQuery || (book.tags && book.tags.some(tag => typeof tag === 'string' && tag.toLocaleLowerCase('tr-TR').includes(debouncedTagQuery.toLocaleLowerCase('tr-TR'))));
 
-    const bookStatus = getBookStatus(book.id);
-    const matchesAvailability = availability === 'all' ||
-      (availability === 'available' && bookStatus === 'available') ||
-      (availability === 'borrowed' && bookStatus === 'borrowed') ||
-      (availability === 'lost' && bookStatus === 'lost');
+      const bookStatus = getBookStatus(book.id);
+      const matchesAvailability = availability === 'all' ||
+        (availability === 'available' && bookStatus === 'available') ||
+        (availability === 'borrowed' && bookStatus === 'borrowed') ||
+        (availability === 'lost' && bookStatus === 'lost');
 
-    const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
 
-    return matchesSearch && matchesAvailability && matchesCategory && matchesTag;
-  }).sort((a, b) => {
-    switch (sortOrder) {
-      case 'title-asc':
-        return a.title.localeCompare(b.title, 'tr-TR');
-      case 'title-desc':
-        return b.title.localeCompare(a.title, 'tr-TR');
-      case 'author-asc':
-        return a.author.localeCompare(b.author, 'tr-TR');
-      case 'author-desc':
-        return b.author.localeCompare(a.author, 'tr-TR');
-      case 'rating-desc':
-        return (b.averageRating || 0) - (a.averageRating || 0);
-      default:
-        return 0;
-    }
-  });
+      return matchesSearch && matchesAvailability && matchesCategory && matchesTag;
+    }).sort((a, b) => {
+      switch (sortOrder) {
+        case 'title-asc':
+          return a.title.localeCompare(b.title, 'tr-TR');
+        case 'title-desc':
+          return b.title.localeCompare(a.title, 'tr-TR');
+        case 'author-asc':
+          return a.author.localeCompare(b.author, 'tr-TR');
+        case 'author-desc':
+          return b.author.localeCompare(a.author, 'tr-TR');
+        case 'rating-desc':
+          return (b.averageRating || 0) - (a.averageRating || 0);
+        default:
+          return 0;
+      }
+    });
+  }, [allBooks, debouncedSearchQuery, debouncedTagQuery, availability, selectedCategory, sortOrder, getBookStatus]);
 
   // Pagination logic
   const indexOfLastBook = currentPage * booksPerPage;
@@ -304,7 +331,7 @@ const CatalogPage: React.FC = () => {
                     type="text"
                     placeholder="Kitap ara..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={handleSearchChange}
                     className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
@@ -320,7 +347,7 @@ const CatalogPage: React.FC = () => {
                       type="text"
                       placeholder="Etiket..."
                       value={tagQuery}
-                      onChange={(e) => setTagQuery(e.target.value)}
+                      onChange={handleTagChange}
                       className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                     <Tag className="absolute left-2.5 top-2.5 text-gray-400" size={16} />
@@ -532,6 +559,7 @@ const CatalogPage: React.FC = () => {
                         <OptimizedImage 
                           src={book.coverImage} 
                           alt={book.title} 
+                          loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">

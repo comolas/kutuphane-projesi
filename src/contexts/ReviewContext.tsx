@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Review } from '../types';
+import { useAuth } from './AuthContext';
 
 interface ReviewContextType {
   reviews: Review[];
@@ -26,19 +27,22 @@ interface ReviewProviderProps {
 }
 
 export const ReviewProvider: React.FC<ReviewProviderProps> = ({ children }) => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
 
   const fetchReviewsByBookId = useCallback(async (bookId: string) => {
     try {
       const reviewsRef = collection(db, 'reviews');
-      const q = query(reviewsRef, where('bookId', '==', bookId), where('status', '==', 'approved'));
+      const q = isSuperAdmin
+        ? query(reviewsRef, where('bookId', '==', bookId), where('status', '==', 'approved'))
+        : query(reviewsRef, where('bookId', '==', bookId), where('status', '==', 'approved'), where('campusId', '==', campusId));
       const querySnapshot = await getDocs(q);
       const bookReviews = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Review[];
       setReviews(bookReviews);
     } catch (error) {
       console.error('Error fetching reviews:', error);
     }
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   const getAverageRating = useCallback((bookId: string) => {
     const bookReviews = reviews.filter(review => review.bookId === bookId);

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Book, Users } from '../../../types';
 import { useBooks } from '../../../contexts/BookContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Html5Qrcode, Html5QrcodeScanType } from "html5-qrcode";
 import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X, Filter, Lightbulb, Loader2 } from 'lucide-react';
 import LendBookModal from '../LendBookModal';
 import EditBookModal from '../EditBookModal';
 import BulkAddBookModal from '../BulkAddBookModal';
 import BulkEditBookModal from '../BulkEditBookModal';
-import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db, functions } from '../../../firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import Swal from 'sweetalert2';
@@ -27,6 +28,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   getBookStatus,
   users,
 }) => {
+  const { isSuperAdmin, campusId } = useAuth();
   const { markBookAsLost, markBookAsFound, lendBookToUser } = useBooks();
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   const [catalogStatusFilter, setCatalogStatusFilter] = useState<'all' | 'available' | 'borrowed' | 'lost'>('all');
@@ -244,7 +246,8 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       });
       setApiMessage(null);
       const booksCollectionRefFresh = collection(db, "books");
-      const querySnapshot = await getDocs(booksCollectionRefFresh);
+      const booksQuery = isSuperAdmin ? booksCollectionRefFresh : query(booksCollectionRefFresh, where('campusId', '==', campusId));
+      const querySnapshot = await getDocs(booksQuery);
       const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
       setCatalogBooks(booksData);
       refetchAllBooks();

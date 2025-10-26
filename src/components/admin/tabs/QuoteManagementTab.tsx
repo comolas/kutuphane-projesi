@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Plus, Search, Edit, Trash2, BookText, Filter, X } from 'lucide-react';
 import QuoteModal from '../QuoteModal';
 import BulkAddQuoteModal from '../BulkAddQuoteModal'; // Import the new modal
@@ -14,6 +15,7 @@ interface Quote {
 }
 
 const QuoteManagementTab: React.FC = () => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,7 +33,8 @@ const QuoteManagementTab: React.FC = () => {
     setLoading(true);
     try {
       const quotesCollection = collection(db, 'quotes');
-      const quoteSnapshot = await getDocs(quotesCollection);
+      const quotesQuery = isSuperAdmin ? quotesCollection : query(quotesCollection, where('campusId', '==', campusId));
+      const quoteSnapshot = await getDocs(quotesQuery);
       const quotesList = quoteSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Quote));
       setQuotes(quotesList);
     } catch (error) {

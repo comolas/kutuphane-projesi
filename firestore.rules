@@ -16,6 +16,23 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
+    function isSuperAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    
+    function isAdminOrSuperAdmin() {
+      let role = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return role == 'admin' || role == 'superadmin';
+    }
+    
+    function getUserCampusId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.campusId;
+    }
+    
+    function isSameCampus(campusId) {
+      return isSuperAdmin() || getUserCampusId() == campusId;
+    }
+    
     function isTeacher() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
@@ -32,7 +49,7 @@ service cloud.firestore {
 
     // Users collection rules
     match /users/{userId} {
-      // Allow authenticated users to read user data for chat purposes
+      // Allow authenticated users to read their own data and any user data (needed for chat)
       allow read: if isAuthenticated();
       
       // Allow user creation during registration
@@ -43,8 +60,8 @@ service cloud.firestore {
         request.resource.data.createdAt is timestamp &&
         request.resource.data.lastLogin is timestamp;
       
-      // Allow users to update their own data and admins to update any user
-      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      // Allow users to update their own data, admins to update any user, and super admins to update any user
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin() || isSuperAdmin());
       
       // Allow admin to delete users
       allow delete: if isAdmin();
@@ -52,34 +69,36 @@ service cloud.firestore {
 
     // Books collection rules
     match /books/{bookId} {
-      // Allow only authenticated users to read books
+      // Allow authenticated users to read books
       allow read: if isAuthenticated();
       
-      // Only admins can create, or delete books
-      allow create: if isAdmin();
+      // Only admins can create books for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
 
-      // Allow users to update ratings and admins to update any field
-      allow update: if isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings']));
+      // Allow users to update ratings and admins to update any field in their campus
+      allow update: if (isAdmin() && isSameCampus(resource.data.campusId)) || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratings']));
     }
 
     // Authors collection rules
     match /authors/{authorId} {
-      // Allow only authenticated users to read authors
+      // Allow authenticated users to read authors
       allow read: if isAuthenticated();
       
-      // Only admins can create, update, or delete authors
-      allow create, update, delete: if isAdmin();
+      // Only admins can create, update, or delete authors for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Magazines collection rules
     match /magazines/{magazineId} {
-      // Allow only authenticated users to read magazines
+      // Allow authenticated users to read magazines
       allow read: if isAuthenticated();
       
-      // Only admins can create, update, or delete magazines
-      allow create, update, delete: if isAdmin();
+      // Only admins can create, update, or delete magazines for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Reading Goals collection rules
@@ -92,23 +111,24 @@ service cloud.firestore {
 
     // Events collection rules
     match /events/{eventId} {
-      // Allow any authenticated user to read events
+      // Allow authenticated users to read events
       allow read: if isAuthenticated();
       
-      // Only admins can create, update, or delete events
-      allow create, update, delete: if isAdmin();
+      // Only admins can create, update, or delete events for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Event Registrations collection rules
     match /eventRegistrations/{registrationId} {
-      // Allow admin to read all registrations, and users to read their own
-      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      // Allow admin to read registrations from their campus, and users to read their own
+      allow read: if (isAdmin() && isSameCampus(resource.data.campusId)) || (isAuthenticated() && resource.data.userId == request.auth.uid);
 
       // Allow authenticated users to create their own registration
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
 
-      // Allow users to delete their own registration, and admins to delete any
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Allow users to delete their own registration, and admins to delete from their campus
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || (isAdmin() && isSameCampus(resource.data.campusId)));
 
       // Do not allow updates
       allow update: if false;
@@ -177,7 +197,7 @@ service cloud.firestore {
     // Requests collection rules
     match /requests/{requestId} {
       allow read: if isAuthenticated() && 
-        (request.auth.uid == resource.data.userId || isAdmin());
+        (request.auth.uid == resource.data.userId || (isAdmin() && isSameCampus(resource.data.campusId)));
       
       allow create: if isAuthenticated() && 
         request.auth.uid == request.resource.data.userId &&
@@ -188,20 +208,20 @@ service cloud.firestore {
         request.resource.data.category in ['Kitap Önerisi', 'Teknik Sorun', 'Üyelik Bilgileri', 'Genel Geri Bildirim'] &&
         request.resource.data.status == 'pending';
       
-      allow update: if isAdmin();
-      allow delete: if isAdmin() || (isOwner(resource.data.userId) && resource.data.status == 'pending');
+      allow update: if isAdmin() && isSameCampus(resource.data.campusId);
+      allow delete: if (isAdmin() && isSameCampus(resource.data.campusId)) || (isOwner(resource.data.userId) && resource.data.status == 'pending');
     }
 
     // Borrowed books collection rules
     match /borrowedBooks/{borrowedId} {
-      allow read: if isAuthenticated() && (isAdmin() || isTeacher() || isOwner(resource.data.userId));
+      allow read: if isAuthenticated();
       
-      // Allow users to create their own borrow records, and admins to create for anyone
-      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || isAdmin());
+      // Allow users to create their own borrow records, and admins to create for their campus
+      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || (isAdmin() && isSameCampus(request.resource.data.campusId)));
       
-      // Allow admins and book owners to update records
+      // Allow admins from same campus and book owners to update records
       allow update: if isAuthenticated() && (
-        isAdmin() ||
+        (isAdmin() && isSameCampus(resource.data.campusId)) ||
         (isOwner(resource.data.userId) &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['extended', 'dueDate', 'returnStatus', 'maxExtensions', 'extensionCount', 'returnRequestDate', 'returnDate', 'fineStatus', 'paymentDate', 'fineAmountSnapshot', 'fineRateSnapshot', 'daysOverdueSnapshot', 'discountApplied', 'originalFineAmount']) &&
@@ -213,14 +233,29 @@ service cloud.firestore {
           ))
       );
       
-      // Allow admins to delete borrowed book records
-      allow delete: if isAdmin();
+      // Allow admins to delete borrowed book records from their campus
+      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
+    }
+
+    // Borrows collection rules (for super admin dashboard)
+    match /borrows/{borrowId} {
+      // Allow authenticated users to read borrows
+      allow read: if isAuthenticated();
+      
+      // Allow users to create their own borrow records, and admins to create for their campus
+      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || isAdminOrSuperAdmin());
+      
+      // Allow admins and super admins to update records
+      allow update: if isAdminOrSuperAdmin();
+      
+      // Allow admins and super admins to delete records
+      allow delete: if isAdminOrSuperAdmin();
     }
 
     // Borrow messages collection rules
     match /borrowMessages/{messageId} {
-      // Allow admin to read all messages, users can read their own
-      allow read: if isAuthenticated();
+      // Allow admin to read messages from their campus, users can read their own
+      allow read: if isAuthenticated() && ((isAdmin() && isSameCampus(resource.data.campusId)) || resource.data.userId == request.auth.uid);
       
       // Allow users to create borrow requests
       allow create: if isAuthenticated() &&
@@ -228,29 +263,30 @@ service cloud.firestore {
         request.resource.data.createdAt is timestamp &&
         request.resource.data.status == 'pending';
       
-      // Allow admins to update borrow messages
-      allow update: if isAuthenticated() && isAdmin();
-      allow delete: if isAdmin();
+      // Allow admins to update borrow messages from their campus
+      allow update: if isAuthenticated() && isAdmin() && isSameCampus(resource.data.campusId);
+      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Return messages collection rules
     match /returnMessages/{messageId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && ((isAdmin() && isSameCampus(resource.data.campusId)) || resource.data.userId == request.auth.uid);
       
       allow create: if isAuthenticated() &&
         request.auth.uid == request.resource.data.userId &&
         request.resource.data.createdAt is timestamp &&
         request.resource.data.status == 'pending';
       
-      // Allow admins to update return messages
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      // Allow admins to update return messages from their campus
+      allow update: if isAdmin() && isSameCampus(resource.data.campusId);
+      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Quotes collection rules
     match /quotes/{quoteId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow read: if isAuthenticated() && (isSuperAdmin() || !isAdmin() || isSameCampus(resource.data.campusId));
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Leaderboards collection rules
@@ -295,8 +331,8 @@ service cloud.firestore {
 
     // Reviews collection rules
     match /reviews/{reviewId} {
-      // Logged-in users can read approved reviews. Admins can read all.
-      allow read: if (resource.data.status == 'approved' && isAuthenticated()) || isAdmin();
+      // Logged-in users can read approved reviews. Admins can read reviews from their campus.
+      allow read: if (resource.data.status == 'approved' && isAuthenticated()) || (isAdmin() && isSameCampus(resource.data.campusId));
 
       // Authenticated users can create their own reviews
       allow create: if isAuthenticated()
@@ -317,8 +353,8 @@ service cloud.firestore {
                     && request.resource.data.helpfulVotes.size() == resource.data.helpfulVotes.size() + 1
                     && request.auth.uid in request.resource.data.helpfulVotes;
 
-      // Admins can update status or delete.
-      allow update, delete: if isAdmin();
+      // Admins can update status or delete from their campus.
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // App Info collection rules (for version checking)
@@ -332,32 +368,34 @@ service cloud.firestore {
 
     // Story Collections rules
     match /collections/{collectionId} {
-      // Any authenticated user can read and list active collections
+      // Any authenticated user can read collections
       allow read, list: if isAuthenticated();
       
-      // Only admins can create, update, or delete collections
-      allow write: if isAdmin();
+      // Only admins can create, update, or delete collections for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Games collection rules
     match /games/{gameId} {
-      // Allow any authenticated user to read games
+      // Allow authenticated users to read games
       allow read: if isAuthenticated();
       
-      // Only admins can create, update, or delete games
-      allow write: if isAdmin();
+      // Only admins can create, update, or delete games for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Game Reservations collection rules
     match /gameReservations/{reservationId} {
-      // Allow all authenticated users to read reservations (needed for checking availability)
+      // Allow authenticated users to read reservations
       allow read: if isAuthenticated();
 
       // Allow authenticated users to create their own reservations
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
 
-      // Allow users to update/delete their own reservations (e.g., to cancel), and admins to update/delete any
-      allow update, delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      // Allow users to update/delete their own reservations, and admins from same campus
+      allow update, delete: if isAuthenticated() && (isOwner(resource.data.userId) || (isAdmin() && isSameCampus(resource.data.campusId)));
     }
 
     // Transactions collection rules
@@ -406,22 +444,22 @@ service cloud.firestore {
 
     // Posts collection rules
     match /posts/{postId} {
-      // Allow authenticated users to read approved posts, admins can read all, authors can read their own
-      allow read: if (resource.data.status == 'approved' && isAuthenticated()) || isAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+      // Allow authenticated users to read approved posts, admins can read posts from their campus, authors can read their own
+      allow read: if (resource.data.status == 'approved' && isAuthenticated()) || (isAdmin() && isSameCampus(resource.data.campusId)) || (isAuthenticated() && resource.data.authorId == request.auth.uid);
       
       // Allow authenticated users to create posts with pending status
       allow create: if isAuthenticated() && 
         request.resource.data.authorId == request.auth.uid &&
         request.resource.data.status == 'pending';
       
-      // Allow users to update likes array, admins can update anything, authors can update their own posts
+      // Allow users to update likes array, admins from same campus can update anything, authors can update their own posts
       allow update: if isAuthenticated() && 
-        (isAdmin() || 
+        ((isAdmin() && isSameCampus(resource.data.campusId)) || 
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) ||
          (resource.data.authorId == request.auth.uid && request.resource.data.status == 'pending'));
       
-      // Allow admins and authors to delete posts
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
+      // Allow admins from same campus and authors to delete posts
+      allow delete: if (isAdmin() && isSameCampus(resource.data.campusId)) || (isAuthenticated() && resource.data.authorId == request.auth.uid);
       
       // Comments subcollection
       match /comments/{commentId} {
@@ -472,40 +510,63 @@ service cloud.firestore {
 
     // Products collection rules
     match /products/{productId} {
-      // Allow all authenticated users to read products
+      // Allow authenticated users to read products
       allow read: if isAuthenticated();
       
-      // Only admins can create, update, or delete products
-      allow create, update, delete: if isAdmin();
+      // Only admins can create, update, or delete products for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Orders collection rules
     match /orders/{orderId} {
-      // Allow users to read their own orders, admins can read all
-      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+      // Allow users to read their own orders, admins can read orders from their campus
+      allow read: if isAuthenticated() && ((isAdmin() && isSameCampus(resource.data.campusId)) || resource.data.userId == request.auth.uid);
       
       // Allow authenticated users to create their own orders
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       
-      // Allow admins to update all orders, users can only update status to 'cancelled' for their own pending orders
-      allow update: if isAdmin() || 
+      // Allow admins from same campus to update orders, users can only update status to 'cancelled' for their own pending orders
+      allow update: if (isAdmin() && isSameCampus(resource.data.campusId)) || 
         (isAuthenticated() && 
          resource.data.userId == request.auth.uid && 
          resource.data.status == 'pending' &&
          request.resource.data.status == 'cancelled' &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
       
-      // Only admins can delete orders
-      allow delete: if isAdmin();
+      // Only admins from same campus can delete orders
+      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Budget collection rules
     match /budget/{budgetId} {
-      // Allow all authenticated users to read budget entries
+      // Allow authenticated users to read budget entries
       allow read: if isAuthenticated();
       
-      // Only admins can create, update, or delete budget entries
-      allow create, update, delete: if isAdmin();
+      // Only admins can create, update, or delete budget entries for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
+    }
+
+    // Campuses collection rules
+    match /campuses/{campusId} {
+      // Allow everyone to read campuses (needed for registration)
+      allow read: if true;
+      
+      // Allow listing campuses for authenticated users
+      allow list: if isAuthenticated();
+      
+      // Only super admins can create, update, or delete campuses
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Page Access collection rules
+    match /pageAccess/{campusId} {
+      // Allow authenticated users to read page access for their campus
+      allow read: if isAuthenticated();
+      
+      // Only super admins can create, update, or delete page access
+      allow create, update, delete: if isSuperAdmin();
     }
 
     // Conversations collection rules

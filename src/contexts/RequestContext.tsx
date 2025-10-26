@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { collection, getDocs, query, where, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from './AuthContext';
 
 interface Request {
   id: string;
@@ -37,6 +38,7 @@ export const useRequests = () => {
 };
 
 export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +46,8 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLoading(true);
     try {
       const requestsRef = collection(db, 'requests');
-      const requestsSnapshot = await getDocs(requestsRef);
+      const requestsQuery = isSuperAdmin ? requestsRef : query(requestsRef, where('campusId', '==', campusId));
+      const requestsSnapshot = await getDocs(requestsQuery);
       
       const requestsData: Request[] = [];
       
@@ -76,7 +79,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error('Error fetching requests:', error);
     }
     setLoading(false);
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   useEffect(() => {
     fetchRequests();

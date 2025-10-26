@@ -1,0 +1,22 @@
+Güncellenecek Tab Dosyaları:
+
+1. FinesTab.tsx - borrowedBooks sorgusu
+2. UsersTab.tsx - users sorgusu  
+3. AdminCatalogTab.tsx - books sorgusu
+4. EventManagementTab.tsx - events sorgusu
+5. ReportsTab.tsx - tüm sorgular
+6. ReviewManagementTab.tsx - reviews sorgusu
+7. AdminMagazinesTab.tsx - magazines sorgusu
+8. GameManagementTab.tsx - games sorgusu
+9. AdminGameReservationsTab.tsx - gameReservations sorgusu
+10. BlogManagementTab.tsx - posts sorgusu
+11. ShopManagementTab.tsx - products, orders sorguları
+12. BudgetTab.tsx - budget sorgusu
+13. QuoteManagementTab.tsx - quotes sorgusu
+14. AuthorManagementTab.tsx - authors sorgusu
+15. CollectionManagementTab.tsx - collections sorgusu
+
+Her dosyaya eklenecek:
+- import { useAuth } from '../../../contexts/AuthContext';
+- const { isSuperAdmin, campusId } = useAuth();
+- Tüm query'lere: isSuperAdmin ? query(...) : query(..., where('campusId', '==', campusId))

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { StoryCollection } from '../types';
+import { useAuth } from './AuthContext';
 
 interface ICollectionContext {
   collections: StoryCollection[];
@@ -12,17 +13,16 @@ interface ICollectionContext {
 const CollectionContext = createContext<ICollectionContext | undefined>(undefined);
 
 export const CollectionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isSuperAdmin, campusId } = useAuth();
   const [collections, setCollections] = useState<StoryCollection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchCollections = useCallback(async () => {
     setIsLoading(true);
     try {
-      const q = query(
-        collection(db, 'collections'),
-        where('isActive', '==', true),
-        orderBy('order', 'asc')
-      );
+      const q = isSuperAdmin
+        ? query(collection(db, 'collections'), where('isActive', '==', true), orderBy('order', 'asc'))
+        : query(collection(db, 'collections'), where('isActive', '==', true), where('campusId', '==', campusId), orderBy('order', 'asc'));
       const querySnapshot = await getDocs(q);
       const collectionsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StoryCollection));
       setCollections(collectionsData);
@@ -32,7 +32,7 @@ export const CollectionProvider: React.FC<{ children: ReactNode }> = ({ children
     } finally {
         setIsLoading(false);
     }
-  }, []);
+  }, [isSuperAdmin, campusId]);
 
   useEffect(() => {
     fetchCollections();
