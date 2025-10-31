@@ -459,7 +459,7 @@ const RequestsTab: React.FC = () => {
       {/* Floating Filter Button (Mobile) */}
       <button
         onClick={() => setIsSidebarOpen(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+        className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
       >
         <Filter className="w-6 h-6" />
       </button>
@@ -467,7 +467,7 @@ const RequestsTab: React.FC = () => {
       {/* Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -475,7 +475,7 @@ const RequestsTab: React.FC = () => {
       {/* Main Content with Sidebar */}
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 animate-fadeIn">
         {/* Sidebar Filters */}
-        <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-80 bg-white/90 backdrop-blur-xl lg:rounded-xl sm:lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
+        <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-80 bg-white/90 backdrop-blur-xl lg:rounded-xl sm:lg:rounded-2xl shadow-lg p-4 sm:p-6 z-40 transition-transform duration-300 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } lg:flex-shrink-0 border border-white/20 lg:top-6`}>
           <div className="flex justify-between items-center mb-4 sm:mb-6">

@@ -89,6 +89,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       const transactionWithTimestamp = {
         ...transaction,
+        campusId: campusId,
         date: Timestamp.fromDate(transaction.date),
       };
       const docRef = await addDoc(collection(db, 'transactions'), transactionWithTimestamp);
@@ -107,6 +108,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       const transactionWithTimestamp = {
         ...transaction,
+        campusId: campusId,
         date: Timestamp.fromDate(transaction.date),
       };
       const transactionRef = doc(db, 'transactions', id);

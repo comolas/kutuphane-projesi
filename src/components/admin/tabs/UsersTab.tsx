@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, getDocs, query, where, doc, updateDoc, deleteDoc, writeBatch, WriteBatch } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import LoadingSpinner from '../../common/LoadingSpinner';
-import { Search, Edit, Trash2, Users, UserPlus, BookOpen, DollarSign, Grid, List, ArrowUpDown, Filter, MoreVertical, History, AlertCircle, X } from 'lucide-react';
+import { Search, Edit, Trash2, Users, UserPlus, BookOpen, DollarSign, Grid, List, ArrowUpDown, Filter, MoreVertical, History, AlertCircle, X, Download } from 'lucide-react';
 import EditUserModal from '../EditUserModal';
 import Swal from 'sweetalert2';
 import { useBooks } from '../../../contexts/BookContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import * as XLSX from 'xlsx';
 
 interface UserData {
   uid: string;
@@ -280,6 +281,22 @@ const UsersTab: React.FC = () => {
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
+  const exportToExcel = () => {
+    const data = filteredUsers.map(user => ({
+      'Ad': user.displayName,
+      'Email': user.email,
+      'Sınıf': user.studentClass,
+      'Numara': user.studentNumber,
+      'Rol': user.role === 'teacher' ? 'Öğretmen' : user.role === 'admin' ? 'Admin' : 'Kullanıcı',
+      'Kayıt Tarihi': user.createdAt.toLocaleDateString()
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Kullanıcılar');
+    XLSX.writeFile(wb, `kullanicilar_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   if (loading) {
     return (
       <>
@@ -419,7 +436,7 @@ const UsersTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-3 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -491,7 +508,7 @@ const UsersTab: React.FC = () => {
           )}
 
           <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-            <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20 z-50 transition-transform duration-300 ${
+            <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20 z-50 transition-transform duration-300 overflow-y-auto ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             }`}>
               <div className="flex justify-between items-center mb-4 sm:mb-6">
@@ -515,9 +532,9 @@ const UsersTab: React.FC = () => {
               <div className="space-y-4 sm:space-y-6">
                 <div>
                   <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Sınıf</h3>
-                  <div className="space-y-1 sm:space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-1 sm:space-y-2 max-h-40 overflow-y-auto">
                     {uniqueClasses.map(c => (
-                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-1.5 sm:p-2 rounded touch-manipulation">
+                      <label key={c} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 sm:p-2.5 rounded touch-manipulation min-h-[44px]">
                         <input type="radio" name="class" checked={classFilter === c} onChange={() => setClassFilter(c)} className="mr-2" />
                         <span className="text-xs sm:text-sm">{c === 'all' ? 'Tümü' : c}</span>
                       </label>
@@ -527,19 +544,19 @@ const UsersTab: React.FC = () => {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Rol</h3>
                   <div className="space-y-2">
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="role" checked={roleFilter === 'all'} onChange={() => setRoleFilter('all')} className="mr-2" />
                       <span className="text-sm">Tümü</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="role" checked={roleFilter === 'user'} onChange={() => setRoleFilter('user')} className="mr-2" />
                       <span className="text-sm text-green-600">● Kullanıcı</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="role" checked={roleFilter === 'teacher'} onChange={() => setRoleFilter('teacher')} className="mr-2" />
                       <span className="text-sm text-orange-600">● Öğretmen</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="role" checked={roleFilter === 'admin'} onChange={() => setRoleFilter('admin')} className="mr-2" />
                       <span className="text-sm text-red-600">● Admin</span>
                     </label>
@@ -548,15 +565,15 @@ const UsersTab: React.FC = () => {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Aktivite</h3>
                   <div className="space-y-2">
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="activity" checked={activityFilter === 'all'} onChange={() => setActivityFilter('all')} className="mr-2" />
                       <span className="text-sm">Tümü</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="activity" checked={activityFilter === 'active'} onChange={() => setActivityFilter('active')} className="mr-2" />
                       <span className="text-sm text-green-600">● Aktif Ödünç Alan</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="activity" checked={activityFilter === 'inactive'} onChange={() => setActivityFilter('inactive')} className="mr-2" />
                       <span className="text-sm text-gray-600">● Pasif</span>
                     </label>
@@ -565,19 +582,19 @@ const UsersTab: React.FC = () => {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
                   <div className="space-y-2">
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="sort" checked={sortBy === 'name' && sortOrder === 'asc'} onChange={() => { setSortBy('name'); setSortOrder('asc'); }} className="mr-2" />
                       <span className="text-sm">İsim (A-Z)</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="sort" checked={sortBy === 'name' && sortOrder === 'desc'} onChange={() => { setSortBy('name'); setSortOrder('desc'); }} className="mr-2" />
                       <span className="text-sm">İsim (Z-A)</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="sort" checked={sortBy === 'createdAt' && sortOrder === 'desc'} onChange={() => { setSortBy('createdAt'); setSortOrder('desc'); }} className="mr-2" />
                       <span className="text-sm">En Yeni Kayıt</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input type="radio" name="sort" checked={sortBy === 'lastLogin' && sortOrder === 'desc'} onChange={() => { setSortBy('lastLogin'); setSortOrder('desc'); }} className="mr-2" />
                       <span className="text-sm">Son Giriş (Yeni)</span>
                     </label>
@@ -595,18 +612,25 @@ const UsersTab: React.FC = () => {
                     <Grid className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-600">{filteredUsers.length} kullanıcı bulundu</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-xs sm:text-sm text-gray-600">{filteredUsers.length} kullanıcı bulundu</p>
+                  <button onClick={exportToExcel} className="flex items-center px-3 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm min-h-[44px]">
+                    <Download className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Toplu Dışa Aktar</span>
+                  </button>
+                </div>
               </div>
               {selectedUsers.length > 0 && (
                 <div className="p-3 sm:p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
                   <span className="text-xs sm:text-sm font-medium text-indigo-700">{selectedUsers.length} kullanıcı seçildi.</span>
-                  <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[40px]">
+                  <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[44px]">
                     {isBulkDeleting ? 'Siliniyor...' : 'Seçilenleri Sil'}
                   </button>
                 </div>
               )}
               {viewMode === 'table' ? (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle px-4 sm:px-0">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -633,7 +657,7 @@ const UsersTab: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input 
                         type="checkbox"
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 touch-manipulation"
                         checked={selectedUsers.includes(user.uid)}
                         onChange={() => handleSelectUser(user.uid)}
                       />
@@ -670,23 +694,23 @@ const UsersTab: React.FC = () => {
                       <div className="relative">
                         <button 
                           onClick={() => setOpenDropdown(openDropdown === user.uid ? null : user.uid)}
-                          className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
+                          className="text-gray-600 hover:text-gray-900 p-2 rounded-full hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
                           disabled={selectedUsers.length > 0}
                         >
-                          <MoreVertical size={18} />
+                          <MoreVertical size={20} />
                         </button>
                         {openDropdown === user.uid && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                            <button onClick={() => { handleEditUser(user); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 max-h-[80vh] overflow-y-auto">
+                            <button onClick={() => { handleEditUser(user); setOpenDropdown(null); }} className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-2 min-h-[44px]">
                               <Edit size={16} /> Düzenle
                             </button>
-                            <button onClick={() => { navigate(`/admin/borrowed-by/${user.uid}`); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                            <button onClick={() => { navigate(`/admin/borrowed-by/${user.uid}`); setOpenDropdown(null); }} className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-2 min-h-[44px]">
                               <History size={16} /> Ödünç Geçmişi
                             </button>
-                            <button onClick={() => { navigate('/admin/dashboard', { state: { activeTab: 'fines', searchQuery: user.displayName } }); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                            <button onClick={() => { navigate('/admin/dashboard', { state: { activeTab: 'fines', searchQuery: user.displayName } }); setOpenDropdown(null); }} className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-2 min-h-[44px]">
                               <AlertCircle size={16} /> Cezaları Görüntüle
                             </button>
-                            <button onClick={() => { handleDeleteUser(user.uid); setOpenDropdown(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 border-t">
+                            <button onClick={() => { handleDeleteUser(user.uid); setOpenDropdown(null); }} className="w-full px-4 py-3 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 border-t min-h-[44px]">
                               <Trash2 size={16} /> Sil
                             </button>
                           </div>
@@ -704,6 +728,7 @@ const UsersTab: React.FC = () => {
               )}
             </tbody>
           </table>
+          </div>
               </div>
               ) : (
               <div>
@@ -755,10 +780,10 @@ const UsersTab: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => handleEditUser(user)} disabled={selectedUsers.length > 0} className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <button onClick={() => handleEditUser(user)} disabled={selectedUsers.length > 0} className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]">
                           <Edit size={16} /> Düzenle
                         </button>
-                        <button onClick={() => handleDeleteUser(user.uid)} disabled={selectedUsers.length > 0} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <button onClick={() => handleDeleteUser(user.uid)} disabled={selectedUsers.length > 0} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]">
                           <Trash2 size={16} /> Sil
                         </button>
                       </div>
@@ -773,11 +798,11 @@ const UsersTab: React.FC = () => {
               )}
               {usersTotalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 p-4 border-t mt-4">
-                  <button onClick={() => setUsersCurrentPage(p => Math.max(p - 1, 1))} disabled={usersCurrentPage === 1} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  <button onClick={() => setUsersCurrentPage(p => Math.max(p - 1, 1))} disabled={usersCurrentPage === 1} className="px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] min-w-[44px]">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                   </button>
                   <span className="text-sm text-gray-600">Sayfa {usersCurrentPage} / {usersTotalPages}</span>
-                  <button onClick={() => setUsersCurrentPage(p => Math.min(p + 1, usersTotalPages))} disabled={usersCurrentPage === usersTotalPages} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  <button onClick={() => setUsersCurrentPage(p => Math.min(p + 1, usersTotalPages))} disabled={usersCurrentPage === usersTotalPages} className="px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] min-w-[44px]">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                   </button>
                 </div>

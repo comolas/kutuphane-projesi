@@ -3,15 +3,18 @@ import { Book, Users } from '../../../types';
 import { useBooks } from '../../../contexts/BookContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Html5Qrcode, Html5QrcodeScanType } from "html5-qrcode";
-import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X, Filter, Lightbulb, Loader2 } from 'lucide-react';
+import { Search, Plus, BookOpen, FileEdit as Edit, Trash2, Book as BookIcon, UserCheck, UserX, CheckCircle, Clock, AlertTriangle, X, Filter, Lightbulb, Loader2, Zap, Download } from 'lucide-react';
 import LendBookModal from '../LendBookModal';
 import EditBookModal from '../EditBookModal';
 import BulkAddBookModal from '../BulkAddBookModal';
 import BulkEditBookModal from '../BulkEditBookModal';
+import QuickBorrowModal from '../QuickBorrowModal';
 import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { db, functions } from '../../../firebase/config';
+import { db, functions, storage } from '../../../firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { httpsCallable } from 'firebase/functions';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 
 interface AdminCatalogTabProps {
   catalogBooks: Book[];
@@ -50,6 +53,9 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [showQuickBorrow, setShowQuickBorrow] = useState(false);
+  const [quickBorrowBookId, setQuickBorrowBookId] = useState<string | undefined>();
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -170,6 +176,37 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
     const { name, value, type } = e.target;
     const isNumber = type === 'number';
     setNewBook(prev => ({ ...prev, [name]: isNumber ? Number(value) : value }));
+  };
+
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      Swal.fire('Hata!', 'Sadece JPG ve PNG dosyaları yüklenebilir.', 'error');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire('Hata!', 'Dosya boyutu 2MB\'dan küçük olmalıdır.', 'error');
+      return;
+    }
+
+    setUploadingCover(true);
+    try {
+      const timestamp = Date.now();
+      const storageRef = ref(storage, `bookCovers/${timestamp}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      setNewBook(prev => ({ ...prev, coverImage: downloadURL }));
+      Swal.fire('Başarılı!', 'Kapak resmi yüklendi.', 'success');
+    } catch (error) {
+      console.error('Kapak resmi yükleme hatası:', error);
+      Swal.fire('Hata!', 'Kapak resmi yüklenirken bir hata oluştu.', 'error');
+    } finally {
+      setUploadingCover(false);
+    }
   };
 
   const fetchBookDataFromISBN = async (isbn: string) => {
@@ -481,6 +518,45 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
     }
   };
 
+  const handleExportToExcel = () => {
+    try {
+      const exportData = catalogBooks.map(book => ({
+        'Kitap ID': book.id,
+        'Başlık': book.title,
+        'Yazar': book.author,
+        'ISBN': book.isbn || '',
+        'Kategori': book.category,
+        'Yayıncı': book.publisher || '',
+        'Konum': book.location || '',
+        'Sayfa Sayısı': book.pageCount || '',
+        'Durum': getBookStatus(book.id) === 'available' ? 'Müsait' : getBookStatus(book.id) === 'borrowed' ? 'Ödünç Verildi' : 'Kayıp',
+        'Etiketler': Array.isArray(book.tags) ? book.tags.join(', ') : '',
+        'Eklenme Tarihi': book.addedDate || ''
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Kitaplar');
+      
+      const fileName = `kutuphane-katalog-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: `${catalogBooks.length} kitap Excel'e aktarıldı.`,
+        timer: 2000
+      });
+    } catch (error) {
+      console.error('Excel dışa aktarma hatası:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Excel dosyası oluşturulurken bir hata oluştu.'
+      });
+    }
+  };
+
   const handleBulkEditSave = async (updatedFields: Partial<Book>) => {
     const result = await Swal.fire({
       icon: 'question',
@@ -563,18 +639,32 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
           </h2>
           <div className="flex flex-wrap gap-2 sm:space-x-3">
             <button
-              onClick={() => setShowAddBookModal(true)}
-              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center text-sm sm:text-base touch-manipulation min-h-[40px]"
+              onClick={() => { setQuickBorrowBookId(undefined); setShowQuickBorrow(true); }}
+              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all flex items-center text-sm min-h-[44px] shadow-md hover:scale-105 justify-center touch-manipulation font-bold"
             >
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              <Zap className="w-4 h-4 mr-2" />
+              Hızlı Ödünç
+            </button>
+            <button
+              onClick={() => setShowAddBookModal(true)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all flex items-center text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 justify-center touch-manipulation"
+            >
+              <Plus className="w-4 h-4 mr-2" />
               Yeni Kitap Ekle
             </button>
             <button
               onClick={() => setShowBulkAddModal(true)}
-              className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm sm:text-base touch-manipulation min-h-[40px]"
+              className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all flex items-center text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 justify-center touch-manipulation"
             >
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              <Plus className="w-4 h-4 mr-2" />
               Toplu Kitap Ekle
+            </button>
+            <button
+              onClick={handleExportToExcel}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all flex items-center text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 justify-center touch-manipulation"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Toplu Dışa Aktar
             </button>
           </div>
         </div>
@@ -727,30 +817,30 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <button
               onClick={handleBulkEdit}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all flex items-center text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 justify-center touch-manipulation"
             >
-              <Edit className="w-5 h-5 mr-2" />
+              <Edit className="w-4 h-4 mr-2" />
               Toplu Düzenle ({selectedBookIds.length})
             </button>
             <button
               onClick={handleBulkDelete}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+              className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all flex items-center text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 justify-center touch-manipulation"
             >
-              <Trash2 className="w-5 h-5 mr-2" />
+              <Trash2 className="w-4 h-4 mr-2" />
               Seçilenleri Sil ({selectedBookIds.length})
             </button>
             <button
               onClick={handleBulkMarkAsLost}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center"
+              className="px-4 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-all flex items-center text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 justify-center touch-manipulation"
             >
-              <UserX className="w-5 h-5 mr-2" />
+              <UserX className="w-4 h-4 mr-2" />
               Kayıp Olarak İşaretle ({selectedBookIds.length})
             </button>
             <button
               onClick={handleBulkLend}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all flex items-center text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 justify-center touch-manipulation"
             >
-              <BookOpen className="w-5 h-5 mr-2" />
+              <BookOpen className="w-4 h-4 mr-2" />
               Ödünç Ver ({selectedBookIds.length})
             </button>
           </div>
@@ -784,7 +874,7 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
             const bookStatus = getBookStatus(book.id);
 
             return (
-              <div key={book.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden relative group transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20">
+              <div key={book.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden relative group transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 hover:z-10">
                 <div className="relative overflow-hidden aspect-[2/3]">
                   <div className="absolute top-2 left-2 z-10">
                     <input
@@ -811,18 +901,8 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                   <h3 className="font-bold text-gray-900 text-sm line-clamp-2 mb-1">{book.title}</h3>
                   <p className="text-xs text-gray-600">{book.author}</p>
                   <p className="text-xs text-gray-500 mt-1">Konum: {book.location}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedBookToLend(book);
-                        setShowLendBookModal(true);
-                      }}
-                      disabled={bookStatus !== 'available'}
-                      className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm text-blue-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <BookOpen className="w-3 h-3 mr-1" />
-                      Ödünç Ver
-                    </button>
+                  {/* Varsayılan Butonlar */}
+                  <div className="mt-3 flex gap-2">
                     <button
                       onClick={() => handleEditBook(book)}
                       className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm text-indigo-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
@@ -830,30 +910,52 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                       <Edit className="w-3 h-3 mr-1" />
                       Düzenle
                     </button>
-                  </div>
-                  <div className="mt-2 flex gap-1 sm:gap-2">
                     <button
                       onClick={() => handleDeleteBook(book.id)}
-                      className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-w-0"
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                     >
-                      <Trash2 className="w-3 h-3 sm:mr-1" />
-                      <span className="hidden sm:inline">Sil</span>
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Sil
+                    </button>
+                  </div>
+                  
+                  {/* Hover Menü */}
+                  <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
+                    {bookStatus === 'available' && (
+                      <button
+                        onClick={() => { setQuickBorrowBookId(book.id); setShowQuickBorrow(true); }}
+                        className="w-full px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                      >
+                        <Zap className="w-3 h-3 mr-1" />
+                        Hızlı Ödünç
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSelectedBookToLend(book);
+                        setShowLendBookModal(true);
+                      }}
+                      disabled={bookStatus !== 'available'}
+                      className="w-full px-3 py-2 bg-white/90 backdrop-blur-sm text-blue-600 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      Ödünç Ver
                     </button>
                     {bookStatus === 'lost' ? (
                       <button
                         onClick={() => handleMarkAsFound(book.id)}
-                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-w-0"
+                        className="w-full px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                       >
-                        <UserCheck className="w-3 h-3 sm:mr-1" />
-                        <span className="hidden sm:inline">Bulundu</span>
+                        <UserCheck className="w-3 h-3 mr-1" />
+                        Bulundu
                       </button>
                     ) : (
                       <button
                         onClick={() => handleMarkAsLost(book.id)}
-                        className="flex-1 px-2 sm:px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-w-0"
+                        className="w-full px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
                       >
-                        <UserX className="w-3 h-3 sm:mr-1" />
-                        <span className="hidden sm:inline">Kayıp</span>
+                        <UserX className="w-3 h-3 mr-1" />
+                        Kayıp
                       </button>
                     )}
                   </div>
@@ -901,9 +1003,9 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
       </div>
 
       {showAddBookModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden flex flex-col my-4 sm:my-8">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-0">
+          <div className="bg-gradient-to-br from-white to-indigo-50 w-full h-full overflow-y-auto flex flex-col">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
                   <BookIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -1091,18 +1193,22 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
               </div>
               
               <div className="md:col-span-2">
-                <label htmlFor="coverImage" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
-                  Kapak Resmi URL <span className="text-red-500">*</span>
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
+                  Kapak Resmi <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="url"
-                  id="coverImage"
-                  name="coverImage"
-                  value={newBook.coverImage}
-                  onChange={handleNewBookChange}
-                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
-                  required
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={handleCoverImageUpload}
+                  disabled={uploadingCover}
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm sm:text-base file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 disabled:opacity-50"
                 />
+                <p className="text-xs text-gray-500 mt-1">JPG veya PNG, maksimum 2MB</p>
+                {newBook.coverImage && (
+                  <div className="mt-2">
+                    <img src={newBook.coverImage} alt="Önizleme" className="w-24 h-32 object-cover rounded-lg" />
+                  </div>
+                )}
               </div>
               
               <div className="md:col-span-2">
@@ -1198,14 +1304,14 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
                     setIsScanning(false);
                     setApiMessage(null);
                   }}
-                  className="w-full sm:w-auto px-6 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm sm:text-base min-h-[44px]"
+                  className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm min-h-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
                 >
                   İptal
                 </button>
                 <button
                   type="submit"
                   onClick={handleAddBook}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-lg text-sm sm:text-base min-h-[44px]"
+                  className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-md hover:shadow-lg text-sm min-h-[44px] flex items-center justify-center hover:scale-105 touch-manipulation"
                 >
                   Kitabı Ekle
                 </button>
@@ -1277,6 +1383,14 @@ const AdminCatalogTab: React.FC<AdminCatalogTabProps> = ({
           onClose={() => setShowBulkEditModal(false)}
           books={catalogBooks.filter(b => selectedBookIds.includes(b.id))}
           onSave={handleBulkEditSave}
+        />
+      )}
+
+      {showQuickBorrow && (
+        <QuickBorrowModal
+          isOpen={showQuickBorrow}
+          onClose={() => { setShowQuickBorrow(false); setQuickBorrowBookId(undefined); }}
+          preSelectedBookId={quickBorrowBookId}
         />
       )}
     </div>

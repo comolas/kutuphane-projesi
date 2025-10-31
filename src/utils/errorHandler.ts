@@ -64,13 +64,21 @@ export const handleError = (error: any): ErrorResponse => {
   };
 };
 
+// Log injection koruması
+const sanitizeLogString = (str: string): string => {
+  if (typeof str !== 'string') return String(str);
+  return str.replace(/[\n\r\t\x00-\x1F\x7F]/g, '');
+};
+
 // Error'u loglama (development'ta detaylı, production'da minimal)
 export const logError = (error: any, context?: string) => {
+  const safeContext = context ? sanitizeLogString(context) : '';
   if (import.meta.env.DEV) {
-    console.error(`[Error${context ? ` - ${context}` : ''}]:`, error);
+    console.error(`[Error${safeContext ? ` - ${safeContext}` : ''}]:`, error);
   } else {
     // Production'da sadece error code
-    console.error(`[Error${context ? ` - ${context}` : ''}]:`, error?.code || 'unknown');
+    const safeCode = error?.code ? sanitizeLogString(String(error.code)) : 'unknown';
+    console.error(`[Error${safeContext ? ` - ${safeContext}` : ''}]:`, safeCode);
   }
 };
 

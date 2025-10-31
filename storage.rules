@@ -1,22 +1,69 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Profile pictures: Users can read any, but only write to their own.
+    // Helper functions
+    function isImage() {
+      return request.resource != null && request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidSize(maxSizeMB) {
+      return request.resource != null && request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+    
+    // Profile pictures: Users can read any, authenticated users can write
     match /users/{userId}/profile.jpg {
       allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      allow write: if request.auth != null &&
+        isImage() &&
+        isValidSize(1);
     }
 
-    // Book covers: Anyone can read, but only admins can write.
+    // Book covers: Anyone can read, authenticated users can write.
     match /bookCovers/{bookId} {
       allow read;
-      allow write: if get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if request.auth != null &&
+        isImage() &&
+        isValidSize(2);
     }
 
-    // Magazine covers: Anyone can read, but only admins can write.
+    // Magazine covers: Anyone can read, authenticated users can write.
     match /magazineCovers/{magazineId} {
       allow read;
-      allow write: if get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if request.auth != null &&
+        isImage() &&
+        isValidSize(2);
+    }
+
+    // Reward images: Authenticated users can read and write.
+    match /rewards/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        isImage() &&
+        isValidSize(5);
+    }
+
+    // Author images: Anyone can read, authenticated users can write.
+    match /authorImages/{authorId} {
+      allow read;
+      allow write: if request.auth != null &&
+        isImage() &&
+        isValidSize(2);
+    }
+
+    // Game images: Anyone can read, authenticated users can write.
+    match /gameImages/{gameId} {
+      allow read;
+      allow write: if request.auth != null &&
+        isImage() &&
+        isValidSize(1);
+    }
+
+    // Product images: Anyone can read, authenticated users can write.
+    match /productImages/{productId} {
+      allow read;
+      allow write: if request.auth != null &&
+        isImage() &&
+        isValidSize(2);
     }
 
     // Other files are locked down by default.

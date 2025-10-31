@@ -23,6 +23,7 @@ import { AlertProvider } from './contexts/AlertContext';
 import { SpinWheelProvider } from './contexts/SpinWheelContext';
 import { CouponProvider } from './contexts/CouponContext';
 import { LocalNotificationProvider } from './contexts/LocalNotificationContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { ChatProvider } from './contexts/ChatContext';
 import { ShopProvider } from './contexts/ShopContext';
 import { useContentNotifications } from './hooks/useContentNotifications';
@@ -71,6 +72,9 @@ const StudentComparePage = lazy(() => import('./pages/StudentComparePage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage'));
+const RewardStorePage = lazy(() => import('./pages/RewardStorePage'));
+const ChallengesPage = lazy(() => import('./pages/ChallengesPage'));
+const NotificationCenter = lazy(() => import('./pages/NotificationCenter'));
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -156,6 +160,9 @@ const AppContent = () => {
           <Route path="/chat/:conversationId" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
           <Route path="/shop" element={<PrivateRoute><ShopPage /></PrivateRoute>} />
           <Route path="/my-orders" element={<PrivateRoute><MyOrdersPage /></PrivateRoute>} />
+          <Route path="/reward-store" element={<PrivateRoute><RewardStorePage /></PrivateRoute>} />
+          <Route path="/challenges" element={<PrivateRoute><ChallengesPage /></PrivateRoute>} />
+          <Route path="/notifications" element={<PrivateRoute><NotificationCenter /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
         </Suspense>
@@ -206,8 +213,9 @@ function App() {
       <Router>
         <AlertProvider>
         <AuthProvider>
-          <ShopProvider>
-            <ChatProvider>
+          <NotificationProvider>
+            <ShopProvider>
+              <ChatProvider>
               <SpinWheelProvider>
                 <CouponProvider>
                   <AuthorProvider>
@@ -243,8 +251,9 @@ function App() {
                   </AuthorProvider>
                 </CouponProvider>
               </SpinWheelProvider>
-            </ChatProvider>
-          </ShopProvider>
+              </ChatProvider>
+            </ShopProvider>
+          </NotificationProvider>
         </AuthProvider>
         </AlertProvider>
       </Router>

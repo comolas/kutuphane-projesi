@@ -285,8 +285,8 @@ const CollectionDistributionPage: React.FC = () => {
       </div>
 
       {showInfoModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full transform transition-all border border-white/20">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full h-full transform transition-all border border-white/20">
              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kategori Açıklamaları</h3>
               <button onClick={() => setShowInfoModal(false)} className="text-gray-400 hover:text-gray-600">

@@ -130,7 +130,7 @@ const BulkAddAuthorModal: React.FC<BulkAddAuthorModalProps> = ({ isOpen, onClose
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-white">Toplu Yazar Ekle</h3>
           </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all">
+          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
@@ -162,7 +162,7 @@ const BulkAddAuthorModal: React.FC<BulkAddAuthorModalProps> = ({ isOpen, onClose
           <button
             onClick={onClose}
             type="button"
-            className="w-full sm:w-auto px-6 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm sm:text-base min-h-[44px]"
+            className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm min-h-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-50 touch-manipulation"
             disabled={loading}
           >
             İptal
@@ -170,7 +170,7 @@ const BulkAddAuthorModal: React.FC<BulkAddAuthorModalProps> = ({ isOpen, onClose
           <button
             onClick={handleUpload}
             type="button"
-            className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-lg disabled:opacity-50 text-sm sm:text-base min-h-[44px]"
+            className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-md hover:shadow-lg disabled:opacity-50 text-sm min-h-[44px] flex items-center justify-center hover:scale-105 touch-manipulation"
             disabled={loading || !file}
           >
             {loading ? 'Yükleniyor...' : 'Yükle'}

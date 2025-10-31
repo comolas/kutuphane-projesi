@@ -7,6 +7,14 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    function isValidString(str, minLen, maxLen) {
+      return str is string && str.size() >= minLen && str.size() <= maxLen;
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
@@ -56,7 +64,9 @@ service cloud.firestore {
       allow create: if request.auth.uid == userId &&
         request.resource.data.uid == userId &&
         request.resource.data.email == request.auth.token.email &&
+        isValidEmail(request.resource.data.email) &&
         request.resource.data.role == 'user' &&
+        isValidString(request.resource.data.displayName, 2, 100) &&
         request.resource.data.createdAt is timestamp &&
         request.resource.data.lastLogin is timestamp;
       
@@ -140,7 +150,7 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       
       // Only admins can create, update, and delete book statuses
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isAdminOrSuperAdmin();
     }
 
     // User tasks collection rules
@@ -202,8 +212,8 @@ service cloud.firestore {
       allow create: if isAuthenticated() && 
         request.auth.uid == request.resource.data.userId &&
         request.resource.data.createdAt is timestamp &&
-        request.resource.data.title is string &&
-        request.resource.data.content is string &&
+        isValidString(request.resource.data.title, 3, 200) &&
+        isValidString(request.resource.data.content, 10, 2000) &&
         request.resource.data.priority in ['low', 'medium', 'high'] &&
         request.resource.data.category in ['Kitap Önerisi', 'Teknik Sorun', 'Üyelik Bilgileri', 'Genel Geri Bildirim'] &&
         request.resource.data.status == 'pending';
@@ -217,11 +227,11 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       
       // Allow users to create their own borrow records, and admins to create for their campus
-      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || (isAdmin() && isSameCampus(request.resource.data.campusId)));
+      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || (isAdminOrSuperAdmin() && isSameCampus(request.resource.data.campusId)));
       
       // Allow admins from same campus and book owners to update records
       allow update: if isAuthenticated() && (
-        (isAdmin() && isSameCampus(resource.data.campusId)) ||
+        (isAdminOrSuperAdmin() && isSameCampus(resource.data.campusId)) ||
         (isOwner(resource.data.userId) &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['extended', 'dueDate', 'returnStatus', 'maxExtensions', 'extensionCount', 'returnRequestDate', 'returnDate', 'fineStatus', 'paymentDate', 'fineAmountSnapshot', 'fineRateSnapshot', 'daysOverdueSnapshot', 'discountApplied', 'originalFineAmount']) &&
@@ -234,7 +244,7 @@ service cloud.firestore {
       );
       
       // Allow admins to delete borrowed book records from their campus
-      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
+      allow delete: if isAdminOrSuperAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Borrows collection rules (for super admin dashboard)
@@ -255,7 +265,7 @@ service cloud.firestore {
     // Borrow messages collection rules
     match /borrowMessages/{messageId} {
       // Allow admin to read messages from their campus, users can read their own
-      allow read: if isAuthenticated() && ((isAdmin() && isSameCampus(resource.data.campusId)) || resource.data.userId == request.auth.uid);
+      allow read: if isAuthenticated() && ((isAdminOrSuperAdmin() && isSameCampus(resource.data.campusId)) || resource.data.userId == request.auth.uid);
       
       // Allow users to create borrow requests
       allow create: if isAuthenticated() &&
@@ -264,8 +274,8 @@ service cloud.firestore {
         request.resource.data.status == 'pending';
       
       // Allow admins to update borrow messages from their campus
-      allow update: if isAuthenticated() && isAdmin() && isSameCampus(resource.data.campusId);
-      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
+      allow update: if isAuthenticated() && isAdminOrSuperAdmin() && isSameCampus(resource.data.campusId);
+      allow delete: if isAdminOrSuperAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Return messages collection rules
@@ -400,9 +410,9 @@ service cloud.firestore {
 
     // Transactions collection rules
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow read: if isAuthenticated() && (isAdminOrSuperAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isAdminOrSuperAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdminOrSuperAdmin() && isSameCampus(resource.data.campusId);
     }
 
     // Settings collection rules
@@ -450,6 +460,8 @@ service cloud.firestore {
       // Allow authenticated users to create posts with pending status
       allow create: if isAuthenticated() && 
         request.resource.data.authorId == request.auth.uid &&
+        isValidString(request.resource.data.title, 5, 200) &&
+        isValidString(request.resource.data.content, 50, 50000) &&
         request.resource.data.status == 'pending';
       
       // Allow users to update likes array, admins from same campus can update anything, authors can update their own posts
@@ -477,7 +489,8 @@ service cloud.firestore {
       
       // Allow authenticated users to create their own comments
       allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
+        request.resource.data.userId == request.auth.uid &&
+        isValidString(request.resource.data.text, 1, 1000);
       
       // Allow users to delete their own comments, admins can delete any
       allow delete: if isAuthenticated() && 
@@ -492,8 +505,10 @@ service cloud.firestore {
       // Allow admins to read all messages
       allow read: if isAdmin();
       
-      // Allow authenticated users to create messages
-      allow create: if isAuthenticated();
+      // Allow authenticated users to create messages with validation
+      allow create: if isAuthenticated() &&
+        isValidString(request.resource.data.content, 1, 5000) &&
+        request.resource.data.senderId == request.auth.uid;
       
       // Allow admins to update and delete messages
       allow update, delete: if isAdmin();
@@ -514,6 +529,13 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       
       // Only admins can create, update, or delete products for their campus
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
+    }
+
+    // Shop Items collection rules
+    match /shopItems/{itemId} {
+      allow read: if isAuthenticated();
       allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
       allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
     }
@@ -569,6 +591,55 @@ service cloud.firestore {
       allow create, update, delete: if isSuperAdmin();
     }
 
+    // Card Templates collection rules
+    match /cardTemplates/{campusId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isSameCampus(campusId);
+    }
+
+    // Library Cards collection rules
+    match /libraryCards/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Allowed Users collection rules
+    match /allowedUsers/{userId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Challenges collection rules
+    match /challenges/{challengeId} {
+      allow read: if isAuthenticated() && isSameCampus(resource.data.campusId);
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.creatorId && isSameCampus(request.resource.data.campusId);
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.creatorId || request.auth.uid == resource.data.opponentId || isAdmin()) && isSameCampus(resource.data.campusId);
+      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
+    }
+
+    // Physical Rewards collection rules
+    match /physicalRewards/{rewardId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isSameCampus(request.resource.data.campusId);
+      allow update, delete: if isAdmin() && isSameCampus(resource.data.campusId);
+    }
+
+    // Reward Coupons collection rules
+    match /rewardCoupons/{couponId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Reward Claims collection rules
+    match /rewardClaims/{claimId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || (isAdmin() && isSameCampus(resource.data.campusId)));
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if (isAdmin() && isSameCampus(resource.data.campusId)) || (isAuthenticated() && request.auth.uid == resource.data.userId);
+      allow delete: if isAdmin() && isSameCampus(resource.data.campusId);
+    }
+
     // Conversations collection rules
     match /conversations/{conversationId} {
       // Allow read if user is a participant
@@ -596,6 +667,18 @@ service cloud.firestore {
         // Allow update for marking as read
         allow update: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
       }
+    }
+
+    // Notifications collection rules
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      
+      // Only system (functions) can create notifications
+      allow create: if false;
+      
+      // Users can update their own notifications (mark as read, delete)
+      allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
   }
 }

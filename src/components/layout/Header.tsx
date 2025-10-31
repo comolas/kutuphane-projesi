@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import NotificationBell from '../common/NotificationBell';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -31,7 +32,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-12">
-        <div className="flex items-center justify-between md:justify-center">
+        <div className="flex items-center justify-between">
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -39,8 +40,10 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-2">
+          
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <nav className="flex items-center space-x-2">
             <Link
               to={isTeacher ? "/teacher-dashboard" : "/dashboard"}
               className="relative px-4 py-2 text-gray-700 dark:text-gray-300 font-medium transition-all duration-300 group"
@@ -81,7 +84,14 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               <span className={`absolute inset-0 bg-gradient-to-r ${isTeacher ? 'from-orange-500/10 to-amber-500/10' : 'from-indigo-500/10 to-purple-500/10'} rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300`}></span>
               <span className={`absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r ${isTeacher ? 'from-orange-500 to-amber-600' : 'from-indigo-500 to-purple-600'} group-hover:w-full group-hover:left-0 transition-all duration-300`}></span>
             </Link>
-          </nav>
+
+            </nav>
+          </div>
+
+          {/* Notification Bell */}
+          <div className="flex items-center">
+            <NotificationBell />
+          </div>
 
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
@@ -122,6 +132,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
                 >
                   Blog
                 </Link>
+
               </nav>
             </div>
           )}

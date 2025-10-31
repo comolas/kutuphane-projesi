@@ -3,7 +3,8 @@ import { X, BookOpen, Lightbulb, Loader2 } from 'lucide-react';
 import { Book } from '../../types';
 import { Html5Qrcode, Html5QrcodeScanType } from 'html5-qrcode';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase/config';
+import { functions, storage } from '../../firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Swal from 'sweetalert2';
 
 interface EditBookModalProps {
@@ -18,6 +19,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
   const [isScanning, setIsScanning] = useState(false);
   const [apiMessage, setApiMessage] = useState<string | null>(null);
   const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   useEffect(() => {
     if (book) {
@@ -199,6 +201,37 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
     });
   };
 
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      Swal.fire('Hata!', 'Sadece JPG ve PNG dosyaları yüklenebilir.', 'error');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire('Hata!', 'Dosya boyutu 2MB\'dan küçük olmalıdır.', 'error');
+      return;
+    }
+
+    setUploadingCover(true);
+    try {
+      const timestamp = Date.now();
+      const storageRef = ref(storage, `bookCovers/${timestamp}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      setEditableBook(prev => prev ? { ...prev, coverImage: downloadURL } : null);
+      Swal.fire('Başarılı!', 'Kapak resmi yüklendi.', 'success');
+    } catch (error) {
+      console.error('Kapak resmi yükleme hatası:', error);
+      Swal.fire('Hata!', 'Kapak resmi yüklenirken bir hata oluştu.', 'error');
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editableBook) {
@@ -245,9 +278,9 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl max-w-8xl w-full max-h-[95vh] overflow-hidden flex flex-col">
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between sticky top-0 z-10">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+      <div className="bg-gradient-to-br from-white to-indigo-50 w-full h-full overflow-y-auto flex flex-col">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between sticky top-0 z-10 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
               <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -256,7 +289,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
           </div>
           <button
             onClick={onClose}
-            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all"
+            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
           >
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
@@ -276,7 +309,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
             <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button 
                 onClick={() => setIsScanning(false)} 
-                className="flex-1 px-4 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm sm:text-base min-h-[44px]"
+                className="flex-1 px-4 py-2 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all font-semibold text-sm min-h-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
               >
                 Taramayı İptal Et
               </button>
@@ -285,7 +318,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
                   setIsScanning(false);
                   setTimeout(() => setIsScanning(true), 100);
                 }} 
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold text-sm sm:text-base shadow-lg min-h-[44px]"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold text-sm shadow-md hover:shadow-lg min-h-[44px] flex items-center justify-center hover:scale-105 touch-manipulation"
               >
                 Yeniden Başlat
               </button>
@@ -334,7 +367,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
               <button
                 type="button"
                 onClick={() => setIsScanning(true)}
-                className="inline-flex items-center px-3 sm:px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs sm:text-sm font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all"
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all min-h-[44px] justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
               >
                 ISBN Tara
               </button>
@@ -377,17 +410,21 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
               required
             />
           </div>
-          <div>
-            <label htmlFor="coverImage" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Kapak Resmi URL</label>
+          <div className="md:col-span-2">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Kapak Resmi</label>
             <input
-              type="url"
-              id="coverImage"
-              name="coverImage"
-              value={editableBook.coverImage || ''}
-              onChange={handleChange}
-              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base transition-all"
-              required
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={handleCoverImageUpload}
+              disabled={uploadingCover}
+              className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2 sm:py-2.5 px-3 sm:px-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm sm:text-base file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 disabled:opacity-50"
             />
+            <p className="text-xs text-gray-500 mt-1">JPG veya PNG, maksimum 2MB</p>
+            {editableBook.coverImage && (
+              <div className="mt-2">
+                <img src={editableBook.coverImage} alt="Önizleme" className="w-24 h-32 object-cover rounded-lg" />
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="location" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Konum</label>
@@ -466,7 +503,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
                 type="button"
                 onClick={handleGenerateDescription}
                 disabled={generatingDescription}
-                className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
               >
                 {generatingDescription ? (
                   <>
@@ -538,13 +575,13 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ isOpen, book, onClose, on
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-6 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all text-sm sm:text-base font-semibold min-h-[44px]"
+              className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl transition-all text-sm font-semibold min-h-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
             >
               İptal
             </button>
             <button
               type="submit"
-              className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all text-sm sm:text-base font-semibold shadow-lg min-h-[44px]"
+              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold shadow-md hover:shadow-lg min-h-[44px] flex items-center justify-center hover:scale-105 touch-manipulation"
             >
               Kaydet
             </button>

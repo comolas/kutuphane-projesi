@@ -444,8 +444,8 @@ const ShopPage: React.FC = () => {
 
       {/* Sepet Modal */}
       {showCart && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+          <div className="bg-white rounded-3xl w-full h-full overflow-hidden shadow-2xl">
             <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-6 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
@@ -675,8 +675,8 @@ const ShopPage: React.FC = () => {
 
       {/* Product Details Modal */}
       {showProductDetails && selectedProduct && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-0 md:p-4">
-          <div className="bg-white w-full h-full md:max-w-5xl md:h-[90vh] md:rounded-3xl shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+          <div className="bg-white w-full h-full shadow-2xl overflow-hidden">
             <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-6 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-white flex items-center">
                 <Package className="w-6 h-6 mr-2" />

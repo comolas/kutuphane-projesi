@@ -20,6 +20,13 @@ const SENSITIVE_FIELDS = [
   'address'
 ];
 
+// Log injection'ı önlemek için string'leri sanitize et
+const sanitizeLogString = (str: string): string => {
+  if (typeof str !== 'string') return String(str);
+  // Newline ve control karakterleri kaldır
+  return str.replace(/[\n\r\t\x00-\x1F\x7F]/g, '');
+};
+
 // Hassas verileri maskele
 const maskSensitiveData = (data: any): any => {
   if (typeof data === 'string') {
@@ -32,7 +39,7 @@ const maskSensitiveData = (data: any): any => {
   
   if (typeof data === 'object' && data !== null) {
     const masked: any = {};
-    for (const key in data) {
+    for (const key of Object.keys(data)) {
       if (SENSITIVE_FIELDS.some(field => key.toLowerCase().includes(field))) {
         masked[key] = '***MASKED***';
       } else {
@@ -48,24 +55,24 @@ const maskSensitiveData = (data: any): any => {
 export const logger = {
   info: (message: string, data?: any) => {
     if (isDevelopment) {
-      console.log(`[INFO] ${message}`, data ? maskSensitiveData(data) : '');
+      console.log(`[INFO] ${sanitizeLogString(message)}`, data ? maskSensitiveData(data) : '');
     }
   },
   
   warn: (message: string, data?: any) => {
     if (isDevelopment) {
-      console.warn(`[WARN] ${message}`, data ? maskSensitiveData(data) : '');
+      console.warn(`[WARN] ${sanitizeLogString(message)}`, data ? maskSensitiveData(data) : '');
     }
   },
   
   error: (message: string, data?: any) => {
     // Error'lar her zaman loglanır ama hassas veriler maskelenir
-    console.error(`[ERROR] ${message}`, data ? maskSensitiveData(data) : '');
+    console.error(`[ERROR] ${sanitizeLogString(message)}`, data ? maskSensitiveData(data) : '');
   },
   
   debug: (message: string, data?: any) => {
     if (isDevelopment) {
-      console.debug(`[DEBUG] ${message}`, data ? maskSensitiveData(data) : '');
+      console.debug(`[DEBUG] ${sanitizeLogString(message)}`, data ? maskSensitiveData(data) : '');
     }
   }
 };

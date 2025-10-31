@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, Search, PieChart, MapPin, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart, ShoppingBag, Package } from 'lucide-react';
 import { useSpinWheel } from '../contexts/SpinWheelContext';
@@ -271,6 +271,7 @@ const UserDashboard: React.FC = () => {
 
   const [currentAuthorBookSlide, setCurrentAuthorBookSlide] = useState(0);
   const [activeTab, setActiveTab] = useState<'all' | 'events' | 'surveys' | 'announcements'>('all');
+  const [expandedCategories, setExpandedCategories] = useState({ library: true, communication: true, activities: true, shopping: true });
 
   const nextAuthorBookSlide = () => {
     const slideCount = Math.ceil(featuredAuthorBooks.length / 3); // 3 books per slide
@@ -376,7 +377,7 @@ const UserDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 relative">
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full w-64 ${isTeacher ? 'bg-orange-900' : 'bg-indigo-900'} text-white transform transition-transform duration-300 ease-in-out z-50 ${
+      <div className={`fixed top-0 left-0 h-full w-64 ${isTeacher ? 'bg-orange-900' : 'bg-indigo-900'} text-white transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="p-4">
@@ -390,80 +391,179 @@ const UserDashboard: React.FC = () => {
             </button>
           </div>
           
-          <nav className="space-y-1">
+          <nav className="space-y-1" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
             <Link to={isTeacher ? "/teacher-dashboard" : "/dashboard"} className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <Home className="w-5 h-5" />
               <span>Ana Sayfa</span>
             </Link>
             {isTeacher && (
-              <>
-                <Link to="/my-class" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
-                  <Users className="w-5 h-5" />
-                  <span>Sınıfım</span>
-                </Link>
-              </>
-            )}
-            <Link to="/catalog" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <Library className="w-5 h-5" />
-              <span>Katalog</span>
-            </Link>
-            <Link to="/borrowed-books" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <BookIcon className="w-5 h-5" />
-              <span>Ödünç Aldıklarım</span>
-            </Link>
-            <Link to="/my-posts" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <BookIcon className="w-5 h-5" />
-              <span>Blog Yazılarım</span>
-            </Link>
-            <Link to="/requests" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <MessageSquare className="w-5 h-5" />
-              <span>Taleplerim</span>
-            </Link>
-            <Link to="/fines" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <DollarSign className="w-5 h-5" />
-              <span>Cezalarım</span>
-            </Link>
-            <Link to="/my-coupons" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <MessageSquare className="w-5 h-5" />
-              <span>Kuponlarım</span>
-            </Link>
-            <Link to="/chat" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <MessageSquare className="w-5 h-5" />
-              <span>Sohbet</span>
-            </Link>
-            <Link to="/favorites" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <Heart className="w-5 h-5" />
-              <span>Favorilerim</span>
-            </Link>
-            <Link to="/shop" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <ShoppingBag className="w-5 h-5" />
-              <span>Mağaza</span>
-            </Link>
-            <Link to="/my-orders" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <Package className="w-5 h-5" />
-              <span>Siparişlerim</span>
-            </Link>
-            <Link to="/collection-distribution" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <PieChart className="w-5 h-5" />
-              <span>Eser Dağılımı</span>
-            </Link>
-            <button
-              onClick={() => setShowRules(true)}
-              className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors w-full text-left`}
-            >
-              <ScrollText className="w-5 h-5" />
-              <span>Kütüphane Kuralları</span>
-            </button>
-            {isTeacher && (
-              <Link to="/teacher/reports" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
-                <BarChart className="w-5 h-5" />
-                <span>Raporlar</span>
+              <Link to="/my-class" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
+                <Users className="w-5 h-5" />
+                <span>Sınıfım</span>
               </Link>
             )}
-            <Link to="/settings" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
-              <Settings className="w-5 h-5" />
-              <span>Ayarlar</span>
-            </Link>
+            
+            {/* Kütüphane Kategorisi */}
+            <div className="pt-2">
+              <button
+                onClick={() => setExpandedCategories(prev => ({ ...prev, library: !prev.library }))}
+                className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
+              >
+                <span>📚 Kütüphane</span>
+                <span>{expandedCategories.library ? '▼' : '▶'}</span>
+              </button>
+              {expandedCategories.library && (
+                <div className="mt-1 space-y-1 ml-2">
+                  <Link to="/catalog" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <Library className="w-5 h-5" />
+                    <span>Katalog</span>
+                  </Link>
+                  <Link to="/borrowed-books" className={`flex items-center justify-between space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <div className="flex items-center space-x-3">
+                      <BookIcon className="w-5 h-5" />
+                      <span>Ödünç Aldıklarım</span>
+                    </div>
+                    {summaryStats.activeBooksCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        {summaryStats.activeBooksCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link to="/favorites" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <Heart className="w-5 h-5" />
+                    <span>Favorilerim</span>
+                  </Link>
+                  <Link to="/collection-distribution" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <PieChart className="w-5 h-5" />
+                    <span>Eser Dağılımı</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* İletişim Kategorisi */}
+            <div className="pt-2">
+              <button
+                onClick={() => setExpandedCategories(prev => ({ ...prev, communication: !prev.communication }))}
+                className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
+              >
+                <span>💬 İletişim</span>
+                <span>{expandedCategories.communication ? '▼' : '▶'}</span>
+              </button>
+              {expandedCategories.communication && (
+                <div className="mt-1 space-y-1 ml-2">
+                  <Link to="/chat" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <MessageSquare className="w-5 h-5" />
+                    <span>Sohbet</span>
+                  </Link>
+                  <Link to="/requests" className={`flex items-center justify-between space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <div className="flex items-center space-x-3">
+                      <MessageSquare className="w-5 h-5" />
+                      <span>Taleplerim</span>
+                    </div>
+                    {summaryStats.pendingRequestsCount > 0 && (
+                      <span className="bg-yellow-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        {summaryStats.pendingRequestsCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link to="/fines" className={`flex items-center justify-between space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <div className="flex items-center space-x-3">
+                      <DollarSign className="w-5 h-5" />
+                      <span>Cezalarım</span>
+                    </div>
+                    {summaryStats.totalFine > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        {summaryStats.totalFine}₺
+                      </span>
+                    )}
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Aktiviteler Kategorisi */}
+            <div className="pt-2">
+              <button
+                onClick={() => setExpandedCategories(prev => ({ ...prev, activities: !prev.activities }))}
+                className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
+              >
+                <span>🎮 Aktiviteler</span>
+                <span>{expandedCategories.activities ? '▼' : '▶'}</span>
+              </button>
+              {expandedCategories.activities && (
+                <div className="mt-1 space-y-1 ml-2">
+                  {!isTeacher && (
+                    <>
+                      <Link to="/challenges" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+                        <span className="text-lg">🏆</span>
+                        <span>Meydan Okumalar</span>
+                      </Link>
+                      <Link to="/reward-store" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
+                        <span className="text-lg">🎁</span>
+                        <span>Ödül Mağazası</span>
+                      </Link>
+                    </>
+                  )}
+                  <Link to="/my-posts" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <BookIcon className="w-5 h-5" />
+                    <span>Blog Yazılarım</span>
+                  </Link>
+                  <Link to="/games" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <Gamepad2 className="w-5 h-5" />
+                    <span>Oyun Rezervasyonları</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Alışveriş Kategorisi */}
+            <div className="pt-2">
+              <button
+                onClick={() => setExpandedCategories(prev => ({ ...prev, shopping: !prev.shopping }))}
+                className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
+              >
+                <span>🛍️ Alışveriş</span>
+                <span>{expandedCategories.shopping ? '▼' : '▶'}</span>
+              </button>
+              {expandedCategories.shopping && (
+                <div className="mt-1 space-y-1 ml-2">
+                  <Link to="/shop" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <ShoppingBag className="w-5 h-5" />
+                    <span>Mağaza</span>
+                  </Link>
+                  <Link to="/my-orders" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <Package className="w-5 h-5" />
+                    <span>Siparişlerim</span>
+                  </Link>
+                  <Link to="/my-coupons" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                    <MessageSquare className="w-5 h-5" />
+                    <span>Kuponlarım</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Diğer */}
+            <div className="pt-2">
+              <button
+                onClick={() => setShowRules(true)}
+                className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors w-full text-left`}
+              >
+                <ScrollText className="w-5 h-5" />
+                <span>Kütüphane Kuralları</span>
+              </button>
+              {isTeacher && (
+                <Link to="/teacher/reports" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
+                  <BarChart className="w-5 h-5" />
+                  <span>Raporlar</span>
+                </Link>
+              )}
+              <Link to="/settings" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
+                <Settings className="w-5 h-5" />
+                <span>Ayarlar</span>
+              </Link>
+            </div>
           </nav>
         </div>
         
@@ -479,8 +579,8 @@ const UserDashboard: React.FC = () => {
       </div>
 
       {showRules && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/30 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden border border-white/20">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+          <div className="bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/30 backdrop-blur-xl rounded-2xl shadow-2xl w-full h-full overflow-hidden border border-white/20 flex flex-col">
             {/* Header */}
             <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-6 flex justify-between items-center">
               <div className="flex items-center gap-3">
@@ -501,8 +601,8 @@ const UserDashboard: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {libraryRules.map((rule, index) => (
                   <div
                     key={index}
@@ -523,7 +623,7 @@ const UserDashboard: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-white/20 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 backdrop-blur-sm">
+            <div className="p-4 sm:p-6 border-t border-white/20 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 backdrop-blur-sm flex-shrink-0">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 flex items-center gap-2">
                   <span className="text-2xl">💡</span>
@@ -531,7 +631,7 @@ const UserDashboard: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setShowRules(false)}
-                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300 hover:scale-105 min-h-[44px]"
                 >
                   Anladım
                 </button>
@@ -637,16 +737,16 @@ const UserDashboard: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* At a Glance Summary Cards - Premium Minimal Gradient */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
             {/* Çark Butonu */}
             <button
               onClick={() => setShowSpinModal(true)}
-              className="relative bg-gradient-to-br from-purple-500 to-pink-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 group overflow-hidden touch-manipulation min-h-[120px]"
+              className="relative bg-gradient-to-br from-purple-500 to-pink-600 p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 group overflow-hidden touch-manipulation min-h-[100px] sm:min-h-[120px] col-span-2 lg:col-span-1"
             >
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative flex flex-col items-center justify-center h-full">
-                <div className="text-4xl sm:text-6xl mb-1 sm:mb-2 group-hover:rotate-180 transition-transform duration-700">🎡</div>
-                <p className="text-white font-bold text-sm sm:text-lg text-center">Günlük Şans Çarkı</p>
+                <div className="text-3xl sm:text-4xl md:text-6xl mb-1 sm:mb-2 group-hover:rotate-180 transition-transform duration-700">🎡</div>
+                <p className="text-white font-bold text-xs sm:text-sm md:text-lg text-center">Günlük Şans Çarkı</p>
                 {canSpin && (
                   <div className="mt-1 sm:mt-2 px-2 sm:px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
                     <span className="text-white text-xs font-semibold flex items-center gap-1">
@@ -657,47 +757,47 @@ const UserDashboard: React.FC = () => {
                 )}
               </div>
             </button>
-            <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-500 to-cyan-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between">
+            <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 min-h-[100px] sm:min-h-[120px]">
+              <div className="flex items-center justify-between h-full">
                 <div>
-                  <p className="text-white/80 text-sm font-medium mb-2">Aktif Kitapların</p>
-                  <p className="text-4xl font-bold text-white">{summaryStats.activeBooksCount}</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Aktif Kitapların</p>
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{summaryStats.activeBooksCount}</p>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
-                  <BookOpen className="w-8 h-8 text-white" />
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-colors">
+                  <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
             </Link>
-            <Link to="/borrowed-books" className={`bg-gradient-to-br ${summaryStats.dueDateStatus === 'overdue' ? 'from-red-500 to-pink-600' : summaryStats.dueDateStatus === 'dueSoon' ? 'from-yellow-500 to-orange-600' : 'from-green-500 to-emerald-600'} p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white/80 text-sm font-medium mb-2">{summaryStats.dueDateText}</p>
-                  <p className="text-lg font-bold text-white truncate">{summaryStats.nextDueBook && summaryStats.nextDueBook.title ? `${summaryStats.nextDueBook.title.substring(0, 15)}...` : '-'}</p>
+            <Link to="/borrowed-books" className={`bg-gradient-to-br ${summaryStats.dueDateStatus === 'overdue' ? 'from-red-500 to-pink-600' : summaryStats.dueDateStatus === 'dueSoon' ? 'from-yellow-500 to-orange-600' : 'from-green-500 to-emerald-600'} p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 min-h-[100px] sm:min-h-[120px]`}>
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{summaryStats.dueDateText}</p>
+                  <p className="text-sm sm:text-base md:text-lg font-bold text-white truncate">{summaryStats.nextDueBook && summaryStats.nextDueBook.title ? `${summaryStats.nextDueBook.title.substring(0, 12)}...` : '-'}</p>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
-                  {summaryStats.dueDateStatus === 'overdue' ? <AlertCircle className="w-8 h-8 text-white" /> : <Clock className="w-8 h-8 text-white" />}
-                </div>
-              </div>
-            </Link>
-            <Link to="/fines" className="bg-gradient-to-br from-red-500 to-pink-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white/80 text-sm font-medium mb-2">Ödenmemiş Ceza</p>
-                  <p className="text-4xl font-bold text-white">{summaryStats.totalFine} TL</p>
-                </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
-                  <AlertCircle className="w-8 h-8 text-white" />
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-colors flex-shrink-0">
+                  {summaryStats.dueDateStatus === 'overdue' ? <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" /> : <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
                 </div>
               </div>
             </Link>
-            <Link to="/requests" className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between">
+            <Link to="/fines" className="bg-gradient-to-br from-red-500 to-pink-600 p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 min-h-[100px] sm:min-h-[120px]">
+              <div className="flex items-center justify-between h-full">
                 <div>
-                  <p className="text-white/80 text-sm font-medium mb-2">Bekleyen Talepler</p>
-                  <p className="text-4xl font-bold text-white">{summaryStats.pendingRequestsCount}</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ödenmemiş Ceza</p>
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{summaryStats.totalFine} TL</p>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
-                  <MessageSquare className="w-8 h-8 text-white" />
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-colors">
+                  <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                </div>
+              </div>
+            </Link>
+            <Link to="/requests" className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 min-h-[100px] sm:min-h-[120px]">
+              <div className="flex items-center justify-between h-full">
+                <div>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Bekleyen Talepler</p>
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{summaryStats.pendingRequestsCount}</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-colors">
+                  <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
             </Link>
@@ -782,8 +882,8 @@ const UserDashboard: React.FC = () => {
                   <div className="flex items-center justify-center min-h-[280px]">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
                   </div>
-                }>(
-                <EnhancedBookCarousel 
+                }>
+                  <EnhancedBookCarousel 
                   books={recommendedBooks} 
                   onBorrowBook={handleBorrowBook}
                   favoriteBookIds={favoriteBookIds}
@@ -871,10 +971,10 @@ const UserDashboard: React.FC = () => {
                     <div className="mt-8">
                       <h3 className="text-2xl font-bold text-white text-center mb-8">Öne Çıkan Eserleri</h3>
                       <div className="flex flex-wrap justify-center items-center gap-8 max-w-6xl mx-auto">
-                        {featuredAuthorBooks.slice(0, 4).map((book, index) => {
+                        {featuredAuthorBooks.slice(0, 3).map((book, index) => {
                           const status = getBookStatus(book.id);
                           const isAvailable = status === 'available';
-                          const rotations = ['-rotate-3', 'rotate-2', '-rotate-2', 'rotate-3'];
+                          const rotations = ['-rotate-3', 'rotate-2', '-rotate-2'];
                           return (
                             <div 
                               key={book.id} 
@@ -883,7 +983,7 @@ const UserDashboard: React.FC = () => {
                               {/* Polaroid Frame */}
                               <div className="bg-white/95 backdrop-blur-sm p-1 shadow-xl hover:shadow-2xl transition-shadow duration-300">
                                 {/* Image */}
-                                <div className="relative w-48 h-56 overflow-hidden">
+                                <div className="relative w-32 h-40 sm:w-48 sm:h-56 overflow-hidden">
                                   <img
                                     src={book.coverImage}
                                     alt={book.title}

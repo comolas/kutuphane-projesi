@@ -312,3 +312,13 @@
 .ql-font-garamond {
   font-family: Garamond, 'EB Garamond', serif;
 }
+
+
+/* Barcode Scanner - Mobil */
+body.scanner-active {
+  background: transparent !important;
+}
+
+body.scanner-active .app-root {
+  visibility: hidden;
+}

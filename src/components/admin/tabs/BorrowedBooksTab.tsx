@@ -4,6 +4,7 @@ import { db } from '../../../firebase/config';
 import { useNavigate } from 'react-router-dom';
 import { User, AlertTriangle, Search, Library, Book as BookIcon, ArrowDownUp, Users as UsersIcon, Filter, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import DOMPurify from 'dompurify';
 
 // Interfaces
 interface UserData {
@@ -201,8 +202,24 @@ const BorrowedBooksTab: React.FC = () => {
     return 'from-green-500 to-green-600'; // 7+ gün
   };
 
+  const sanitizeText = (text: string): string => {
+    return DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
+  };
+
+  const sanitizeUrl = (url: string): string => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return DOMPurify.sanitize(url, { ALLOWED_TAGS: [] });
+      }
+    } catch {
+      return 'https://via.placeholder.com/200';
+    }
+    return 'https://via.placeholder.com/200';
+  };
+
   const handleUserClick = (userId: string) => {
-    navigate(`/admin/borrowed-by/${userId}`);
+    navigate(`/admin/borrowed-by/${encodeURIComponent(userId)}`);
   };
 
   if (loading) {
@@ -481,7 +498,7 @@ const BorrowedBooksTab: React.FC = () => {
                                     {user.borrowCount} Kitap
                                 </div>
                                 {user.photoURL ? (
-                                    <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src='https://via.placeholder.com/200'; }} />
+                                    <img src={sanitizeUrl(user.photoURL)} alt={sanitizeText(user.displayName)} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src='https://via.placeholder.com/200'; }} />
                                 ) : (
                                     <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                                         <User className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
@@ -489,8 +506,8 @@ const BorrowedBooksTab: React.FC = () => {
                                 )}
                             </div>
                             <div className="p-3 sm:p-4">
-                                <h2 className="font-bold text-base sm:text-lg text-gray-800 truncate group-hover:text-indigo-600" title={user.displayName}>{user.displayName}</h2>
-                                <p className="text-xs sm:text-sm text-gray-600">{user.studentClass} - {user.studentNumber}</p>
+                                <h2 className="font-bold text-base sm:text-lg text-gray-800 truncate group-hover:text-indigo-600" title={sanitizeText(user.displayName)}>{sanitizeText(user.displayName)}</h2>
+                                <p className="text-xs sm:text-sm text-gray-600">{sanitizeText(user.studentClass)} - {sanitizeText(user.studentNumber)}</p>
                             </div>
                         </div>
                     ) : (
@@ -503,7 +520,7 @@ const BorrowedBooksTab: React.FC = () => {
                             <div className="flex items-center gap-4 p-4">
                                 <div className="relative flex-shrink-0">
                                     {user.photoURL ? (
-                                        <img src={user.photoURL} alt={user.displayName} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src='https://via.placeholder.com/80'; }} />
+                                        <img src={sanitizeUrl(user.photoURL)} alt={sanitizeText(user.displayName)} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src='https://via.placeholder.com/80'; }} />
                                     ) : (
                                         <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 flex items-center justify-center">
                                             <User className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
@@ -512,8 +529,8 @@ const BorrowedBooksTab: React.FC = () => {
 
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h2 className="font-bold text-base sm:text-lg text-gray-800 truncate">{user.displayName}</h2>
-                                    <p className="text-xs sm:text-sm text-gray-600">{user.studentClass} - {user.studentNumber}</p>
+                                    <h2 className="font-bold text-base sm:text-lg text-gray-800 truncate">{sanitizeText(user.displayName)}</h2>
+                                    <p className="text-xs sm:text-sm text-gray-600">{sanitizeText(user.studentClass)} - {sanitizeText(user.studentNumber)}</p>
                                     <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
                                         <BookIcon className="w-3 h-3" />
                                         <span>{user.borrowCount} Kitap</span>

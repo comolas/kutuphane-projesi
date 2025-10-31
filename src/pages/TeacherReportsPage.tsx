@@ -336,7 +336,7 @@ const TeacherReportsPage: React.FC = () => {
           <button
             id="pdf-button"
             onClick={handleDownloadPDF}
-            className="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
+            className="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base min-h-[44px]"
           >
             <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             PDF Rapor İndir
@@ -437,7 +437,7 @@ const TeacherReportsPage: React.FC = () => {
             return (
               <div className="space-y-6">
                 {/* İstatistik Kartları */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
                     <p className="text-purple-600 text-sm font-medium mb-1">Veri Tamamlama</p>
                     <p className="text-3xl font-bold text-purple-700">{Math.round((studentsWithData.length / classStudents.length) * 100)}%</p>
@@ -461,7 +461,7 @@ const TeacherReportsPage: React.FC = () => {
                 </div>
 
                 {/* Grafikler */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6">
                   {/* Kategori Tercihleri */}
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
@@ -559,35 +559,35 @@ const TeacherReportsPage: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <Calendar className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-2 sm:mb-4">
+                <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Toplam Öğrenci</p>
-              <p className="text-4xl font-bold text-white">{classStudents.length}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Öğrenci</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{classStudents.length}</p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <BarChart className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-2 sm:mb-4">
+                <BarChart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Okunan Kitap</p>
-              <p className="text-4xl font-bold text-white">{classBooks.filter(b => b.returnStatus === 'returned').length}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Okunan Kitap</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{classBooks.filter(b => b.returnStatus === 'returned').length}</p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <PieChart className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-2 sm:mb-4">
+                <PieChart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Aktif Kitap</p>
-              <p className="text-4xl font-bold text-white">{classBooks.filter(b => b.returnStatus === 'borrowed').length}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Aktif Kitap</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{classBooks.filter(b => b.returnStatus === 'borrowed').length}</p>
             </div>
           </div>
         </div>
@@ -756,7 +756,7 @@ const TeacherReportsPage: React.FC = () => {
             Okuma Alışkanlıkları
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             {/* Hiç Okumayan Öğrenciler */}
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
               <div className="flex items-center justify-between mb-3">

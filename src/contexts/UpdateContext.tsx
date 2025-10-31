@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { logger } from '../utils/logger';
 
 // Extend Window interface to include electronAPI
 declare global {
@@ -35,7 +36,7 @@ export const UpdateProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     if (window.electronAPI) {
       window.electronAPI.onUpdateAvailable((info) => {
-        console.log('Renderer: Update available', info);
+        logger.info('Renderer: Update available', info);
         setIsUpdateAvailable(true);
         setIsUpdateDownloaded(false); // Reset if a new update is available
         setDownloadProgress(null);
@@ -43,7 +44,7 @@ export const UpdateProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       });
 
       window.electronAPI.onUpdateNotAvailable(() => {
-        console.log('Renderer: Update not available');
+        logger.info('Renderer: Update not available');
         setIsUpdateAvailable(false);
         setIsUpdateDownloaded(false);
         setDownloadProgress(null);
@@ -51,19 +52,19 @@ export const UpdateProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       });
 
       window.electronAPI.onDownloadProgress((progressObj) => {
-        console.log('Renderer: Download progress', progressObj);
+        logger.info('Renderer: Download progress', progressObj);
         setDownloadProgress(progressObj);
       });
 
       window.electronAPI.onUpdateDownloaded((info) => {
-        console.log('Renderer: Update downloaded', info);
+        logger.info('Renderer: Update downloaded', info);
         setIsUpdateDownloaded(true);
         setIsUpdateAvailable(true); // Still available, but now downloaded
         setDownloadProgress(null);
       });
 
       window.electronAPI.onUpdateError((message) => {
-        console.error('Renderer: Update error', message);
+        logger.error('Renderer: Update error', { message });
         setUpdateError(message);
       });
     }
@@ -71,14 +72,14 @@ export const UpdateProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const downloadUpdate = () => {
     if (window.electronAPI) {
-      console.log('Renderer: Requesting update download');
+      logger.info('Renderer: Requesting update download');
       window.electronAPI.downloadUpdate();
     }
   };
 
   const installUpdate = () => {
     if (window.electronAPI) {
-      console.log('Renderer: Requesting update installation');
+      logger.info('Renderer: Requesting update installation');
       window.electronAPI.installUpdate();
     }
   };

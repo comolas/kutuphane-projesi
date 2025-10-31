@@ -24,6 +24,7 @@
     "mobile:sync": "npx cap sync"
   },
   "dependencies": {
+    "@capacitor-community/barcode-scanner": "^4.0.1",
     "@capacitor/android": "^7.4.3",
     "@capacitor/browser": "^7.0.2",
     "@capacitor/cli": "^7.4.3",
@@ -41,6 +42,7 @@
     "chart.js": "^4.4.1",
     "date-fns": "^4.1.0",
     "dompurify": "^3.3.0",
+    "dotenv": "^17.2.3",
     "electron-updater": "^6.6.2",
     "firebase": "^12.4.0",
     "firebase-admin": "^13.5.0",
@@ -52,6 +54,7 @@
     "lucide-react": "^0.303.0",
     "papaparse": "^5.5.3",
     "pdfjs-dist": "^5.4.296",
+    "qrcode.react": "^4.2.0",
     "quill": "^2.0.3",
     "react": "^18.2.0",
     "react-big-calendar": "^1.19.4",
@@ -66,7 +69,8 @@
     "recharts": "^3.3.0",
     "sweetalert2": "^11.23.0",
     "sweetalert2-react-content": "^5.1.0",
-    "swiper": "^12.0.2"
+    "swiper": "^12.0.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/dompurify": "^3.0.5",

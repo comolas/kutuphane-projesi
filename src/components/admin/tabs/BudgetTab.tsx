@@ -8,6 +8,7 @@ import { Line, Bar } from 'react-chartjs-2';
 import ExpensePieChart from '../budget/ExpensePieChart';
 import MonthlyBarChart from '../budget/MonthlyBarChart';
 import MonthComparer from '../budget/MonthComparer';
+import Swal from 'sweetalert2';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -27,16 +28,16 @@ const BudgetTab: React.FC = () => {
     try {
       if (transactionToEdit) {
         await updateTransaction(transactionToEdit.id, transactionData);
-        alert('İşlem başarıyla güncellendi.');
+        Swal.fire('Başarılı!', 'İşlem başarıyla güncellendi.', 'success');
       } else {
         await addTransaction(transactionData);
-        alert('İşlem başarıyla eklendi.');
+        Swal.fire('Başarılı!', 'İşlem başarıyla eklendi.', 'success');
       }
       setIsModalOpen(false);
       setTransactionToEdit(null);
     } catch (error) {
       console.error("Failed to save transaction:", error);
-      alert("İşlem kaydedilirken bir hata oluştu.");
+      Swal.fire('Hata!', 'İşlem kaydedilirken bir hata oluştu.', 'error');
     }
   };
 
@@ -51,13 +52,24 @@ const BudgetTab: React.FC = () => {
   };
 
   const handleDeleteClick = async (transactionId: string) => {
-    if (window.confirm('Bu işlemi kalıcı olarak silmek istediğinizden emin misiniz?')) {
+    const result = await Swal.fire({
+      title: 'Emin misiniz?',
+      text: 'Bu işlemi kalıcı olarak silmek istediğinizden emin misiniz?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, sil!',
+      cancelButtonText: 'Vazgeç'
+    });
+
+    if (result.isConfirmed) {
       try {
         await deleteTransaction(transactionId);
-        alert('İşlem başarıyla silindi.');
+        Swal.fire('Silindi!', 'İşlem başarıyla silindi.', 'success');
       } catch (error) {
         console.error("Failed to delete transaction:", error);
-        alert("İşlem silinirken bir hata oluştu.");
+        Swal.fire('Hata!', 'İşlem silinirken bir hata oluştu.', 'error');
       }
     }
   };
@@ -663,7 +675,7 @@ const BudgetTab: React.FC = () => {
         {/* Floating Filter Button (Mobile) */}
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+          className="lg:hidden fixed bottom-6 right-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
         >
           <Filter className="w-6 h-6" />
         </button>
@@ -671,7 +683,7 @@ const BudgetTab: React.FC = () => {
         {/* Overlay */}
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -679,7 +691,7 @@ const BudgetTab: React.FC = () => {
         {/* Filter and Actions */}
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mb-6 sm:mb-8 animate-fadeIn">
           {/* Sidebar Filters */}
-          <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20 z-50 transition-transform duration-300 ${
+          <aside className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 flex-shrink-0 border border-white/20 z-40 transition-transform duration-300 ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}>
             <div className="flex justify-between items-center mb-4 sm:mb-6">

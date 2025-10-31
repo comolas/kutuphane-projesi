@@ -224,7 +224,8 @@ export interface Product {
   category: 'aksesuar' | 'kiyafet' | 'kirtasiye';
   price: number;
   stock: number;
-  image: string;
+  image: string; // Ana görsel (geriye dönük uyumluluk için)
+  images?: string[]; // Çoklu görseller
   description: string;
   createdAt: any;
 }
@@ -256,4 +257,94 @@ export interface Order {
   paymentProof?: string;
   couponId?: string;
   discountAmount?: number;
+}
+
+export interface LibraryCard {
+  userId: string;
+  qrCode: string;
+  generatedAt: any;
+  cardDelivered?: boolean;
+  deliveredAt?: any;
+}
+
+export interface AllowedUser {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  studentClass: string;
+  studentNumber: string;
+  campusName: string;
+  campusId: string;
+  addedAt?: any;
+}
+
+export type ChallengeType = 'book-count' | 'category-books' | 'page-count' | 'reviews' | 'blog-posts';
+export type ChallengeDuration = 'week' | '2weeks' | 'month';
+export type ChallengeStatus = 'pending' | 'active' | 'completed' | 'rejected';
+
+export interface Challenge {
+  id?: string;
+  creatorId: string;
+  creatorName: string;
+  opponentId: string;
+  opponentName: string;
+  type: ChallengeType;
+  category?: string;
+  duration: ChallengeDuration;
+  startDate: any;
+  endDate: any;
+  status: ChallengeStatus;
+  creatorScore: number;
+  opponentScore: number;
+  winnerId?: string;
+  campusId: string;
+  studentClass: string;
+  createdAt: any;
+}
+
+export type RewardCategory = 'experience' | 'gift-card' | 'food' | 'item';
+
+export interface PhysicalReward {
+  id?: string;
+  name: string;
+  category: RewardCategory;
+  description: string;
+  image: string;
+  requiredCoupons: number;
+  stock: number;
+  campusId: string;
+  isActive: boolean;
+  lowStockThreshold?: number;
+  createdAt: any;
+}
+
+export interface RewardCoupon {
+  id?: string;
+  userId: string;
+  challengeId: string;
+  earnedAt: any;
+  isUsed: boolean;
+  usedAt?: any;
+  usedForRewardId?: string;
+}
+
+export type RewardClaimStatus = 'pending' | 'approved' | 'delivered' | 'rejected';
+
+export interface RewardClaim {
+  id?: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userClass: string;
+  rewardId: string;
+  rewardName: string;
+  couponsUsed: number;
+  claimedAt: any;
+  status: RewardClaimStatus;
+  campusId: string;
+  approvedBy?: string;
+  approvedAt?: any;
+  deliveredAt?: any;
+  rejectedReason?: string;
+  notes?: string;
 }

@@ -8,6 +8,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import Swal from 'sweetalert2';
 import { Image, Type, FileText, Clock } from 'lucide-react';
+import { sanitizeHTML, sanitizeText } from '../utils/sanitize';
 
 const categories = [
   'Kitap İncelemesi',
@@ -89,10 +90,14 @@ const CreatePostPage: React.FC = () => {
     setError(null);
 
     try {
+      const sanitizedContent = sanitizeHTML(content);
+      const sanitizedSources = sanitizeHTML(sources);
+      const sanitizedTitle = sanitizeText(title);
+      
       const postData = {
-        title,
-        content,
-        excerpt: content.replace(/<[^>]*>/g, '').substring(0, 150) + '...',
+        title: sanitizedTitle,
+        content: sanitizedContent,
+        excerpt: sanitizedContent.replace(/<[^>]*>/g, '').substring(0, 150) + '...',
         coverImageURL,
         authorId: user.uid,
         authorName: userData?.displayName || user.displayName || user.email?.split('@')[0] || 'Anonim',
@@ -101,8 +106,8 @@ const CreatePostPage: React.FC = () => {
         updatedAt: serverTimestamp(),
         status: 'pending',
         category,
-        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        sources: sources,
+        tags: tags.split(',').map(tag => sanitizeText(tag.trim())).filter(tag => tag),
+        sources: sanitizedSources,
         areCommentsEnabled,
         likes: [],
       };

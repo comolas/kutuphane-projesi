@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Package, DollarSign, Filter, X, Search, ShoppingBag, TrendingUp, AlertTriangle, XCircle, Award, Minus, Eye, Calendar, ShoppingCart, Upload, Clock, CheckCircle, CreditCard, ChevronDown, ChevronUp, User, Mail, Tag } from 'lucide-react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, where } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
+import { db, storage } from '../../../firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Product, Order } from '../../../types';
 import { useAuth } from '../../../contexts/AuthContext';
+import Swal from 'sweetalert2';
 
 const ShopManagementTab: React.FC = () => {
   const { isSuperAdmin, campusId } = useAuth();
@@ -22,6 +24,7 @@ const ShopManagementTab: React.FC = () => {
     price: 0,
     stock: 0,
     image: '',
+    images: [] as string[],
     description: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,6 +45,7 @@ const ShopManagementTab: React.FC = () => {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -62,15 +66,59 @@ const ShopManagementTab: React.FC = () => {
     setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order)));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const validFiles = Array.from(files).filter(file => {
+      if (!file.type.startsWith('image/')) {
+        Swal.fire('Hata!', `${file.name} geçerli bir görsel değil.`, 'error');
+        return false;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        Swal.fire('Hata!', `${file.name} dosya boyutu 2 MB'dan büyük.`, 'error');
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    setUploadingImage(true);
+    try {
+      const uploadPromises = validFiles.map(async (file) => {
+        const timestamp = Date.now();
+        const storageRef = ref(storage, `productImages/${timestamp}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef);
+      });
+
+      const downloadURLs = await Promise.all(uploadPromises);
+      const newImages = [...formData.images, ...downloadURLs];
+      setFormData({ ...formData, images: newImages, image: newImages[0] || formData.image });
+      Swal.fire('Başarılı!', `${downloadURLs.length} görsel başarıyla yüklendi.`, 'success');
+    } catch (error) {
+      console.error('Görsel yükleme hatası:', error);
+      Swal.fire('Hata!', 'Görseller yüklenirken bir hata oluştu.', 'error');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = formData.images.filter((_, i) => i !== index);
+    setFormData({ ...formData, images: newImages, image: newImages[0] || '' });
+  };
+
   const handleSaveProduct = async () => {
     if (editingProduct) {
       await updateDoc(doc(db, 'products', editingProduct.id), formData);
     } else {
-      await addDoc(collection(db, 'products'), { ...formData, createdAt: Timestamp.now() });
+      await addDoc(collection(db, 'products'), { ...formData, campusId, createdAt: Timestamp.now() });
     }
     setShowProductModal(false);
     setEditingProduct(null);
-    setFormData({ name: '', category: 'aksesuar', price: 0, stock: 0, image: '', description: '' });
+    setFormData({ name: '', category: 'aksesuar', price: 0, stock: 0, image: '', images: [], description: '' });
     fetchProducts();
   };
 
@@ -130,6 +178,7 @@ const ShopManagementTab: React.FC = () => {
             stock: Number(product.stock) || 0,
             image: product.image || '',
             description: product.description || '',
+            campusId,
             createdAt: Timestamp.now()
           });
           successCount++;
@@ -267,7 +316,7 @@ const ShopManagementTab: React.FC = () => {
           {/* Floating Filter Button (Mobile) */}
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="lg:hidden fixed bottom-6 left-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="lg:hidden fixed bottom-6 left-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
           >
             <Filter className="w-6 h-6" />
           </button>
@@ -275,14 +324,14 @@ const ShopManagementTab: React.FC = () => {
           {/* Overlay */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
 
           <div className="flex gap-6">
             {/* Sidebar */}
-            <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-6 z-50 transition-transform duration-300 ${
+            <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-6 z-40 transition-transform duration-300 ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             } lg:flex-shrink-0 border border-white/20`}>
               <div className="flex justify-between items-center mb-6">
@@ -467,7 +516,7 @@ const ShopManagementTab: React.FC = () => {
                   <button
                     onClick={() => {
                       setEditingProduct(null);
-                      setFormData({ name: '', category: 'aksesuar', price: 0, stock: 0, image: '', description: '' });
+                      setFormData({ name: '', category: 'aksesuar', price: 0, stock: 0, image: '', images: [], description: '' });
                       setShowProductModal(true);
                     }}
                     className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
@@ -664,6 +713,7 @@ const ShopManagementTab: React.FC = () => {
                               price: product.price,
                               stock: product.stock,
                               image: product.image,
+                              images: product.images || [],
                               description: product.description,
                             });
                             setShowProductModal(true);
@@ -693,7 +743,7 @@ const ShopManagementTab: React.FC = () => {
           {/* Floating Filter Button (Mobile) */}
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="lg:hidden fixed bottom-6 left-6 z-40 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="lg:hidden fixed bottom-6 left-6 z-30 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
           >
             <Filter className="w-6 h-6" />
           </button>
@@ -701,14 +751,14 @@ const ShopManagementTab: React.FC = () => {
           {/* Overlay */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
 
           <div className="flex gap-6">
             {/* Sidebar */}
-            <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-6 z-50 transition-transform duration-300 ${
+            <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-6 z-40 transition-transform duration-300 ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             } lg:flex-shrink-0 border border-white/20`}>
               <div className="flex justify-between items-center mb-6">
@@ -1211,9 +1261,9 @@ const ShopManagementTab: React.FC = () => {
         const totalRevenue = completedOrders.reduce((sum, o) => sum + o.items.filter(i => i.productId === selectedProduct.id).reduce((s, i) => s + (i.price * i.quantity), 0), 0);
 
         return (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowDetailModal(false)}>
-            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0" onClick={() => setShowDetailModal(false)}>
+            <div className="bg-white rounded-2xl w-full h-full overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600 flex-shrink-0">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold text-white flex items-center">
                     <Eye className="w-6 h-6 mr-2" />
@@ -1241,6 +1291,7 @@ const ShopManagementTab: React.FC = () => {
                             price: selectedProduct.price,
                             stock: selectedProduct.stock,
                             image: selectedProduct.image,
+                            images: selectedProduct.images || [],
                             description: selectedProduct.description,
                           });
                           setShowProductModal(true);
@@ -1348,9 +1399,9 @@ const ShopManagementTab: React.FC = () => {
         };
 
         return (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowOrderDetailModal(false)}>
-            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0" onClick={() => setShowOrderDetailModal(false)}>
+            <div className="bg-white rounded-2xl w-full h-full overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600 flex-shrink-0">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold text-white flex items-center">
                     <ShoppingCart className="w-6 h-6 mr-2" />
@@ -1506,9 +1557,9 @@ const ShopManagementTab: React.FC = () => {
 
       {/* Product Modal */}
       {showProductModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+          <div className="bg-white rounded-2xl w-full h-full overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600 flex-shrink-0">
               <h2 className="text-2xl font-bold text-white flex items-center">
                 <ShoppingBag className="w-6 h-6 mr-2" />
                 {editingProduct ? 'Ürün Düzenle' : 'Yeni Ürün Ekle'}
@@ -1555,13 +1606,38 @@ const ShopManagementTab: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Resim URL</label>
-                <input
-                  type="text"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full p-2 border rounded-lg"
-                />
+                <label className="block text-sm font-medium mb-2">Ürün Görselleri</label>
+                <label className="w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-all flex items-center justify-center gap-2 font-medium text-gray-700">
+                  <Upload className="w-5 h-5 text-indigo-600" />
+                  {uploadingImage ? 'Yükleniyor...' : 'Çoklu Görsel Yükle (JPG/PNG, Max 2MB)'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    multiple
+                    className="hidden"
+                  />
+                </label>
+                {formData.images.length > 0 && (
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {formData.images.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-20 object-cover rounded-lg border-2 border-gray-300" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        {idx === 0 && (
+                          <span className="absolute bottom-1 left-1 bg-indigo-600 text-white text-xs px-2 py-0.5 rounded">Ana</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Açıklama</label>

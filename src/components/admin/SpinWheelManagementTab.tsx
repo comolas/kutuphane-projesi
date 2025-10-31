@@ -466,6 +466,7 @@ const SpinWheelManagementTab: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto -mx-4 md:mx-0">
+          <div className="inline-block min-w-full align-middle">
           <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b-2 border-gray-200">
@@ -538,6 +539,7 @@ const SpinWheelManagementTab: React.FC = () => {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="mt-6 flex justify-end">
@@ -598,6 +600,7 @@ const SpinWheelManagementTab: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
             <table className="w-full min-w-[640px]">
               <thead>
                 <tr className="border-b-2 border-gray-200">
@@ -632,6 +635,7 @@ const SpinWheelManagementTab: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
@@ -639,7 +643,7 @@ const SpinWheelManagementTab: React.FC = () => {
       {/* Yeni Ödül Modal */}
       {showAddRewardModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Yeni Ödül Ekle</h3>
             <div className="space-y-4">
               <div>
@@ -713,13 +717,13 @@ const SpinWheelManagementTab: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowAddRewardModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all"
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all min-h-[44px]"
               >
                 İptal
               </button>
               <button
                 onClick={handleAddReward}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all min-h-[44px]"
               >
                 Ekle
               </button>
@@ -731,7 +735,7 @@ const SpinWheelManagementTab: React.FC = () => {
       {/* Ödül Düzenle Modal */}
       {editingReward && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Ödül Düzenle</h3>
             <div className="space-y-4">
               <div>
@@ -765,13 +769,13 @@ const SpinWheelManagementTab: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setEditingReward(null)}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all"
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all min-h-[44px]"
               >
                 İptal
               </button>
               <button
                 onClick={handleEditReward}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all min-h-[44px]"
               >
                 Güncelle
               </button>
@@ -783,7 +787,7 @@ const SpinWheelManagementTab: React.FC = () => {
       {/* Yeni Çark Oluştur Modal */}
       {showCreateWheelModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Yeni Çark Oluştur</h3>
             <div className="space-y-4">
               <div>
@@ -800,13 +804,13 @@ const SpinWheelManagementTab: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowCreateWheelModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all"
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all min-h-[44px]"
               >
                 İptal
               </button>
               <button
                 onClick={handleCreateWheel}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all min-h-[44px]"
               >
                 Oluştur
               </button>

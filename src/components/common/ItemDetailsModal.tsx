@@ -47,7 +47,7 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[95vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-base sm:text-lg font-medium text-gray-900 pr-2">{getTitle()}</h3>
           <button
@@ -62,7 +62,7 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             <img
               src={item.coverImage}
               alt={getTitle()}
-              className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
+              className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-lg mb-4"
             />
           )}
           {getContent()}
@@ -73,7 +73,7 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
         <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
+            className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
             Kapat
           </button>

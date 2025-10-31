@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { BarChart3, TrendingUp, Users, Building2, BookOpen, Download, Calendar, FileText, ArrowLeft, RefreshCw } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Building2, BookOpen, Download, Calendar, FileText, ArrowLeft, RefreshCw, Wallet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -59,6 +59,7 @@ const reportTypes: ReportCard[] = [
   { id: 'userGrowth', title: 'Kullanıcı Büyüme Trendi', description: 'Aylık kullanıcı artış analizi', icon: TrendingUp, color: 'green', available: true },
   { id: 'categoryPopularity', title: 'Kategori Popülerliği', description: 'Kapsamlı kategori analizi (4 farklı görünüm)', icon: BookOpen, color: 'purple', available: true },
   { id: 'activeUsers', title: 'Aktif Kullanıcı Analizi', description: 'En aktif okuyucular ve istatistikler', icon: Users, color: 'orange', available: true },
+  { id: 'campusBudgets', title: 'Bütçe', description: 'Kampüslerin mevcut bütçe durumları', icon: Wallet, color: 'indigo', available: true },
 ];
 
 const GlobalReportsPage: React.FC = () => {
@@ -262,7 +263,7 @@ const GlobalReportsPage: React.FC = () => {
             <button 
               onClick={refreshReport}
               disabled={refreshing}
-              className="flex items-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm w-full sm:w-auto justify-center"
+              className="flex items-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm w-full sm:w-auto justify-center min-h-[44px]"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               {refreshing ? 'Yenileniyor...' : 'Veriyi Yenile'}
@@ -285,7 +286,7 @@ const GlobalReportsPage: React.FC = () => {
                 type="date"
                 value={dateRange.start}
                 onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
                 max={new Date().toISOString().split('T')[0]}
               />
               <span className="text-gray-500">-</span>
@@ -293,14 +294,14 @@ const GlobalReportsPage: React.FC = () => {
                 type="date"
                 value={dateRange.end}
                 onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
                 max={new Date().toISOString().split('T')[0]}
                 min={dateRange.start}
               />
               {(dateRange.start || dateRange.end) && (
                 <button 
                   onClick={clearDateRange}
-                  className="px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                  className="px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm min-h-[44px]"
                 >
                   Temizle
                 </button>
@@ -319,7 +320,7 @@ const GlobalReportsPage: React.FC = () => {
               <select
                 value={filters.campus}
                 onChange={(e) => setFilters(prev => ({ ...prev, campus: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
               >
                 <option value="">Tüm Kampüsler</option>
                 {availableCampuses.map(campus => (
@@ -337,7 +338,7 @@ const GlobalReportsPage: React.FC = () => {
               <select
                 value={filters.category}
                 onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
               >
                 <option value="">Tüm Kategoriler</option>
                 {availableCategories.map(category => (
@@ -355,7 +356,7 @@ const GlobalReportsPage: React.FC = () => {
               <select
                 value={filters.userGroup}
                 onChange={(e) => setFilters(prev => ({ ...prev, userGroup: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
               >
                 <option value="">Tüm Kullanıcılar</option>
                 <option value="student">Öğrenciler</option>
@@ -469,14 +470,14 @@ const GlobalReportsPage: React.FC = () => {
                   <button
                     onClick={refreshReport}
                     disabled={refreshing}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 min-h-[44px]"
                   >
                     <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                     <span>{refreshing ? 'Yenileniyor...' : 'Yenile'}</span>
                   </button>
                   <button
                     onClick={exportToPDF}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors min-h-[44px]"
                   >
                     <Download className="w-5 h-5" />
                     <span>PDF İndir</span>
@@ -550,7 +551,7 @@ const GlobalReportsPage: React.FC = () => {
                     <span className="text-sm font-medium text-gray-700">Otomatik Yenileme</span>
                   </label>
                   {autoRefresh && (
-                    <select value={refreshInterval} onChange={(e) => setRefreshInterval(Number(e.target.value))} className="px-3 py-1 border border-gray-300 rounded text-sm">
+                    <select value={refreshInterval} onChange={(e) => setRefreshInterval(Number(e.target.value))} className="px-3 py-1 border border-gray-300 rounded text-sm min-h-[44px]">
                       <option value={10}>10 saniye</option>
                       <option value={30}>30 saniye</option>
                       <option value={60}>1 dakika</option>
@@ -578,18 +579,18 @@ const GlobalReportsPage: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium text-gray-700">Grafik Türü:</span>
                   <div className="flex gap-2">
-                    <button onClick={() => setChartType('bar')} className={`px-3 py-1 rounded text-sm ${chartType === 'bar' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Çubuk</button>
-                    <button onClick={() => setChartType('line')} className={`px-3 py-1 rounded text-sm ${chartType === 'line' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Çizgi</button>
-                    <button onClick={() => setChartType('pie')} className={`px-3 py-1 rounded text-sm ${chartType === 'pie' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Pasta</button>
+                    <button onClick={() => setChartType('bar')} className={`px-3 py-1 rounded text-sm min-h-[44px] ${chartType === 'bar' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Çubuk</button>
+                    <button onClick={() => setChartType('line')} className={`px-3 py-1 rounded text-sm min-h-[44px] ${chartType === 'line' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Çizgi</button>
+                    <button onClick={() => setChartType('pie')} className={`px-3 py-1 rounded text-sm min-h-[44px] ${chartType === 'pie' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Pasta</button>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium text-gray-700">Renk Teması:</span>
                   <div className="flex gap-2">
-                    <button onClick={() => setColorTheme('default')} className={`w-8 h-8 rounded border-2 ${colorTheme === 'default' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'}} title="Varsayılan"></button>
-                    <button onClick={() => setColorTheme('warm')} className={`w-8 h-8 rounded border-2 ${colorTheme === 'warm' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)'}} title="Sıcak"></button>
-                    <button onClick={() => setColorTheme('cool')} className={`w-8 h-8 rounded border-2 ${colorTheme === 'cool' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)'}} title="Soğuk"></button>
-                    <button onClick={() => setColorTheme('mono')} className={`w-8 h-8 rounded border-2 ${colorTheme === 'mono' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #1f2937 0%, #9ca3af 100%)'}} title="Mono"></button>
+                    <button onClick={() => setColorTheme('default')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'default' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'}} title="Varsayılan"></button>
+                    <button onClick={() => setColorTheme('warm')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'warm' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)'}} title="Sıcak"></button>
+                    <button onClick={() => setColorTheme('cool')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'cool' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)'}} title="Soğuk"></button>
+                    <button onClick={() => setColorTheme('mono')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'mono' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #1f2937 0%, #9ca3af 100%)'}} title="Mono"></button>
                   </div>
                 </div>
               </div>
@@ -745,6 +746,41 @@ const GlobalReportsPage: React.FC = () => {
                         <p className="text-sm text-gray-500 uppercase tracking-wider">En Çok Okuyan</p>
                         <p className="text-xl font-bold text-gray-800 mt-2">
                           {selectedReport.data?.[0]?.name || '-'}
+                        </p>
+                      </div>
+                      <BarChart3 className="w-12 h-12 text-purple-600 opacity-20" />
+                    </div>
+                  </div>
+                </>
+              )}
+              {selectedReport.title.includes('Bütçe') && (
+                <>
+                  <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500 uppercase tracking-wider">Toplam Kampüs</p>
+                        <p className="text-3xl font-bold text-gray-800 mt-2">{selectedReport.campusCount || 0}</p>
+                      </div>
+                      <Building2 className="w-12 h-12 text-blue-600 opacity-20" />
+                    </div>
+                  </div>
+                  <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500 uppercase tracking-wider">Toplam Bütçe</p>
+                        <p className="text-3xl font-bold text-gray-800 mt-2">
+                          {selectedReport.totalBudget?.toLocaleString('tr-TR')} TL
+                        </p>
+                      </div>
+                      <Wallet className="w-12 h-12 text-green-600 opacity-20" />
+                    </div>
+                  </div>
+                  <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500 uppercase tracking-wider">Ortalama Bütçe</p>
+                        <p className="text-3xl font-bold text-gray-800 mt-2">
+                          {parseFloat(selectedReport.avgBudget || 0).toLocaleString('tr-TR')} TL
                         </p>
                       </div>
                       <BarChart3 className="w-12 h-12 text-purple-600 opacity-20" />
@@ -955,10 +991,10 @@ const GlobalReportsPage: React.FC = () => {
                 {/* Tabs */}
                 <div className="bg-white rounded-lg shadow-lg mb-6">
                   <div className="border-b border-gray-200">
-                    <nav className="flex -mb-px">
+                    <nav className="flex -mb-px overflow-x-auto">
                       <button
                         onClick={() => setCategoryTab('overview')}
-                        className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        className={`px-4 sm:px-6 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors min-h-[44px] whitespace-nowrap ${
                           categoryTab === 'overview'
                             ? 'border-indigo-600 text-indigo-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -968,7 +1004,7 @@ const GlobalReportsPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setCategoryTab('campus')}
-                        className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        className={`px-4 sm:px-6 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors min-h-[44px] whitespace-nowrap ${
                           categoryTab === 'campus'
                             ? 'border-indigo-600 text-indigo-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -978,7 +1014,7 @@ const GlobalReportsPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setCategoryTab('trend')}
-                        className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        className={`px-4 sm:px-6 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors min-h-[44px] whitespace-nowrap ${
                           categoryTab === 'trend'
                             ? 'border-indigo-600 text-indigo-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -988,7 +1024,7 @@ const GlobalReportsPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setCategoryTab('comparison')}
-                        className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        className={`px-4 sm:px-6 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors min-h-[44px] whitespace-nowrap ${
                           categoryTab === 'comparison'
                             ? 'border-indigo-600 text-indigo-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -1075,11 +1111,11 @@ const GlobalReportsPage: React.FC = () => {
                   <>
                     <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4">Karşılaştırmak İçin 2 Kategori Seçin</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <select
                           value={selectedCategories[0] || ''}
                           onChange={(e) => setSelectedCategories([e.target.value, selectedCategories[1] || ''])}
-                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[44px]"
                         >
                           <option value="">1. Kategori Seçin</option>
                           {selectedReport.comparisonCategories?.map((cat: any) => (
@@ -1089,7 +1125,7 @@ const GlobalReportsPage: React.FC = () => {
                         <select
                           value={selectedCategories[1] || ''}
                           onChange={(e) => setSelectedCategories([selectedCategories[0] || '', e.target.value])}
-                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[44px]"
                         >
                           <option value="">2. Kategori Seçin</option>
                           {selectedReport.comparisonCategories?.map((cat: any) => (
@@ -1231,16 +1267,49 @@ const GlobalReportsPage: React.FC = () => {
               </div>
             )}
 
+            {selectedReport.title.includes('Bütçe') && (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Kampüs Bütçeleri</h3>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={selectedReport.data} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={120} />
+                        <Tooltip />
+                        <Bar dataKey="budget" fill="#6366f1" name="Bütçe (TL)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Bütçe Dağılımı</h3>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <PieChart>
+                        <Pie data={selectedReport.data} dataKey="budget" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
+                          {selectedReport.data?.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </>
+            )}
+
             {selectedReport.title.includes('Karşılaştırma') && (
               <>
                 {/* Category Selection */}
                 <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Karşılaştırmak İçin 2 Kategori Seçin</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <select
                       value={selectedCategories[0] || ''}
                       onChange={(e) => setSelectedCategories([e.target.value, selectedCategories[1] || ''])}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[44px]"
                     >
                       <option value="">1. Kategori Seçin</option>
                       {selectedReport.categories?.map((cat: any) => (
@@ -1250,7 +1319,7 @@ const GlobalReportsPage: React.FC = () => {
                     <select
                       value={selectedCategories[1] || ''}
                       onChange={(e) => setSelectedCategories([selectedCategories[0] || '', e.target.value])}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[44px]"
                     >
                       <option value="">2. Kategori Seçin</option>
                       {selectedReport.categories?.map((cat: any) => (
@@ -1346,7 +1415,38 @@ const GlobalReportsPage: React.FC = () => {
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
               <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">Detaylı Veriler</h3>
               <div className="overflow-x-auto -mx-4 sm:mx-0">
-                {selectedReport.title.includes('Aktif Kullanıcı') ? (
+                {selectedReport.title.includes('Bütçe') ? (
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">#</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Kampüs Adı</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bütçe (TL)</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Oran</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedReport.data?.map((row: any, index: number) => {
+                        const percentage = ((row.budget / selectedReport.totalBudget) * 100).toFixed(1);
+                        return (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">{row.budget.toLocaleString('tr-TR')} TL</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <div className="flex items-center">
+                                <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                  <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
+                                </div>
+                                <span>{percentage}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : selectedReport.title.includes('Aktif Kullanıcı') ? (
                   <table className="min-w-full">
                     <thead>
                       <tr className="bg-gray-50">

@@ -36,8 +36,8 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ bookId, bookTitle, onClose })
   }, [reviews, sortBy]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-[9999] flex items-center justify-center p-0" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg w-full h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 pr-2">"{bookTitle}" Yorumları</h2>
           <button

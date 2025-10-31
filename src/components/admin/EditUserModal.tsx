@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, User as UserIcon, Mail, Hash, GraduationCap, Shield } from 'lucide-react';
+import { X, User as UserIcon, Mail, Hash, GraduationCap, Shield, Upload } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../firebase/config';
+import Swal from 'sweetalert2';
 
 interface UserData {
   uid: string;
@@ -26,6 +29,7 @@ interface EditUserModalProps {
 
 const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, onSave }) => {
   const [editableUser, setEditableUser] = useState<UserData | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -34,6 +38,38 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
   }, [user]);
 
   if (!isOpen || !editableUser) return null;
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Dosya tipi kontrolü
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      Swal.fire('Hata!', 'Sadece JPG ve PNG dosyaları yüklenebilir.', 'error');
+      return;
+    }
+
+    // Dosya boyutu kontrolü (1MB)
+    if (file.size > 1024 * 1024) {
+      Swal.fire('Hata!', 'Dosya boyutu 1MB\'dan küçük olmalıdır.', 'error');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `users/${editableUser.uid}/profile.jpg`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      setEditableUser(prev => prev ? { ...prev, photoURL: downloadURL } : null);
+      Swal.fire('Başarılı!', 'Fotoğraf yüklendi.', 'success');
+    } catch (error) {
+      console.error('Fotoğraf yükleme hatası:', error);
+      Swal.fire('Hata!', 'Fotoğraf yüklenirken bir hata oluştu.', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -64,9 +100,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col transform transition-all duration-300 animate-slideUp" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 rounded-t-2xl sm:rounded-t-3xl flex-shrink-0">
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-[9999] flex items-center justify-center p-0 animate-fadeIn" onClick={onClose}>
+      <div className="bg-gradient-to-br from-white to-indigo-50 w-full h-full overflow-y-auto flex flex-col transform transition-all duration-300" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex-shrink-0">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3">
@@ -77,7 +113,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
                 <p className="text-xs sm:text-sm text-white/80">Kullanıcı bilgilerini güncelleyin</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200 flex-shrink-0">
+            <button onClick={onClose} className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200 flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
               <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
@@ -101,19 +137,18 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
             {/* Fields Section */}
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div className="md:col-span-2">
-                <label htmlFor="photoURL" className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                  <UserIcon className="w-4 h-4 text-indigo-600" />
-                  Fotoğraf URL
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-indigo-600" />
+                  Profil Fotoğrafı Yükle
                 </label>
                 <input
-                  type="text"
-                  id="photoURL"
-                  name="photoURL"
-                  value={editableUser.photoURL || ''}
-                  onChange={handleChange}
-                  className="block w-full border-2 border-gray-200 rounded-xl shadow-sm py-2 sm:py-3 px-3 sm:px-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm sm:text-base"
-                  placeholder="https://example.com/image.png"
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="block w-full border-2 border-gray-200 rounded-xl shadow-sm py-2 sm:py-3 px-3 sm:px-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm sm:text-base file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 disabled:opacity-50"
                 />
+                <p className="text-xs text-gray-500 mt-1">JPG veya PNG, maksimum 1MB</p>
               </div>
               <div>
                 <label htmlFor="displayName" className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
@@ -245,13 +280,13 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
             <button
               type="button"
               onClick={onClose}
-              className="px-4 sm:px-6 py-2 sm:py-3 text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all font-semibold text-sm sm:text-base touch-manipulation min-h-[44px]"
+              className="px-4 py-2 text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all font-semibold text-sm min-h-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
             >
               İptal
             </button>
             <button
               type="submit"
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all font-semibold text-sm sm:text-base touch-manipulation min-h-[44px]"
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all font-semibold text-sm min-h-[44px] flex items-center justify-center shadow-md hover:scale-105 touch-manipulation"
             >
               Kaydet
             </button>

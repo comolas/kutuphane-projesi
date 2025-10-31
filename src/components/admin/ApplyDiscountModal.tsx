@@ -102,7 +102,7 @@ const ApplyDiscountModal: React.FC<ApplyDiscountModalProps> = ({
             </h3>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/20 rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
             >
               <X className="w-5 h-5" />
             </button>
@@ -185,14 +185,14 @@ const ApplyDiscountModal: React.FC<ApplyDiscountModalProps> = ({
         <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all font-semibold"
+            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all font-semibold text-sm min-h-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
           >
             İptal
           </button>
           <button
             onClick={handleApply}
             disabled={!selectedCoupon}
-            className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm min-h-[44px] flex items-center justify-center shadow-md hover:scale-105 touch-manipulation"
           >
             Kuponu Uygula
           </button>

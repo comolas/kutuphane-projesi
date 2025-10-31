@@ -112,7 +112,7 @@ const ParticipantsModal: React.FC<ParticipantsModalProps> = ({ isOpen, onClose, 
             </div>
             <h2 className="text-base sm:text-lg md:text-xl font-bold text-white truncate">'{event.name}' Katılımcıları</h2>
           </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all flex-shrink-0">
+          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
@@ -171,7 +171,7 @@ const ParticipantsModal: React.FC<ParticipantsModalProps> = ({ isOpen, onClose, 
                         <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => handleRemoveParticipant(participant.id)}
-                            className="text-red-600 hover:text-white hover:bg-red-600 p-2 rounded-full transition-all"
+                            className="text-red-600 hover:text-white hover:bg-red-600 p-2 rounded-full transition-all min-h-[44px] min-w-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -190,14 +190,14 @@ const ParticipantsModal: React.FC<ParticipantsModalProps> = ({ isOpen, onClose, 
                     <button
                       onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                       disabled={currentPage === 1}
-                      className="px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg min-h-[40px]"
+                      className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg min-h-[44px] flex items-center justify-center hover:scale-105 touch-manipulation"
                     >
                       Önceki
                     </button>
                     <button
                       onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className="px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg min-h-[40px]"
+                      className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg min-h-[44px] flex items-center justify-center hover:scale-105 touch-manipulation"
                     >
                       Sonraki
                     </button>

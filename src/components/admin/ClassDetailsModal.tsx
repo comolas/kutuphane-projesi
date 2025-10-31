@@ -64,7 +64,6 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
 
         const [year, month] = reportMonth.split('-').map(Number);
 
-        // Calculate school-wide average for the month
         const totalSchoolBorrowsInMonth = allBorrowed.filter(b => {
           if (!b.borrowedAt) return false;
           const borrowDate = (b.borrowedAt as Timestamp).toDate();
@@ -72,7 +71,7 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
         }).length;
         
         const totalStudents = allUsers.filter(u => u.role === 'student').length;
-        setSchoolAverage(totalStudents > 0 ? totalSchoolBorrowsInMonth / totalStudents : 0);
+        setSchoolAverage(totalStudents > 0 ? (totalSchoolBorrowsInMonth / totalStudents) : 0);
 
         const studentStats = studentsOfClass.map(student => {
           const studentBorrows = allBorrowed.filter(b => b.userId === student.uid);
@@ -232,30 +231,31 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-3xl shadow-2xl w-full h-full max-h-[calc(100vh-2rem)] flex flex-col transform transition-all duration-300 animate-slideUp">
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-t-3xl flex justify-between items-center">
-          <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Award className="w-7 h-7" />
-            Sınıf Detayları: {className}
+    <>
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
+      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl w-full h-full max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] flex flex-col transform transition-all duration-300 animate-slideUp">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 rounded-t-2xl sm:rounded-t-3xl flex justify-between items-center">
+          <h3 className="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <Award className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+            <span className="truncate">Sınıf: {className}</span>
           </h3>
-          <button onClick={onClose} className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200">
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200 flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <div className="p-6 flex-grow flex flex-col">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-            <div className="lg:col-span-2 space-y-4">
+        <div className="p-4 sm:p-6 flex-grow flex flex-col">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
                 <div className="relative w-full">
                   <input
                     type="text"
                     placeholder="Öğrenci adıyla ara..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-white border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm"
+                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 text-sm sm:text-base bg-white border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm"
                   />
-                  <Search className="absolute left-4 top-3.5 text-indigo-400" size={20} />
+                  <Search className="absolute left-3 sm:left-4 top-2.5 sm:top-3.5 text-indigo-400" size={18} />
                 </div>
                 <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 shadow-lg">
                   <div className="flex items-center gap-3 text-white">
@@ -277,8 +277,7 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
                   data={comparisonData} 
                   options={{ 
                     indexAxis: 'y', 
-                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
-                    plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
                   }} 
                 />
               </div>
@@ -297,56 +296,56 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gradient-to-r from-indigo-50 to-purple-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('name')}>
-                      Öğrenci Adı {sortConfig?.key === 'name' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('name')}>
+                      <span className="hidden sm:inline">Öğrenci Adı</span><span className="sm:hidden">Ad</span> {sortConfig?.key === 'name' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('monthlyReads')}>
-                      {monthName} Ayı {sortConfig?.key === 'monthlyReads' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('monthlyReads')}>
+                      <span className="hidden sm:inline">{monthName} Ayı</span><span className="sm:hidden">Ay</span> {sortConfig?.key === 'monthlyReads' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('totalReads')}>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors hidden md:table-cell" onClick={() => requestSort('totalReads')}>
                       Toplam {sortConfig?.key === 'totalReads' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('monthlyFinesPaid')}>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors hidden lg:table-cell" onClick={() => requestSort('monthlyFinesPaid')}>
                       Aylık Ceza {sortConfig?.key === 'monthlyFinesPaid' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => requestSort('totalFinesPaid')}>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider cursor-pointer hover:bg-indigo-100 transition-colors hidden lg:table-cell" onClick={() => requestSort('totalFinesPaid')}>
                       Toplam Ceza {sortConfig?.key === 'totalFinesPaid' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {currentStudents.map((student, index) => (
+                  {currentStudents.map((student) => (
                     <tr key={student.id} className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200 cursor-pointer group" onClick={() => setDetailedStudent(student)}>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                             {student.name.charAt(0).toUpperCase()}
                           </div>
-                          <span className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{student.name}</span>
+                          <span className="text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">{student.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
-                          <BookOpen className="w-4 h-4" />
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-indigo-100 text-indigo-800">
+                          <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
                           {student.monthlyReads}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center hidden md:table-cell">
                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
                           <Award className="w-4 h-4" />
                           {student.totalReads}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center hidden lg:table-cell">
                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${student.monthlyFinesPaid > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                           <DollarSign className="w-4 h-4" />
-                          {student.monthlyFinesPaid} ₺
+                          {student.monthlyFinesPaid} TL
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center hidden lg:table-cell">
                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${student.totalFinesPaid > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                           <DollarSign className="w-4 h-4" />
-                          {student.totalFinesPaid} ₺
+                          {student.totalFinesPaid} TL
                         </span>
                       </td>
                     </tr>
@@ -356,80 +355,24 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
             </div>
           )}
 
-          {detailedStudent && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-[60] flex items-center justify-center animate-fadeIn" onClick={() => setDetailedStudent(null)}>
-              <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4 transform transition-all duration-300 animate-slideUp" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                      {detailedStudent.name.charAt(0).toUpperCase()}
-                    </div>
-                    <h4 className="text-2xl font-bold text-gray-900">{detailedStudent.name}</h4>
-                  </div>
-                  <button onClick={() => setDetailedStudent(null)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-all"><X size={24} /></button>
-                </div>
-                <div className="space-y-4">
-                  <div className="bg-white rounded-xl p-4 shadow-md border border-indigo-100">
-                    <h5 className="font-bold text-indigo-700 flex items-center gap-2 mb-3">
-                      <BookOpen className="w-5 h-5" />
-                      Bu Ay Okuduğu Kitaplar ({detailedStudent.monthlyReads})
-                    </h5>
-                    {detailedStudent.monthlyBorrowsData.length > 0 ? (
-                      <ul className="space-y-2 max-h-48 overflow-y-auto">
-                        {detailedStudent.monthlyBorrowsData.map((book, index) => (
-                          <li key={index} className="flex items-start gap-2 p-2 rounded-lg hover:bg-indigo-50 transition-colors">
-                            <span className="text-indigo-600 font-bold text-xs mt-1">•</span>
-                            <span className="text-sm text-gray-700">
-                              <span className="font-semibold">{book.title}</span>
-                              <span className="text-gray-500"> - {book.author}</span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">Bu ay hiç kitap okumamış.</p>
-                    )}
-                  </div>
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 shadow-md text-white">
-                    <h5 className="font-bold flex items-center gap-2 mb-3">
-                      <Award className="w-5 h-5" />
-                      Genel İstatistikler
-                    </h5>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center bg-white/10 rounded-lg p-2">
-                        <span className="text-sm">Favori Kategorisi:</span>
-                        <span className="font-bold">{detailedStudent.favoriteCategory}</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-white/10 rounded-lg p-2">
-                        <span className="text-sm">Favori Yazarı:</span>
-                        <span className="font-bold">{detailedStudent.favoriteAuthor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-b-3xl flex justify-between items-center">
+          <div className="p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-b-2xl sm:rounded-b-3xl flex flex-col sm:flex-row justify-between items-center gap-3">
             <div>
-              <p className="text-sm font-medium text-gray-700">
-                Sayfa <span className="font-bold text-indigo-600">{currentPage}</span> / <span className="font-bold text-indigo-600">{totalPages}</span>
-                <span className="ml-2 text-gray-500">({filteredStudents.length} öğrenci)</span>
+              <p className="text-xs sm:text-sm font-medium text-gray-700 text-center sm:text-left">
+                Sayfa {currentPage} / {totalPages}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
+                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all flex items-center justify-center min-h-[44px] shadow-md touch-manipulation"
               >
                 Önceki
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200"
+                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all flex items-center justify-center min-h-[44px] shadow-md touch-manipulation"
               >
                 Sonraki
               </button>
@@ -438,6 +381,62 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({ isOpen, onClose, 
         </div>
       </div>
     </div>
+
+    {detailedStudent && (
+      <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-[60] flex items-center justify-center animate-fadeIn p-2 sm:p-4" onClick={() => setDetailedStudent(null)}>
+        <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl shadow-2xl p-4 sm:p-6 w-full max-w-lg transform transition-all duration-300 animate-slideUp" onClick={(e) => e.stopPropagation()}>
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                {detailedStudent.name.charAt(0).toUpperCase()}
+              </div>
+              <h4 className="text-2xl font-bold text-gray-900">{detailedStudent.name}</h4>
+            </div>
+            <button onClick={() => setDetailedStudent(null)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"><X size={24} /></button>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-4 shadow-md border border-indigo-100">
+              <h5 className="font-bold text-indigo-700 flex items-center gap-2 mb-3">
+                <BookOpen className="w-5 h-5" />
+                Bu Ay Okuduğu Kitaplar ({detailedStudent.monthlyReads})
+              </h5>
+              {detailedStudent.monthlyBorrowsData.length > 0 ? (
+                <ul className="space-y-2 max-h-48 overflow-y-auto">
+                  {detailedStudent.monthlyBorrowsData.map((book, index) => (
+                    <li key={index} className="flex items-start gap-2 p-2 rounded-lg hover:bg-indigo-50 transition-colors">
+                      <span className="text-indigo-600 font-bold text-xs mt-1">•</span>
+                      <span className="text-sm text-gray-700">
+                        <span className="font-semibold">{book.title}</span>
+                        <span className="text-gray-500"> - {book.author}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500 italic">Bu ay hiç kitap okumamış.</p>
+              )}
+            </div>
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 shadow-md text-white">
+              <h5 className="font-bold flex items-center gap-2 mb-3">
+                <Award className="w-5 h-5" />
+                Genel İstatistikler
+              </h5>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center bg-white/10 rounded-lg p-2">
+                  <span className="text-sm">Favori Kategorisi:</span>
+                  <span className="font-bold">{detailedStudent.favoriteCategory}</span>
+                </div>
+                <div className="flex justify-between items-center bg-white/10 rounded-lg p-2">
+                  <span className="text-sm">Favori Yazarı:</span>
+                  <span className="font-bold">{detailedStudent.favoriteAuthor}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

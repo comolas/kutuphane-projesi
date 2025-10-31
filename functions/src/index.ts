@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import axios from "axios";
@@ -688,6 +689,52 @@ export const generateGlobalReport = onCall(async (request: any) => {
         throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
       }
 
+    case "campusBudgets":
+      try {
+        const [campusesSnapshot, transactionsSnapshot] = await Promise.all([
+          db.collection("campuses").get(),
+          db.collection("transactions").get(),
+        ]);
+        
+        const campusNames = new Map<string, string>();
+        campusesSnapshot.forEach(doc => {
+          campusNames.set(doc.id, doc.data().name || "İsimsiz Kampüs");
+        });
+
+        const campusBudgets = new Map<string, number>();
+        transactionsSnapshot.forEach(doc => {
+          const data = doc.data();
+          const campusId = data.campusId;
+          const amount = data.amount || 0;
+          
+          if (campusId) {
+            campusBudgets.set(campusId, (campusBudgets.get(campusId) || 0) + amount);
+          }
+        });
+
+        const budgetData = Array.from(campusBudgets.entries())
+          .map(([campusId, budget]) => ({
+            id: campusId,
+            name: campusNames.get(campusId) || "Bilinmeyen Kampüs",
+            budget,
+          }))
+          .sort((a, b) => b.budget - a.budget);
+
+        const totalBudget = budgetData.reduce((sum, campus) => sum + campus.budget, 0);
+        const avgBudget = budgetData.length > 0 ? totalBudget / budgetData.length : 0;
+
+        return {
+          title: "Kampüs Bütçeleri",
+          data: budgetData,
+          totalBudget,
+          avgBudget: avgBudget.toFixed(2),
+          campusCount: budgetData.length,
+        };
+      } catch (error) {
+        logger.error("Rapor oluşturulurken hata:", error);
+        throw new HttpsError("internal", "Rapor oluşturulurken bir sunucu hatası oluştu.");
+      }
+
     default:
       throw new HttpsError("not-found", `'${reportType}' adında bir rapor bulunamadı.`);
   }
@@ -752,6 +799,32 @@ export const updateMonthlyLeaderboard = onSchedule("every 1 hours", async () => 
   }
 });
 
+// Güvenli URL whitelist
+const ALLOWED_IMAGE_DOMAINS = [
+  'firebasestorage.googleapis.com',
+  'storage.googleapis.com',
+  'lh3.googleusercontent.com',
+  'i.dr.com.tr',
+  'img.kitapyurdu.com',
+  'resimlink.com'
+];
+
+function isUrlSafe(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    // Sadece HTTPS izin ver
+    if (url.protocol !== 'https:') return false;
+    // Localhost ve private IP'leri engelle
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || 
+        url.hostname.startsWith('192.168.') || url.hostname.startsWith('10.') ||
+        url.hostname.startsWith('172.')) return false;
+    // Whitelist kontrolü
+    return ALLOWED_IMAGE_DOMAINS.some(domain => url.hostname.endsWith(domain));
+  } catch {
+    return false;
+  }
+}
+
 export const imageProxy = onRequest({ cors: true }, async (req, res) => {
   const imageUrl = req.query.url as string;
 
@@ -760,9 +833,17 @@ export const imageProxy = onRequest({ cors: true }, async (req, res) => {
     return;
   }
 
+  // SSRF koruması
+  if (!isUrlSafe(imageUrl)) {
+    res.status(403).send("URL not allowed");
+    return;
+  }
+
   try {
     const response = await axios.get(imageUrl, {
       responseType: 'stream',
+      timeout: 5000,
+      maxRedirects: 0,
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
       }
@@ -771,7 +852,7 @@ export const imageProxy = onRequest({ cors: true }, async (req, res) => {
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     response.data.pipe(res);
   } catch (error) {
-    logger.error("Image proxy error", { code: (error as any).code });
+    logger.error("Image proxy error");
     res.status(500).send("Error proxying image");
   }
 });
@@ -782,6 +863,7 @@ export const imageProxy = onRequest({ cors: true }, async (req, res) => {
 // ============================================
 
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import QRCode from "qrcode";
 
 import { defineSecret } from "firebase-functions/params";
 import { sanitizeInput, validateMessage, validateEmail, MIN_MESSAGE_LENGTH } from "./security";
@@ -2312,6 +2394,725 @@ export const getChatHistory = onCall(async (request: any) => {
   } catch (error) {
     logger.error("Error fetching chat history");
     return { messages: [] };
+  }
+});
+
+// Kütüphane kartı için QR kod oluştur
+export const generateLibraryCardQR = onCall(async (request: any) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  }
+
+  const { userId } = request.data;
+
+  if (!userId) {
+    throw new HttpsError("invalid-argument", "Kullanıcı ID'si gerekli.");
+  }
+
+  // Kullanıcı sadece kendi kartını veya admin herkesin kartını oluşturabilir
+  if (request.auth.uid !== userId && request.auth?.token.role !== "admin") {
+    throw new HttpsError("permission-denied", "Sadece kendi kartınızı oluşturabilirsiniz.");
+  }
+
+  try {
+    const db = admin.firestore();
+    const userDoc = await db.collection("users").doc(userId).get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "Kullanıcı bulunamadı.");
+    }
+
+    const userData = userDoc.data()!;
+    const qrData = JSON.stringify({ userId, type: "library-card" });
+    const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 300, margin: 1 });
+
+    return {
+      qrCode: qrCodeDataURL,
+      userName: userData.displayName,
+      studentNumber: userData.studentNumber,
+      studentClass: userData.studentClass,
+    };
+  } catch (error) {
+    const err = error as any;
+    logger.error("Error generating library card QR", { code: err.code });
+    throw new HttpsError("internal", "QR kod oluşturulurken hata oluştu.");
+  }
+});
+
+// Meydan okuma skor güncelleme (Firestore Trigger)
+// ============================================
+// BİLDİRİM SİSTEMİ
+// ============================================
+
+// Bildirim oluşturma yardımcı fonksiyonu
+async function createNotification(
+  userId: string,
+  type: 'book' | 'penalty' | 'achievement' | 'system' | 'social' | 'admin',
+  title: string,
+  message: string,
+  icon: string,
+  actionUrl?: string,
+  metadata?: any
+) {
+  try {
+    await admin.firestore().collection('notifications').add({
+      userId,
+      type,
+      title,
+      message,
+      icon,
+      isRead: false,
+      isPinned: false,
+      createdAt: admin.firestore.Timestamp.now(),
+      actionUrl,
+      metadata,
+    });
+  } catch (error) {
+    logger.error('Error creating notification:', error);
+  }
+}
+
+// Kitap iadesi yaklaşan kullanıcılara bildirim (günlük cron)
+export const notifyBookDueSoon = onSchedule('every day 09:00', async () => {
+  logger.info('Starting book due soon notifications...');
+  
+  try {
+    const db = admin.firestore();
+    const now = new Date();
+    const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    
+    const borrowedBooksSnapshot = await db.collection('borrowedBooks')
+      .where('returnedAt', '==', null)
+      .get();
+    
+    for (const doc of borrowedBooksSnapshot.docs) {
+      const borrow = doc.data();
+      const dueDate = borrow.dueDate?.toDate();
+      
+      if (dueDate && dueDate <= threeDaysLater && dueDate > now) {
+        const daysLeft = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        await createNotification(
+          borrow.userId,
+          'book',
+          '📚 Kitap İadesi Yaklaşıyor',
+          `"${borrow.bookTitle}" kitabının iade tarihi ${daysLeft} gün sonra. Lütfen zamanında iade etmeyi unutmayın.`,
+          '📚',
+          '/borrowed-books',
+          { bookId: borrow.bookId, daysLeft }
+        );
+      }
+    }
+    
+    logger.info('Book due soon notifications completed.');
+  } catch (error) {
+    logger.error('Error sending book due notifications:', error);
+  }
+});
+
+// Gecikmiş iade bildirimleri (günlük cron)
+export const notifyOverdueBooks = onSchedule('every day 10:00', async () => {
+  logger.info('Starting overdue book notifications...');
+  
+  try {
+    const db = admin.firestore();
+    const now = new Date();
+    
+    const borrowedBooksSnapshot = await db.collection('borrowedBooks')
+      .where('returnedAt', '==', null)
+      .get();
+    
+    for (const doc of borrowedBooksSnapshot.docs) {
+      const borrow = doc.data();
+      const dueDate = borrow.dueDate?.toDate();
+      
+      if (dueDate && dueDate < now) {
+        const daysOverdue = Math.ceil((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        await createNotification(
+          borrow.userId,
+          'penalty',
+          '⚠️ Gecikmiş İade',
+          `"${borrow.bookTitle}" kitabının iadesi ${daysOverdue} gün gecikmiş. Lütfen en kısa sürede iade edin.`,
+          '⚠️',
+          '/borrowed-books',
+          { bookId: borrow.bookId, daysOverdue }
+        );
+      }
+    }
+    
+    logger.info('Overdue book notifications completed.');
+  } catch (error) {
+    logger.error('Error sending overdue notifications:', error);
+  }
+});
+
+// Kullanıcı seviye atladığında bildirim (Firestore trigger)
+export const notifyLevelUp = onDocumentUpdated({ document: 'users/{userId}', region: 'us-central1' }, async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  
+  if (after && before && after.level > before.level) {
+    await createNotification(
+      event.params.userId,
+      'achievement',
+      '🎉 Seviye Atladınız!',
+      `Tebrikler! Artık Seviye ${after.level}'siniz. Okumaya devam edin!`,
+      '🎉',
+      '/progress',
+      { oldLevel: before.level, newLevel: after.level }
+    );
+  }
+});
+
+// Yeni kitap eklendiğinde bildirim (admin tarafından)
+export const notifyNewBook = onDocumentCreated({ document: 'books/{bookId}', region: 'us-central1' }, async (event) => {
+  const book = event.data?.data();
+  if (!book) return;
+  
+  const db = admin.firestore();
+  
+  // Aynı kampüsteki kullanıcılara bildirim gönder
+  const usersSnapshot = await db.collection('users')
+    .where('campusId', '==', book.campusId)
+    .limit(100) // İlk 100 kullanıcıya
+    .get();
+  
+  const timestamp = admin.firestore.Timestamp.now();
+  const batch = db.batch();
+  usersSnapshot.forEach(userDoc => {
+    const notifRef = db.collection('notifications').doc();
+    batch.set(notifRef, {
+      userId: userDoc.id,
+      type: 'book',
+      title: '📖 Yeni Kitap Eklendi',
+      message: `"${book.title}" - ${book.author} kütüphanemize eklendi!`,
+      icon: '📖',
+      isRead: false,
+      isPinned: false,
+      createdAt: timestamp,
+      actionUrl: '/catalog',
+      metadata: { bookId: event.params.bookId },
+    });
+  });
+  
+  await batch.commit();
+  logger.info(`New book notification sent for: ${book.title}`);
+});
+
+// Ceza oluştuğunda bildirim
+export const notifyPenaltyCreated = onDocumentCreated({ document: 'penalties/{penaltyId}', region: 'us-central1' }, async (event) => {
+  const penalty = event.data?.data();
+  if (!penalty) return;
+  
+  await createNotification(
+    penalty.userId,
+    'penalty',
+    '💰 Yeni Ceza',
+    `${penalty.amount} TL ceza oluşturuldu. Sebep: ${penalty.reason}`,
+    '💰',
+    '/fines',
+    { penaltyId: event.params.penaltyId, amount: penalty.amount }
+  );
+  
+  logger.info(`Penalty notification sent to user: ${penalty.userId}`);
+});
+
+// Meydan okuma daveti
+export const notifyChallengeInvite = onDocumentCreated({ document: 'challenges/{challengeId}', region: 'us-central1' }, async (event) => {
+  const challenge = event.data?.data();
+  if (!challenge) return;
+  
+  const db = admin.firestore();
+  const creatorDoc = await db.collection('users').doc(challenge.creatorId).get();
+  const creatorName = creatorDoc.data()?.displayName || 'Bir kullanıcı';
+  
+  const challengeTypes: { [key: string]: string } = {
+    'book-count': 'En çok kitap okuma',
+    'category-books': `${challenge.category} kategorisinde en çok kitap`,
+    'reviews': 'En çok yorum yazma',
+    'blog-posts': 'En çok blog yazısı',
+  };
+  
+  await createNotification(
+    challenge.opponentId,
+    'social',
+    '🎯 Meydan Okuma Daveti',
+    `${creatorName} seni "${challengeTypes[challenge.type] || 'Okuma'}" meydan okumasına davet etti!`,
+    '🎯',
+    '/challenges',
+    { challengeId: event.params.challengeId, creatorId: challenge.creatorId }
+  );
+  
+  logger.info(`Challenge invite sent to: ${challenge.opponentId}`);
+});
+
+// Yorum beğenildiğinde bildirim
+export const notifyReviewLiked = onDocumentUpdated({ document: 'reviews/{reviewId}', region: 'us-central1' }, async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  
+  if (!before || !after) return;
+  
+  const beforeLikes = before.helpfulVotes?.length || 0;
+  const afterLikes = after.helpfulVotes?.length || 0;
+  
+  // Yeni beğeni varsa
+  if (afterLikes > beforeLikes) {
+    const db = admin.firestore();
+    const bookDoc = await db.collection('books').doc(after.bookId).get();
+    const bookTitle = bookDoc.data()?.title || 'Kitap';
+    
+    await createNotification(
+      after.userId,
+      'social',
+      '💬 Yorumunuz Beğenildi',
+      `"${bookTitle}" kitabı hakkındaki yorumunuz beğenildi! (${afterLikes} beğeni)`,
+      '💬',
+      `/catalog`,
+      { reviewId: event.params.reviewId, bookId: after.bookId }
+    );
+  }
+});
+
+// Blog yazısı beğenildiğinde bildirim
+export const notifyPostLiked = onDocumentUpdated({ document: 'posts/{postId}', region: 'us-central1' }, async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  
+  if (!before || !after) return;
+  
+  const beforeLikes = before.likes?.length || 0;
+  const afterLikes = after.likes?.length || 0;
+  
+  // Yeni beğeni varsa (her 5 beğenide bir bildirim)
+  if (afterLikes > beforeLikes && afterLikes % 5 === 0) {
+    await createNotification(
+      after.authorId,
+      'social',
+      '❤️ Yazınız Beğenildi',
+      `"${after.title}" yazınız ${afterLikes} beğeni aldı!`,
+      '❤️',
+      `/blog/${event.params.postId}`,
+      { postId: event.params.postId, likes: afterLikes }
+    );
+  }
+});
+
+// Admin onay bekleyen işlemler - Yeni talep oluşturulduğunda
+export const notifyAdminNewRequest = onDocumentCreated({ document: 'requests/{requestId}', region: 'us-central1' }, async (event) => {
+  const request = event.data?.data();
+  if (!request) return;
+  
+  const db = admin.firestore();
+  
+  // Aynı kampüsteki adminlere bildirim gönder
+  const adminsSnapshot = await db.collection('users')
+    .where('campusId', '==', request.campusId)
+    .where('role', '==', 'admin')
+    .get();
+  
+  const timestamp = admin.firestore.Timestamp.now();
+  const batch = db.batch();
+  adminsSnapshot.forEach(adminDoc => {
+    const notifRef = db.collection('notifications').doc();
+    batch.set(notifRef, {
+      userId: adminDoc.id,
+      type: 'admin',
+      title: '📋 Yeni Talep',
+      message: `${request.userName} tarafından yeni bir "${request.category}" talebi oluşturuldu.`,
+      icon: '📋',
+      isRead: false,
+      isPinned: false,
+      createdAt: timestamp,
+      actionUrl: '/admin',
+      metadata: { requestId: event.params.requestId, priority: request.priority },
+    });
+  });
+  
+  await batch.commit();
+  logger.info(`Admin notification sent for new request: ${event.params.requestId}`);
+});
+
+// Admin onay bekleyen işlemler - Yeni blog yazısı onay bekliyor
+export const notifyAdminNewPost = onDocumentCreated({ document: 'posts/{postId}', region: 'us-central1' }, async (event) => {
+  const post = event.data?.data();
+  if (!post || post.status !== 'pending') return;
+  
+  const db = admin.firestore();
+  
+  // Aynı kampüsteki adminlere bildirim gönder
+  const adminsSnapshot = await db.collection('users')
+    .where('campusId', '==', post.campusId)
+    .where('role', '==', 'admin')
+    .get();
+  
+  const timestamp = admin.firestore.Timestamp.now();
+  const batch = db.batch();
+  adminsSnapshot.forEach(adminDoc => {
+    const notifRef = db.collection('notifications').doc();
+    batch.set(notifRef, {
+      userId: adminDoc.id,
+      type: 'admin',
+      title: '✍️ Yeni Blog Yazısı Onay Bekliyor',
+      message: `${post.authorName} tarafından "${post.title}" başlıklı yazı onay bekliyor.`,
+      icon: '✍️',
+      isRead: false,
+      isPinned: false,
+      createdAt: timestamp,
+      actionUrl: '/admin',
+      metadata: { postId: event.params.postId },
+    });
+  });
+  
+  await batch.commit();
+  logger.info(`Admin notification sent for new post: ${event.params.postId}`);
+});
+
+// Admin onay bekleyen işlemler - Yeni yorum onay bekliyor
+export const notifyAdminNewReview = onDocumentCreated({ document: 'reviews/{reviewId}', region: 'us-central1' }, async (event) => {
+  const review = event.data?.data();
+  if (!review || review.status !== 'pending') return;
+  
+  const db = admin.firestore();
+  
+  // Aynı kampüsteki adminlere bildirim gönder
+  const adminsSnapshot = await db.collection('users')
+    .where('campusId', '==', review.campusId)
+    .where('role', '==', 'admin')
+    .get();
+  
+  const timestamp = admin.firestore.Timestamp.now();
+  const batch = db.batch();
+  adminsSnapshot.forEach(adminDoc => {
+    const notifRef = db.collection('notifications').doc();
+    batch.set(notifRef, {
+      userId: adminDoc.id,
+      type: 'admin',
+      title: '⭐ Yeni Yorum Onay Bekliyor',
+      message: `${review.userDisplayName} tarafından yeni bir kitap yorumu onay bekliyor.`,
+      icon: '⭐',
+      isRead: false,
+      isPinned: false,
+      createdAt: timestamp,
+      actionUrl: '/admin',
+      metadata: { reviewId: event.params.reviewId, bookId: review.bookId },
+    });
+  });
+  
+  await batch.commit();
+  logger.info(`Admin notification sent for new review: ${event.params.reviewId}`);
+});
+
+// Meydan okuma tamamlandığında bildirim
+export const notifyChallengeCompleted = onDocumentUpdated({ document: 'challenges/{challengeId}', region: 'us-central1' }, async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  
+  if (!before || !after) return;
+  
+  // Challenge tamamlandıysa
+  if (before.status === 'active' && after.status === 'completed') {
+    const db = admin.firestore();
+    const [creatorDoc, opponentDoc] = await Promise.all([
+      db.collection('users').doc(after.creatorId).get(),
+      db.collection('users').doc(after.opponentId).get(),
+    ]);
+    
+    const creatorName = creatorDoc.data()?.displayName || 'Rakip';
+    const opponentName = opponentDoc.data()?.displayName || 'Rakip';
+    
+    // Kazanana bildirim
+    if (after.winnerId) {
+      const loserId = after.winnerId === after.creatorId ? after.opponentId : after.creatorId;
+      const loserName = after.winnerId === after.creatorId ? opponentName : creatorName;
+      
+      await createNotification(
+        after.winnerId,
+        'achievement',
+        '🏆 Meydan Okumayı Kazandınız!',
+        `${loserName} ile olan meydan okumayı kazandınız! Tebrikler!`,
+        '🏆',
+        '/challenges',
+        { challengeId: event.params.challengeId }
+      );
+      
+      await createNotification(
+        loserId,
+        'social',
+        '🎯 Meydan Okuma Bitti',
+        `${after.winnerId === after.creatorId ? creatorName : opponentName} meydan okumayı kazandı. Bir dahaki sefere!`,
+        '🎯',
+        '/challenges',
+        { challengeId: event.params.challengeId }
+      );
+    } else {
+      // Berabere
+      await Promise.all([
+        createNotification(
+          after.creatorId,
+          'social',
+          '🤝 Meydan Okuma Berabere Bitti',
+          `${opponentName} ile olan meydan okuma berabere bitti!`,
+          '🤝',
+          '/challenges',
+          { challengeId: event.params.challengeId }
+        ),
+        createNotification(
+          after.opponentId,
+          'social',
+          '🤝 Meydan Okuma Berabere Bitti',
+          `${creatorName} ile olan meydan okuma berabere bitti!`,
+          '🤝',
+          '/challenges',
+          { challengeId: event.params.challengeId }
+        ),
+      ]);
+    }
+  }
+});
+
+// Manuel toplu bildirim gönderme (Admin)
+export const sendBulkNotification = onCall({ cors: true }, async (request: any) => {
+  // Sadece adminler kullanabilir
+  if (!request.auth || request.auth.token.role !== 'admin') {
+    throw new HttpsError('permission-denied', 'Bu işlemi sadece adminler yapabilir.');
+  }
+
+  const { targetType, targetValue, title, message, icon, actionUrl } = request.data;
+
+  if (!title || !message) {
+    throw new HttpsError('invalid-argument', 'Başlık ve mesaj gereklidir.');
+  }
+
+  try {
+    const db = admin.firestore();
+    const adminDoc = await db.collection('users').doc(request.auth.uid).get();
+    const adminCampusId = adminDoc.data()?.campusId;
+
+    let usersQuery = db.collection('users').where('campusId', '==', adminCampusId);
+
+    // Hedef belirleme
+    if (targetType === 'class' && targetValue) {
+      usersQuery = usersQuery.where('studentClass', '==', targetValue);
+    } else if (targetType === 'user' && targetValue) {
+      // Tek kullanıcıya gönder
+      await db.collection('notifications').add({
+        userId: targetValue,
+        type: 'admin',
+        title,
+        message,
+        icon: icon || '📢',
+        isRead: false,
+        isPinned: false,
+        createdAt: admin.firestore.Timestamp.now(),
+        actionUrl: actionUrl || undefined,
+        metadata: { sentBy: request.auth.uid, manual: true },
+      });
+      return { success: true, count: 1 };
+    }
+
+    const usersSnapshot = await usersQuery.get();
+    const batch = db.batch();
+    let count = 0;
+
+    const timestamp = admin.firestore.Timestamp.now();
+    
+    usersSnapshot.forEach(userDoc => {
+      const notifRef = db.collection('notifications').doc();
+      batch.set(notifRef, {
+        userId: userDoc.id,
+        type: 'admin',
+        title,
+        message,
+        icon: icon || '📢',
+        isRead: false,
+        isPinned: false,
+        createdAt: timestamp,
+        actionUrl: actionUrl || undefined,
+        metadata: { sentBy: request.auth.uid, manual: true },
+      });
+      count++;
+    });
+
+    await batch.commit();
+    logger.info(`Bulk notification sent to ${count} users by admin: ${request.auth.uid}`);
+
+    return { success: true, count };
+  } catch (error) {
+    logger.error('Error sending bulk notification:', error);
+    throw new HttpsError('internal', 'Bildirim gönderilirken bir hata oluştu.');
+  }
+});
+
+export const updateChallengeScores = onSchedule("every 5 minutes", async () => {
+  logger.info("Starting challenge score update...");
+  
+  try {
+    const db = admin.firestore();
+    const now = new Date();
+    
+    // Aktif meydan okumaları getir
+    const activeChallenges = await db.collection("challenges")
+      .where("status", "==", "active")
+      .get();
+    
+    for (const challengeDoc of activeChallenges.docs) {
+      const challenge = challengeDoc.data();
+      const endDate = challenge.endDate?.toDate();
+      
+      // Süre dolmuş mu kontrol et
+      if (endDate && endDate < now) {
+        // Skorları hesapla ve kazananı belirle
+        let creatorScore = 0;
+        let opponentScore = 0;
+        
+        // Challenge türüne göre skor hesapla
+        if (challenge.type === "book-count" || challenge.type === "category-books") {
+          const creatorBooks = await db.collection("borrowedBooks")
+            .where("userId", "==", challenge.creatorId)
+            .where("borrowedAt", ">=", challenge.startDate)
+            .where("borrowedAt", "<=", challenge.endDate)
+            .get();
+          
+          const opponentBooks = await db.collection("borrowedBooks")
+            .where("userId", "==", challenge.opponentId)
+            .where("borrowedAt", ">=", challenge.startDate)
+            .where("borrowedAt", "<=", challenge.endDate)
+            .get();
+          
+          if (challenge.type === "category-books" && challenge.category) {
+            creatorScore = creatorBooks.docs.filter(doc => 
+              doc.data().bookCategory?.toLowerCase() === challenge.category.toLowerCase()
+            ).length;
+            opponentScore = opponentBooks.docs.filter(doc => 
+              doc.data().bookCategory?.toLowerCase() === challenge.category.toLowerCase()
+            ).length;
+          } else {
+            creatorScore = creatorBooks.size;
+            opponentScore = opponentBooks.size;
+          }
+        } else if (challenge.type === "reviews") {
+          const creatorReviews = await db.collection("reviews")
+            .where("userId", "==", challenge.creatorId)
+            .where("createdAt", ">=", challenge.startDate)
+            .where("createdAt", "<=", challenge.endDate)
+            .get();
+          
+          const opponentReviews = await db.collection("reviews")
+            .where("userId", "==", challenge.opponentId)
+            .where("createdAt", ">=", challenge.startDate)
+            .where("createdAt", "<=", challenge.endDate)
+            .get();
+          
+          creatorScore = creatorReviews.size;
+          opponentScore = opponentReviews.size;
+        } else if (challenge.type === "blog-posts") {
+          const creatorPosts = await db.collection("posts")
+            .where("authorId", "==", challenge.creatorId)
+            .where("createdAt", ">=", challenge.startDate)
+            .where("createdAt", "<=", challenge.endDate)
+            .get();
+          
+          const opponentPosts = await db.collection("posts")
+            .where("authorId", "==", challenge.opponentId)
+            .where("createdAt", ">=", challenge.startDate)
+            .where("createdAt", "<=", challenge.endDate)
+            .get();
+          
+          creatorScore = creatorPosts.size;
+          opponentScore = opponentPosts.size;
+        }
+        
+        // Kazananı belirle
+        const winnerId = creatorScore > opponentScore ? challenge.creatorId : 
+                        opponentScore > creatorScore ? challenge.opponentId : null;
+        
+        // Challenge'ı güncelle
+        await challengeDoc.ref.update({
+          status: "completed",
+          creatorScore,
+          opponentScore,
+          winnerId
+        });
+        
+        // Kazanana kupon ver
+        if (winnerId) {
+          await db.collection("rewardCoupons").add({
+            userId: winnerId,
+            challengeId: challengeDoc.id,
+            earnedAt: admin.firestore.FieldValue.serverTimestamp(),
+            isUsed: false
+          });
+        }
+        
+        logger.info(`Challenge ${challengeDoc.id} completed. Winner: ${winnerId || "Draw"}`);
+      } else {
+        // Henüz bitmemiş, skorları güncelle
+        let creatorScore = 0;
+        let opponentScore = 0;
+        
+        if (challenge.type === "book-count" || challenge.type === "category-books") {
+          const creatorBooks = await db.collection("borrowedBooks")
+            .where("userId", "==", challenge.creatorId)
+            .where("borrowedAt", ">=", challenge.startDate)
+            .get();
+          
+          const opponentBooks = await db.collection("borrowedBooks")
+            .where("userId", "==", challenge.opponentId)
+            .where("borrowedAt", ">=", challenge.startDate)
+            .get();
+          
+          if (challenge.type === "category-books" && challenge.category) {
+            creatorScore = creatorBooks.docs.filter(doc => 
+              doc.data().bookCategory?.toLowerCase() === challenge.category.toLowerCase()
+            ).length;
+            opponentScore = opponentBooks.docs.filter(doc => 
+              doc.data().bookCategory?.toLowerCase() === challenge.category.toLowerCase()
+            ).length;
+          } else {
+            creatorScore = creatorBooks.size;
+            opponentScore = opponentBooks.size;
+          }
+        } else if (challenge.type === "reviews") {
+          const creatorReviews = await db.collection("reviews")
+            .where("userId", "==", challenge.creatorId)
+            .where("createdAt", ">=", challenge.startDate)
+            .get();
+          
+          const opponentReviews = await db.collection("reviews")
+            .where("userId", "==", challenge.opponentId)
+            .where("createdAt", ">=", challenge.startDate)
+            .get();
+          
+          creatorScore = creatorReviews.size;
+          opponentScore = opponentReviews.size;
+        } else if (challenge.type === "blog-posts") {
+          const creatorPosts = await db.collection("posts")
+            .where("authorId", "==", challenge.creatorId)
+            .where("createdAt", ">=", challenge.startDate)
+            .get();
+          
+          const opponentPosts = await db.collection("posts")
+            .where("authorId", "==", challenge.opponentId)
+            .where("createdAt", ">=", challenge.startDate)
+            .get();
+          
+          creatorScore = creatorPosts.size;
+          opponentScore = opponentPosts.size;
+        }
+        
+        // Skorları güncelle
+        await challengeDoc.ref.update({
+          creatorScore,
+          opponentScore
+        });
+      }
+    }
+    
+    logger.info("Challenge score update completed.");
+  } catch (error) {
+    logger.error("Error updating challenge scores:", error);
   }
 });
 

@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 interface Campus {
   id: string;
   name: string;
+  code?: string;
   createdAt: any;
   status?: 'active' | 'inactive';
   description?: string;
@@ -24,6 +25,7 @@ const CampusManagementPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCampus, setEditingCampus] = useState<Campus | null>(null);
   const [newCampusName, setNewCampusName] = useState('');
+  const [newCampusCode, setNewCampusCode] = useState('');
   const [newCampusDescription, setNewCampusDescription] = useState('');
   const [selectedCampuses, setSelectedCampuses] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState('');
@@ -44,6 +46,7 @@ const CampusManagementPage: React.FC = () => {
         const campusesData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           name: doc.data().name,
+          code: doc.data().code || '',
           createdAt: doc.data().createdAt,
           status: doc.data().status || 'active',
           description: doc.data().description || '',
@@ -70,6 +73,7 @@ const CampusManagementPage: React.FC = () => {
     try {
       const campusData = {
         name: newCampusName,
+        code: newCampusCode,
         description: newCampusDescription,
         status: 'active' as const,
         createdAt: serverTimestamp(),
@@ -84,6 +88,7 @@ const CampusManagementPage: React.FC = () => {
       }
       
       setNewCampusName('');
+      setNewCampusCode('');
       setNewCampusDescription('');
       setEditingCampus(null);
       setIsModalOpen(false);
@@ -96,6 +101,7 @@ const CampusManagementPage: React.FC = () => {
   const handleEditCampus = (campus: Campus) => {
     setEditingCampus(campus);
     setNewCampusName(campus.name);
+    setNewCampusCode(campus.code || '');
     setNewCampusDescription(campus.description || '');
     setIsModalOpen(true);
   };
@@ -172,6 +178,7 @@ const CampusManagementPage: React.FC = () => {
     setIsModalOpen(false);
     setEditingCampus(null);
     setNewCampusName('');
+    setNewCampusCode('');
     setNewCampusDescription('');
   };
 
@@ -410,6 +417,9 @@ const CampusManagementPage: React.FC = () => {
                   )}
                 </button>
               </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Benzersiz Kod
+              </th>
               {showStats && (
                 <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   İstatistikler
@@ -444,9 +454,9 @@ const CampusManagementPage: React.FC = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={showStats ? 6 : 5} className="text-center py-4">Yükleniyor...</td></tr>
+              <tr><td colSpan={showStats ? 7 : 6} className="text-center py-4">Yükleniyor...</td></tr>
             ) : error ? (
-              <tr><td colSpan={showStats ? 6 : 5} className="text-center py-4 text-red-500">{error}</td></tr>
+              <tr><td colSpan={showStats ? 7 : 6} className="text-center py-4 text-red-500">{error}</td></tr>
             ) : (
               filteredAndSortedCampuses.map(campus => (
                 <tr key={campus.id} className={selectedCampuses.includes(campus.id) ? 'bg-blue-50' : ''}>
@@ -465,6 +475,9 @@ const CampusManagementPage: React.FC = () => {
                         <p className="text-gray-600 text-xs">{campus.description}</p>
                       )}
                     </div>
+                  </td>
+                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <p className="text-gray-900 font-mono font-semibold">{campus.code || '-'}</p>
                   </td>
                   {showStats && (
                     <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
@@ -554,6 +567,17 @@ const CampusManagementPage: React.FC = () => {
                   onChange={(e) => setNewCampusName(e.target.value)}
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   placeholder="Örn: Merkez Kampüs"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="campusCode" className="block text-gray-700 text-sm font-bold mb-2">Benzersiz Kod</label>
+                <input 
+                  type="text"
+                  id="campusCode"
+                  value={newCampusCode}
+                  onChange={(e) => setNewCampusCode(e.target.value.toUpperCase())}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono"
+                  placeholder="Örn: MERKEZ2024"
                 />
               </div>
               <div className="mb-4">

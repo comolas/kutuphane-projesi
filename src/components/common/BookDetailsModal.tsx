@@ -89,8 +89,8 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
     : 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-lg max-w-3xl w-full max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-[9999] flex items-center justify-center p-0" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg w-full h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
           <h3 className="text-lg sm:text-xl font-semibold text-gray-900 pr-2">{book.title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-500 flex-shrink-0">
@@ -134,7 +134,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
               <div className="flex items-center mb-4 flex-wrap gap-2">
                 <span className="text-xs sm:text-sm font-medium">Puanınız:</span>
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setRating(star)} className="touch-manipulation">
+                  <button key={star} onClick={() => setRating(star)} className="touch-manipulation p-1 min-h-[44px] min-w-[44px] flex items-center justify-center">
                     <Star className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors ${rating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'} hover:text-yellow-300`} />
                   </button>
                 ))}
@@ -145,7 +145,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
                   onChange={(e) => setReviewText(e.target.value)}
                   maxLength={1000}
                   placeholder="Kitap hakkındaki düşüncelerinizi paylaşın..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm sm:text-base"
                   rows={4}
                 />
                 <span className="absolute bottom-2 right-2 text-xs text-gray-400">
@@ -204,7 +204,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
                         <button 
                           onClick={() => handleHelpfulVote(review.id)}
                           disabled={!user || review.helpfulVotes?.includes(user.uid)}
-                          className="flex items-center text-xs sm:text-sm text-gray-500 hover:text-indigo-600 disabled:text-indigo-400 disabled:cursor-not-allowed transition-colors touch-manipulation"
+                          className="flex items-center text-xs sm:text-sm text-gray-500 hover:text-indigo-600 disabled:text-indigo-400 disabled:cursor-not-allowed transition-colors touch-manipulation p-2 min-h-[44px]"
                         >
                           <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                           Faydalı buldum ({review.helpfulVotes?.length || 0})

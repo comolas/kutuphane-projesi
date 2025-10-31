@@ -114,7 +114,7 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
   const handleDownloadTemplate = () => {
     const headers = ['title', 'author', 'isbn', 'category', 'Publisher', 'publication_year', 'location', 'coverImage', 'pageCount', 'tags', 'backCover', 'binding', 'dimensions', 'weight'];
     const required = ['title', 'author', 'coverImage'];
-    const note = "Lütfen bu şablonu kullanın. Zorunlu alanlar: ${required.join(', ')}. id ve addedDate alanları sistem tarafından otomatik olarak eklenecektir.";
+    const note = `Lütfen bu şablonu kullanın. Zorunlu alanlar: ${required.join(', ')}. id ve addedDate alanları sistem tarafından otomatik olarak eklenecektir.`;
     const csvContent = "data:text/csv;charset=utf-8," + note + "\n" + headers.join(',');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
@@ -154,7 +154,7 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
             </div>
             <h2 className="text-lg sm:text-xl font-bold text-white">Toplu Kitap Ekle</h2>
           </div>
-          <button onClick={handleClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all disabled:opacity-50" disabled={isProcessing}>
+          <button onClick={handleClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation" disabled={isProcessing}>
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
@@ -180,7 +180,7 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
                   <FileIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 flex-shrink-0" />
                   <span className="font-semibold text-gray-800 text-sm sm:text-base truncate">{file.name}</span>
                 </div>
-                <button onClick={() => setFile(null)} className="ml-2 p-1.5 hover:bg-indigo-200 rounded-full transition-colors flex-shrink-0">
+                <button onClick={() => setFile(null)} className="ml-2 p-1.5 hover:bg-indigo-200 rounded-full transition-all flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
                     <X className="w-4 h-4 text-gray-600"/>
                 </button>
               </div>
@@ -189,7 +189,7 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
               <button 
                 onClick={handleDownloadTemplate}
-                className="flex items-center justify-center px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all font-semibold text-sm sm:text-base min-h-[44px]"
+                className="flex items-center justify-center px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all font-semibold text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 touch-manipulation"
               >
                 <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Örnek Şablon İndir
@@ -197,7 +197,7 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
               <button 
                 onClick={handleProcess} 
                 disabled={!file}
-                className="flex items-center justify-center px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base shadow-lg min-h-[44px]"
+                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-md hover:shadow-lg min-h-[44px] hover:scale-105 touch-manipulation"
               >
                 Kitapları Yükle ve İşle
               </button>
@@ -227,7 +227,7 @@ const BulkAddBookModal: React.FC<BulkAddBookModalProps> = ({ isOpen, onClose }) 
                     <p className="text-red-700 font-bold text-sm sm:text-base">✗ {report.failures.length} kitap eklenemedi.</p>
                     {report.failures.length > 0 && (
                         <div className="mt-4">
-                            <button onClick={downloadErrorCSV} className="px-4 py-2.5 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-xl hover:from-red-200 hover:to-red-300 transition-all font-semibold text-sm sm:text-base border-2 border-red-300 min-h-[44px]">
+                            <button onClick={downloadErrorCSV} className="px-4 py-2 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-xl hover:from-red-200 hover:to-red-300 transition-all font-semibold text-sm border-2 border-red-300 min-h-[44px] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 touch-manipulation">
                                 Hatalı Kayıtları İndir (CSV)
                             </button>
                             <ul className="mt-3 text-xs sm:text-sm text-red-700 list-disc list-inside space-y-1">

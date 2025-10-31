@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare, Library, BarChart3, DollarSign, Menu, X, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import NotificationBell from '../common/NotificationBell';
 
 interface AdminHeaderProps {
   isDarkMode: boolean;
@@ -36,7 +37,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ isDarkMode, toggleDarkMode })
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-12">
-        <div className="flex items-center justify-between md:justify-center">
+        <div className="flex items-center justify-between">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden p-2 text-gray-700 dark:text-gray-300"
@@ -44,7 +45,9 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ isDarkMode, toggleDarkMode })
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
           
-          <nav className="hidden md:flex items-center space-x-2">
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <nav className="flex items-center space-x-2">
             <button
               onClick={() => handleNavigation('borrowed-books')}
               className="relative px-4 py-2 text-gray-700 dark:text-gray-300 font-medium transition-all duration-300 group"
@@ -100,7 +103,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ isDarkMode, toggleDarkMode })
               <span className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300"></span>
               <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-red-500 to-orange-600 group-hover:w-full group-hover:left-0 transition-all duration-300"></span>
             </button>
-          </nav>
+            </nav>
+          </div>
+
+          {/* Notification Bell */}
+          <div className="flex items-center">
+            <NotificationBell />
+          </div>
 
           {isMobileMenuOpen && (
             <div className="md:hidden fixed top-16 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50">

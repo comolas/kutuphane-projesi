@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import UpdateButton from '../components/common/UpdateButton';
 import AdminChatBot from '../components/admin/AdminChatBot';
+import SendNotificationModal from '../components/admin/SendNotificationModal';
 import { RequestProvider } from '../contexts/RequestContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useBooks } from '../contexts/BookContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Book as BookIcon, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2, Gift, Search, ChevronDown, ChevronRight, MessageCircle, ShoppingBag } from 'lucide-react';
+import { Book as BookIcon, Users, Library, LogOut, Menu, X, MessageSquare, DollarSign, Mail, Calendar, PieChart, BarChart, BookText, UserCog, ClipboardList, BookOpen, Layers, TrendingUp, Gamepad2, Gift, Search, ChevronDown, ChevronRight, MessageCircle, ShoppingBag, CreditCard, Award } from 'lucide-react';
 
 const BorrowedBooksTab = lazy(() => import('../components/admin/tabs/BorrowedBooksTab'));
 const MessagesTab = lazy(() => import('../components/admin/tabs/MessagesTab'));
@@ -28,6 +29,9 @@ const BlogManagementTab = lazy(() => import('../components/admin/tabs/BlogManage
 const SpinWheelManagementTab = lazy(() => import('../components/admin/SpinWheelManagementTab'));
 const AdminChatTab = lazy(() => import('../components/admin/tabs/AdminChatTab'));
 const ShopManagementTab = lazy(() => import('../components/admin/tabs/ShopManagementTab'));
+const LibraryCardsTab = lazy(() => import('../components/admin/tabs/LibraryCardsTab'));
+const RewardManagementTab = lazy(() => import('../components/admin/tabs/RewardManagementTab'));
+const RewardClaimsTab = lazy(() => import('../components/admin/tabs/RewardClaimsTab'));
 import { auth, db } from '../firebase/config';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import { Book } from '../types';
@@ -49,7 +53,7 @@ const AdminDashboard: React.FC = () => {
   const { isAdmin, isSuperAdmin, campusId } = useAuth();
   const { refetchAllBooks, getBookStatus } = useBooks();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations' | 'blog-management' | 'spin-wheel-management' | 'chat' | 'shop-management'>(location.state?.activeTab || 'borrowed-books');
+  const [activeTab, setActiveTab] = useState<'borrowed-books' | 'requests' | 'fines' | 'messages' | 'users' | 'catalog' | 'collection-distribution' | 'reports' | 'user-events' | 'announcements' | 'quote-management' | 'author-management' | 'review-management' | 'magazine-management' | 'collection-management' | 'budget' | 'game-management' | 'game-reservations' | 'blog-management' | 'spin-wheel-management' | 'chat' | 'shop-management' | 'library-cards' | 'reward-management' | 'reward-claims'>(location.state?.activeTab || 'borrowed-books');
   const [users, setUsers] = useState<UserData[]>([]);
   const [catalogBooks, setCatalogBooks] = useState<Book[]>([]);
   const [badgeData, setBadgeData] = useState({ messages: 0, requests: 0, borrowedBooks: [], reviews: 0, posts: 0 });
@@ -57,6 +61,7 @@ const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({ main: true, management: true, reports: true });
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   const debouncedSearch = useMemo(
     () => debounce((value: string) => setDebouncedSearchQuery(value), 300),
@@ -173,7 +178,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full w-80 sm:w-96 bg-indigo-900 text-white transform transition-transform duration-300 ease-in-out z-50 ${
+      <div className={`fixed top-0 left-0 h-full w-80 sm:w-96 bg-indigo-900 text-white transform transition-transform duration-300 ease-in-out z-[60] ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="p-3 sm:p-4">
@@ -474,6 +479,42 @@ const AdminDashboard: React.FC = () => {
                   <span>Mağaza Yönetimi</span>
                 </button>
                 )}
+
+                {(!searchQuery || 'kütüphane kartları kart'.includes(searchQuery.toLowerCase())) && (
+                <button
+                  onClick={() => { setActiveTab('library-cards'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 hover:scale-105 hover:shadow-lg transition-all duration-200 ${
+                    activeTab === 'library-cards' ? 'bg-indigo-800 scale-105 shadow-lg' : ''
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>Kütüphane Kartları</span>
+                </button>
+                )}
+
+                {(!searchQuery || 'ödül mağazası ödül'.includes(searchQuery.toLowerCase())) && (
+                <button
+                  onClick={() => { setActiveTab('reward-management'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 hover:scale-105 hover:shadow-lg transition-all duration-200 ${
+                    activeTab === 'reward-management' ? 'bg-indigo-800 scale-105 shadow-lg' : ''
+                  }`}
+                >
+                  <Award className="w-5 h-5" />
+                  <span>Ödül Mağazası</span>
+                </button>
+                )}
+
+                {(!searchQuery || 'ödül talepleri talep'.includes(searchQuery.toLowerCase())) && (
+                <button
+                  onClick={() => { setActiveTab('reward-claims'); setSidebarOpen(false); }}
+                  className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 hover:scale-105 hover:shadow-lg transition-all duration-200 ${
+                    activeTab === 'reward-claims' ? 'bg-indigo-800 scale-105 shadow-lg' : ''
+                  }`}
+                >
+                  <Gift className="w-5 h-5" />
+                  <span>Ödül Talepleri</span>
+                </button>
+                )}
               </div>
               )}
             </div>
@@ -545,13 +586,13 @@ const AdminDashboard: React.FC = () => {
       {/* Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
       {/* Header */}
-      <div className="bg-indigo-900 text-white pt-20">
+      <div className="bg-indigo-900 text-white pt-20 relative z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
@@ -573,6 +614,14 @@ const AdminDashboard: React.FC = () => {
               ) : null}
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
+              <button
+                onClick={() => setShowNotificationModal(true)}
+                className="flex items-center px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors touch-manipulation text-sm sm:text-base"
+                title="Toplu Bildirim Gönder"
+              >
+                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+                <span className="hidden sm:inline">Bildirim Gönder</span>
+              </button>
               <UpdateButton />
               <button
                 onClick={handleLogout}
@@ -626,9 +675,16 @@ const AdminDashboard: React.FC = () => {
           {activeTab === 'spin-wheel-management' && <SpinWheelManagementTab />}
           {activeTab === 'chat' && <AdminChatTab />}
           {activeTab === 'shop-management' && <ShopManagementTab />}
+          {activeTab === 'library-cards' && <LibraryCardsTab />}
+          {activeTab === 'reward-management' && <RewardManagementTab />}
+          {activeTab === 'reward-claims' && <RewardClaimsTab />}
         </Suspense>
       </div>
       <AdminChatBot />
+      <SendNotificationModal 
+        isOpen={showNotificationModal} 
+        onClose={() => setShowNotificationModal(false)} 
+      />
     </div>
   );
 };

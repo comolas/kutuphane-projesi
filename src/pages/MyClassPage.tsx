@@ -405,28 +405,28 @@ const MyClassPage: React.FC = () => {
         </div>
 
         {/* Aylık Gelişim Özeti */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg p-6 mb-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold mb-2 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2" />
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg p-4 sm:p-6 mb-6 text-white">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:w-auto">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 flex items-center justify-center sm:justify-start">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Sınıf Aylık Gelişim
               </h3>
-              <div className="flex items-center gap-6">
-                <div>
-                  <p className="text-sm opacity-90">Bu Ay</p>
-                  <p className="text-3xl font-bold">{classStats.thisMonthBooksRead}</p>
+              <div className="flex items-center justify-center sm:justify-start gap-4 sm:gap-6">
+                <div className="text-center">
+                  <p className="text-xs sm:text-sm opacity-90">Bu Ay</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{classStats.thisMonthBooksRead}</p>
                   <p className="text-xs opacity-75">kitap okundu</p>
                 </div>
-                <div>
-                  <p className="text-sm opacity-90">Geçen Ay</p>
-                  <p className="text-3xl font-bold">{classStats.lastMonthBooksRead}</p>
+                <div className="text-center">
+                  <p className="text-xs sm:text-sm opacity-90">Geçen Ay</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{classStats.lastMonthBooksRead}</p>
                   <p className="text-xs opacity-75">kitap okundu</p>
                 </div>
               </div>
             </div>
             <div className="text-center">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-6">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4 sm:p-6">
                 {classStats.monthlyProgress > 0 ? (
                   <>
                     <span className="text-5xl">↗️</span>
@@ -454,45 +454,45 @@ const MyClassPage: React.FC = () => {
         </div>
 
         {/* Sınıf İstatistikleri */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <Users className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-2 sm:mb-4">
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Toplam Öğrenci</p>
-              <p className="text-4xl font-bold text-white">{classStats.totalStudents}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Öğrenci</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{classStats.totalStudents}</p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <BookOpen className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-2 sm:mb-4">
+                <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Aktif Okuyucu</p>
-              <p className="text-4xl font-bold text-white">{classStats.activeReaders}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Aktif Okuyucu</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{classStats.activeReaders}</p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <Award className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-2 sm:mb-4">
+                <Award className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Okunan Kitap</p>
-              <p className="text-4xl font-bold text-white">{classStats.totalBooksRead}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Okunan Kitap</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{classStats.totalBooksRead}</p>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-4 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
-                <TrendingUp className="w-8 h-8 text-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-2 sm:mb-4">
+                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Ortalama Seviye</p>
-              <p className="text-4xl font-bold text-white">{classStats.averageLevel}</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ortalama Seviye</p>
+              <p className="text-2xl sm:text-4xl font-bold text-white">{classStats.averageLevel}</p>
             </div>
           </div>
         </div>
@@ -501,7 +501,7 @@ const MyClassPage: React.FC = () => {
         <div className="mb-6">
           <button
             onClick={() => navigate('/student-compare')}
-            className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 min-h-[44px]"
           >
             <GitCompare className="w-5 h-5" />
             Öğrencileri Karşılaştır
@@ -518,13 +518,13 @@ const MyClassPage: React.FC = () => {
                 placeholder="Öğrenci adı veya numarası ile ara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base min-h-[44px]"
               />
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSortBy('name')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-xs sm:text-sm min-h-[44px] ${
                   sortBy === 'name'
                     ? 'bg-orange-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -534,7 +534,7 @@ const MyClassPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setSortBy('books')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-xs sm:text-sm min-h-[44px] ${
                   sortBy === 'books'
                     ? 'bg-orange-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -544,7 +544,7 @@ const MyClassPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setSortBy('level')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-xs sm:text-sm min-h-[44px] ${
                   sortBy === 'level'
                     ? 'bg-orange-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -557,7 +557,7 @@ const MyClassPage: React.FC = () => {
         </div>
 
         {/* Students Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredAndSortedStudents.map((student) => {
             const stats = getStudentStats(student.uid);
             const status = getStudentStatus(student.uid);
@@ -689,42 +689,42 @@ const MyClassPage: React.FC = () => {
           };
 
           return (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedStudent(null)}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" onClick={() => setSelectedStudent(null)}>
               <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
-                <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-pink-500 p-6 rounded-t-2xl">
+                <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-pink-500 p-4 sm:p-6 rounded-t-2xl z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
                       {selectedStudent.photoURL ? (
-                        <img src={selectedStudent.photoURL} alt={selectedStudent.displayName} className="w-20 h-20 rounded-full border-4 border-white" />
+                        <img src={selectedStudent.photoURL} alt={selectedStudent.displayName} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white" />
                       ) : (
-                        <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center border-4 border-white">
-                          <span className="text-3xl font-bold text-orange-600">{selectedStudent.displayName[0]}</span>
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white flex items-center justify-center border-4 border-white">
+                          <span className="text-2xl sm:text-3xl font-bold text-orange-600">{selectedStudent.displayName[0]}</span>
                         </div>
                       )}
                       <div>
-                        <h2 className="text-2xl font-bold text-white">{selectedStudent.displayName}</h2>
-                        <p className="text-white/90">No: {selectedStudent.studentNumber}</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-white">{selectedStudent.displayName}</h2>
+                        <p className="text-sm sm:text-base text-white/90">No: {selectedStudent.studentNumber}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-semibold">Seviye {selectedStudent.level || 1}</span>
                           <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-semibold">{selectedStudent.totalXP || 0} XP</span>
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => setSelectedStudent(null)} className="text-white/80 hover:text-white transition-colors">
+                    <button onClick={() => setSelectedStudent(null)} className="text-white/80 hover:text-white transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
                       <X className="w-6 h-6" />
                     </button>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   {/* Gelişim Takibi */}
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-lg p-4">
                     <h3 className="font-semibold text-purple-900 mb-3 flex items-center">
                       <TrendingUp className="w-5 h-5 mr-2" />
                       Aylık Gelişim Takibi
                     </h3>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
                       <div className="text-center">
                         <p className="text-sm text-gray-600 mb-1">Bu Ay</p>
                         <p className="text-3xl font-bold text-purple-600">{detailedStats.thisMonthBooks}</p>
@@ -767,7 +767,7 @@ const MyClassPage: React.FC = () => {
                   </div>
 
                   {/* İstatistikler */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="bg-blue-50 rounded-lg p-4 text-center">
                       <BookOpen className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                       <p className="text-2xl font-bold text-blue-600">{detailedStats.totalBooks}</p>
@@ -791,7 +791,7 @@ const MyClassPage: React.FC = () => {
                   </div>
 
                   {/* Grafik Alanı */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
                     {/* Kategori Dağılımı */}
                     {Object.keys(detailedStats.categoryCount).length > 0 && (
                       <div className="bg-gray-50 rounded-lg p-4">
@@ -880,10 +880,10 @@ const MyClassPage: React.FC = () => {
                     {/* Not Kategorisi */}
                     <div className="mb-3">
                       <label className="block text-sm font-medium text-gray-700 mb-2">Not Kategorisi</label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => setNoteCategory('general')}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                             noteCategory === 'general'
                               ? 'bg-blue-600 text-white'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -893,7 +893,7 @@ const MyClassPage: React.FC = () => {
                         </button>
                         <button
                           onClick={() => setNoteCategory('behavior')}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                             noteCategory === 'behavior'
                               ? 'bg-purple-600 text-white'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -903,7 +903,7 @@ const MyClassPage: React.FC = () => {
                         </button>
                         <button
                           onClick={() => setNoteCategory('reading')}
-                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                             noteCategory === 'reading'
                               ? 'bg-green-600 text-white'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -919,13 +919,13 @@ const MyClassPage: React.FC = () => {
                       value={studentNote}
                       onChange={(e) => setStudentNote(e.target.value)}
                       placeholder="Öğrenci hakkında notlarınızı buraya ekleyebilirsiniz..."
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none text-sm sm:text-base"
                       rows={3}
                     />
                     <button
                       onClick={saveStudentNote}
                       disabled={!studentNote.trim() || isSavingNote}
-                      className="mt-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="mt-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
                     >
                       <Save className="w-4 h-4" />
                       {isSavingNote ? 'Kaydediliyor...' : 'Notu Kaydet'}
@@ -966,7 +966,7 @@ const MyClassPage: React.FC = () => {
                                   </div>
                                   <button
                                     onClick={() => deleteStudentNote(note.id)}
-                                    className="text-red-500 hover:text-red-700 transition-colors"
+                                    className="text-red-500 hover:text-red-700 transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                                     title="Notu Sil"
                                   >
                                     <Trash2 className="w-4 h-4" />

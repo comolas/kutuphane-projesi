@@ -4,6 +4,7 @@ import { db } from '../firebase/config';
 import { useAuth } from './AuthContext';
 import { useGoals } from './GoalsContext';
 import { Book } from '../types';
+import { logger } from '../utils/logger';
 
 interface BorrowedBook extends Book {
   borrowedAt: Date;
@@ -147,7 +148,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAllBooks(booksData);
         return booksData;
       } catch (error) {
-        console.error("Error fetching all books:", error);
+        logger.error("Error fetching all books", error);
         return [];
       }
     };
@@ -165,7 +166,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setBookStatuses(statuses);
       } catch (error) {
-        console.error("Error fetching book statuses:", error);
+        logger.error("Error fetching book statuses", error);
       }
     };
 
@@ -204,7 +205,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setBorrowedBooks(books);
       } catch (error) {
-        console.error("Error fetching borrowed books:", error);
+        logger.error("Error fetching borrowed books", error);
       }
     };
 
@@ -258,7 +259,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
           setAllBorrowedBooks(books);
         } catch (error) {
-          console.error("Error fetching all borrowed books:", error);
+          logger.error("Error fetching all borrowed books", error);
         }
       };
 
@@ -282,7 +283,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setBorrowMessages(messages);
       } catch (error) {
-        console.error("Error fetching borrow messages:", error);
+        logger.error("Error fetching borrow messages", error);
       }
     };
 
@@ -307,7 +308,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
       setAllBooks(booksData);
     } catch (error) {
-      console.error("Error refetching all books:", error);
+      logger.error("Error refetching all books", error);
     }
   }, [isSuperAdmin, campusId]);
 
@@ -418,6 +419,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userId,
         bookId,
         book: bookToLend,
+        campusId: bookToLend.campusId || campusId,
         borrowedAt: serverTimestamp(),
         dueDate,
         extended: false,
@@ -441,7 +443,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
 
     } catch (error) {
-      console.error('Error lending book:', error);
+      logger.error('Error lending book', error);
       throw error;
     }
   }, [user, allBooks, getBookStatus]);
@@ -467,7 +469,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setAllBooks(prev => prev.map(b => b.id === bookId ? { ...b, status: 'lost' } : b));
     } catch (error) {
-      console.error('Error marking book as lost:', error);
+      logger.error('Error marking book as lost', error);
       throw error;
     }
   }, [user]);
@@ -493,7 +495,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setAllBooks(prev => prev.map(b => b.id === bookId ? { ...b, status: 'available' } : b));
     } catch (error) {
-      console.error('Error marking book as found:', error);
+      logger.error('Error marking book as found', error);
       throw error;
     }
   }, [user]);
@@ -580,7 +582,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setBorrowMessages(messages);
 
     } catch (error) {
-      console.error('Error borrowing book:', error);
+      logger.error('Error borrowing book', error);
       throw error;
     }
   }, [user, userData, getBookStatus, isBookBorrowed]);
@@ -605,6 +607,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userId,
         bookId,
         book: borrowMessage.bookData,
+        campusId: borrowMessage.bookData.campusId || campusId,
         borrowedAt: serverTimestamp(),
         dueDate,
         extended: false,
@@ -651,7 +654,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
     } catch (error) {
-      console.error('Error approving borrow:', error);
+      logger.error('Error approving borrow', error);
       throw error;
     }
   }, [user, borrowMessages, getBookStatus]);
@@ -669,7 +672,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setBorrowedBooks(prev => prev.filter(b => !(b.id === bookId && b.borrowStatus === 'pending')));
       setAllBorrowedBooks(prev => prev.filter(b => !(b.id === bookId && b.borrowStatus === 'pending')));
     } catch (error) {
-      console.error('Error rejecting borrow:', error);
+      logger.error('Error rejecting borrow', error);
       throw error;
     }
   }, [borrowMessages]);
@@ -709,7 +712,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : book
       ));
     } catch (error) {
-      console.error('Error returning book:', error);
+      logger.error('Error returning book', error);
       throw error;
     }
   }, [user, borrowedBooks, hasPendingFine]);
@@ -755,7 +758,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         b.id === bookId && b.borrowedBy === user.uid ? updatedBook : b
       ));
     } catch (error) {
-      console.error('Error extending book:', error);
+      logger.error('Error extending book', error);
       throw error;
     }
   }, [user, borrowedBooks]);
@@ -804,7 +807,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return finalFineAmount;
     } catch (error) {
-      console.error('Ceza ödemesi işlenirken hata oluştu:', error);
+      logger.error('Ceza ödemesi işlenirken hata oluştu', error);
       throw error;
     }
   }, [allBorrowedBooks]);
@@ -861,7 +864,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         b.id === bookId && b.borrowedBy === user.uid ? { ...b, returnStatus: 'pending' } : b
       ));
     } catch (error) {
-      console.error('Error requesting return:', error);
+      logger.error('Error requesting return', error);
       throw error;
     }
   }, [user, userData, borrowedBooks, hasPendingFine]);
@@ -922,9 +925,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : book
       ));
 
-      console.log(`Book ${bookId} returned by user ${userId} - status updated to available`);
+      logger.info('Book returned by user', { bookId, userId });
     } catch (error) {
-      console.error('Error approving return:', error);
+      logger.error('Error approving return', error);
       throw error;
     }
   }, [user, updateGoalProgress]);
@@ -946,7 +949,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       await refetchAllBooks();
     } catch (error) {
-      console.error('Error saving book:', error);
+      logger.error('Error saving book', error);
       throw error;
     }
   }, [refetchAllBooks]);
@@ -984,9 +987,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : book
       ));
 
-      console.log(`Book ${bookId} returned by admin for user ${userId} - status updated to available`);
+      logger.info('Book returned by admin', { bookId, userId });
     } catch (error) {
-      console.error('Error returning book (admin):', error);
+      logger.error('Error returning book (admin)', error);
       throw error;
     }
   }, [user, updateGoalProgress]);
@@ -1033,9 +1036,9 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : book
       ));
 
-      console.log(`Batch returned ${books.length} books - all statuses updated to available`);
+      logger.info('Batch returned books', { count: books.length });
     } catch (error) {
-      console.error('Error batch returning books (admin):', error);
+      logger.error('Error batch returning books (admin)', error);
       throw error;
     }
   }, [user]);

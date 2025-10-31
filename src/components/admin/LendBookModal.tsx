@@ -45,16 +45,16 @@ const LendBookModal: React.FC<LendBookModalProps> = ({ isOpen, onClose, onLend, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl sm:rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+      <div className="bg-gradient-to-br from-white to-indigo-50 w-full h-full overflow-y-auto flex flex-col">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full">
               <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-white">Kullanıcı Seç</h3>
           </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all">
+          <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
@@ -118,7 +118,7 @@ const LendBookModal: React.FC<LendBookModalProps> = ({ isOpen, onClose, onLend, 
             </div>
             <div className="flex items-center flex-wrap gap-1 sm:gap-2">
               {Array.from({ length: Math.ceil(filteredUsers.length / usersPerPage) }, (_, i) => (
-                <button key={i} onClick={() => paginate(i + 1)} className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${currentPage === i + 1 ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-indigo-300'}`}>
+                <button key={i} onClick={() => paginate(i + 1)} className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${currentPage === i + 1 ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md hover:shadow-lg' : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-indigo-300 shadow-md hover:shadow-lg hover:scale-105'}`}>
                   {i + 1}
                 </button>
               ))}
@@ -126,7 +126,7 @@ const LendBookModal: React.FC<LendBookModalProps> = ({ isOpen, onClose, onLend, 
           </div>
         </div>
         <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end bg-gradient-to-t from-white to-transparent">
-          <button onClick={handleLend} className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm sm:text-base shadow-lg min-h-[44px]" disabled={!selectedUser}>
+          <button onClick={handleLend} className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm shadow-md hover:shadow-lg min-h-[44px] flex items-center justify-center hover:scale-105 touch-manipulation" disabled={!selectedUser}>
             Tamam
           </button>
         </div>

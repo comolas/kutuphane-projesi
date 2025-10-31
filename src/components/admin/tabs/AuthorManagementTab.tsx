@@ -265,13 +265,13 @@ const AuthorManagementTab: React.FC = () => {
 
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         <div className="w-full lg:w-64 flex-shrink-0">
-          <div className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 z-50 transition-transform duration-300 ${
+          <div className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-64 bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6 z-40 transition-transform duration-300 ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           } lg:top-6`}>
             <div className="flex items-center justify-between mb-4">

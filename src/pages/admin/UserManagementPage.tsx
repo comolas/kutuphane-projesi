@@ -5,6 +5,7 @@ import { db } from '../../firebase/config';
 import { Search, SortAsc, SortDesc, ArrowLeft, Ban, CheckCircle, ChevronLeft, ChevronRight, Users as UsersIcon, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { updateDoc, doc } from 'firebase/firestore';
+import * as XLSX from 'xlsx';
 
 interface User {
   id: string;
@@ -194,24 +195,19 @@ const UserManagementPage: React.FC = () => {
     setCurrentPage(page);
   };
 
-  const exportToCSV = () => {
-    const headers = ['Ad', 'Email', 'Rol', 'Kampüs', 'Durum'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredAndSortedUsers.map(user => [
-        user.displayName || '',
-        user.email || '',
-        user.role || '',
-        campuses.find(c => c.id === user.campusId)?.name || 'N/A',
-        user.isBlocked ? 'Engelli' : 'Aktif'
-      ].join(','))
-    ].join('\n');
+  const exportToExcel = () => {
+    const data = filteredAndSortedUsers.map(user => ({
+      'Ad': user.displayName || '',
+      'Email': user.email || '',
+      'Rol': user.role || '',
+      'Kampüs': campuses.find(c => c.id === user.campusId)?.name || 'N/A',
+      'Durum': user.isBlocked ? 'Engelli' : 'Aktif'
+    }));
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `kullanicilar_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Kullanıcılar');
+    XLSX.writeFile(wb, `kullanicilar_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   return (
@@ -236,11 +232,11 @@ const UserManagementPage: React.FC = () => {
             <span className="text-blue-800 font-semibold text-sm sm:text-base">{filteredAndSortedUsers.length} Kullanıcı</span>
           </div>
           <button 
-            onClick={exportToCSV}
+            onClick={exportToExcel}
             className="flex items-center px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
           >
             <Download className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Dışa Aktar</span>
+            <span className="hidden sm:inline">Toplu Dışa Aktar</span>
           </button>
         </div>
       </div>

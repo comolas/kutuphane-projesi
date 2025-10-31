@@ -593,8 +593,8 @@ const RequestsPage: React.FC = () => {
 
       {/* New Request Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full border border-white/20">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full h-full border border-white/20 overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-900">Yeni Talep Oluştur</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">

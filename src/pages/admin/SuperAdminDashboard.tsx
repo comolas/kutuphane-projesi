@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getCountFromServer, getDocs } from 'firebase/firestore';
 import { db, auth } from '../../firebase/config';
-import { Building2, Users, GraduationCap, UserCog, Menu, X, LogOut, BarChart, Settings, Search, ChevronDown, ChevronRight, TrendingUp, BookOpen, Clock, Activity } from 'lucide-react';
+import { Building2, Users, GraduationCap, UserCog, Menu, X, LogOut, BarChart, Settings, Search, ChevronDown, ChevronRight, TrendingUp, BookOpen, Clock, Activity, UserCheck } from 'lucide-react';
+import AllowedUsersTab from '../../components/superadmin/AllowedUsersTab';
 
 interface Stats {
   totalCampuses: number;
@@ -27,7 +28,7 @@ interface PerformanceMetric {
   color: string;
 }
 
-type TabType = 'dashboard' | 'campuses' | 'users' | 'reports' | 'settings';
+type TabType = 'dashboard' | 'campuses' | 'users' | 'reports' | 'settings' | 'allowedUsers';
 
 const StatCard = ({ title, value, icon: Icon, loading }: { title: string; value: number; icon: any; loading?: boolean }) => (
   <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow">
@@ -224,6 +225,15 @@ const SuperAdminDashboard: React.FC = () => {
                     <Users className="w-5 h-5" />
                     <span>Kullanıcılar</span>
                   </button>
+                  <button
+                    onClick={() => handleNavigation('allowedUsers')}
+                    className={`flex items-center w-full space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-all ${
+                      activeTab === 'allowedUsers' ? 'bg-indigo-800' : ''
+                    }`}
+                  >
+                    <UserCheck className="w-5 h-5" />
+                    <span>İzin Verilen Kullanıcılar</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -309,6 +319,7 @@ const SuperAdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {activeTab === 'allowedUsers' && <AllowedUsersTab />}
         {activeTab === 'dashboard' && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6 mb-6 sm:mb-8">

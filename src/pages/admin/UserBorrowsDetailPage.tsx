@@ -240,13 +240,13 @@ const UserBorrowsDetailPage: React.FC = () => {
                         return (
                             <div key={item.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                                 <div className="relative">
-                                    <img src={item.book.coverImage || 'https://via.placeholder.com/300x400'} alt={item.book.title} className="w-full h-64 object-cover" />
+                                    <img src={item.book?.coverImage || 'https://via.placeholder.com/300x400'} alt={item.book?.title} className="w-full h-64 object-cover" />
                                     <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold text-white ${isOverdue ? 'bg-red-500' : 'bg-green-500'}`}>
                                         {isOverdue ? `${Math.abs(remainingDays)} gün gecikti` : `${remainingDays} gün kaldı`}
                                     </div>
                                 </div>
                                 <div className="p-4">
-                                    <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2">{item.book.title}</h3>
+                                    <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2">{item.book?.title || 'Bilinmeyen Kitap'}</h3>
                                     <div className="flex items-center text-sm text-gray-600 mb-4">
                                         <Calendar className="w-4 h-4 mr-2" />
                                         <span>İade: {new Date(item.dueDate.seconds * 1000).toLocaleDateString()}</span>
@@ -277,10 +277,10 @@ const UserBorrowsDetailPage: React.FC = () => {
                             return (
                                 <li key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
                                     <div className="flex flex-col sm:flex-row gap-4">
-                                        <img src={item.book.coverImage || 'https://via.placeholder.com/80x120'} alt={item.book.title} className="w-20 h-28 object-cover rounded-md shadow flex-shrink-0" />
+                                        <img src={item.book?.coverImage || 'https://via.placeholder.com/80x120'} alt={item.book?.title} className="w-20 h-28 object-cover rounded-md shadow flex-shrink-0" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-lg text-gray-800 mb-1">{item.book.title}</p>
-                                            <p className="text-sm text-gray-500 mb-2">Kod: {item.book.id}</p>
+                                            <p className="font-bold text-lg text-gray-800 mb-1">{item.book?.title || 'Bilinmeyen Kitap'}</p>
+                                            <p className="text-sm text-gray-500 mb-2">Kod: {item.book?.id || '-'}</p>
                                             <div className="flex flex-wrap items-center gap-2 mb-3">
                                                 <div className={`px-3 py-1 rounded-full text-xs font-medium ${isOverdue ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                                                     {isOverdue ? `${Math.abs(remainingDays)} gün gecikti` : `Kalan ${remainingDays} gün`}
@@ -336,13 +336,13 @@ const UserBorrowsDetailPage: React.FC = () => {
                         return (
                             <div key={item.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                                 <div className="relative">
-                                    <img src={item.book.coverImage || 'https://via.placeholder.com/300x400'} alt={item.book.title} className="w-full h-64 object-cover" />
+                                    <img src={item.book?.coverImage || 'https://via.placeholder.com/300x400'} alt={item.book?.title} className="w-full h-64 object-cover" />
                                     <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold text-white ${wasReturnedLate ? 'bg-red-500' : 'bg-green-500'}`}>
                                         {wasReturnedLate ? 'Geç' : 'Zamanında'}
                                     </div>
                                 </div>
                                 <div className="p-4">
-                                    <h3 className="font-bold text-lg text-gray-800 mb-3 line-clamp-2">{item.book.title}</h3>
+                                    <h3 className="font-bold text-lg text-gray-800 mb-3 line-clamp-2">{item.book?.title || 'Bilinmeyen Kitap'}</h3>
                                     <div className="space-y-1 text-sm text-gray-600">
                                         <p>Ödünç: {item.borrowDate ? new Date(item.borrowDate.seconds * 1000).toLocaleDateString() : '-'}</p>
                                         <p>Teslim: {item.returnDate ? new Date(item.returnDate.seconds * 1000).toLocaleDateString() : '-'}</p>
@@ -360,9 +360,9 @@ const UserBorrowsDetailPage: React.FC = () => {
                             return (
                                 <li key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
                                     <div className="flex flex-col sm:flex-row gap-4">
-                                        <img src={item.book.coverImage || 'https://via.placeholder.com/80x120'} alt={item.book.title} className="w-20 h-28 object-cover rounded-md shadow flex-shrink-0" />
+                                        <img src={item.book?.coverImage || 'https://via.placeholder.com/80x120'} alt={item.book?.title} className="w-20 h-28 object-cover rounded-md shadow flex-shrink-0" />
                                         <div className="flex-1">
-                                            <p className="font-bold text-lg text-gray-800 mb-2">{item.book.title}</p>
+                                            <p className="font-bold text-lg text-gray-800 mb-2">{item.book?.title || 'Bilinmeyen Kitap'}</p>
                                             <div className="space-y-1 text-sm text-gray-600 mb-2">
                                                 <p>Ödünç: {item.borrowDate ? new Date(item.borrowDate.seconds * 1000).toLocaleDateString() : '-'}</p>
                                                 <p>Teslim: {item.returnDate ? new Date(item.returnDate.seconds * 1000).toLocaleDateString() : '-'}</p>

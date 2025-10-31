@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Bell, BellOff, User, Award, Calendar, Mail, GraduationCap, Hash, Clock, Target } from 'lucide-react';
+import { ChevronLeft, Bell, BellOff, User, Award, Calendar, Mail, GraduationCap, Hash, Clock, Target, CreditCard, Download, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGoals } from '../contexts/GoalsContext';
 import ReadingGoalsModal from '../components/common/ReadingGoalsModal';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
+import { doc, getDoc } from 'firebase/firestore';
+import { db, functions } from '../firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import html2canvas from 'html2canvas';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +18,10 @@ const SettingsPage: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isNative, setIsNative] = useState(false);
   const [showReadingGoalsModal, setShowReadingGoalsModal] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [cardTemplate, setCardTemplate] = useState<any>(null);
+  const [loadingCard, setLoadingCard] = useState(true);
+  const [downloadingCard, setDownloadingCard] = useState(false);
 
   useEffect(() => {
     const checkNotificationStatus = async () => {
@@ -25,7 +33,60 @@ const SettingsPage: React.FC = () => {
     };
     checkNotificationStatus();
     fetchGoals();
+    loadLibraryCard();
   }, [fetchGoals]);
+
+  const loadLibraryCard = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      setLoadingCard(true);
+      
+      // QR kod oluştur
+      const generateQR = httpsCallable(functions, 'generateLibraryCardQR');
+      const result = await generateQR({ userId: user.uid }) as any;
+      setQrCode(result.data.qrCode);
+      
+      // Şablon yükle
+      const templateDoc = await getDoc(doc(db, 'cardTemplates', userData?.campusId || ''));
+      if (templateDoc.exists()) {
+        setCardTemplate(templateDoc.data());
+      } else {
+        // Varsayılan şablon
+        setCardTemplate({
+          primaryColor: '#6366f1',
+          secondaryColor: '#8b5cf6',
+          textColor: '#ffffff',
+          logoUrl: 'https://r.resimlink.com/BJq8au6HpG.png',
+          schoolName: 'Okul Kütüphanesi',
+          showLogo: true,
+          showPhoto: true
+        });
+      }
+    } catch (error) {
+      console.error('Kart yüklenemedi:', error);
+    } finally {
+      setLoadingCard(false);
+    }
+  };
+
+  const downloadCard = async () => {
+    const cardElement = document.getElementById('digital-library-card');
+    if (!cardElement) return;
+
+    setDownloadingCard(true);
+    try {
+      const canvas = await html2canvas(cardElement, { scale: 2 });
+      const link = document.createElement('a');
+      link.download = `${userData?.displayName}-kutuphane-karti.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    } catch (error) {
+      console.error('Kart indirilemedi:', error);
+    } finally {
+      setDownloadingCard(false);
+    }
+  };
 
   const toggleNotifications = async () => {
     if (!isNative) return;
@@ -247,6 +308,83 @@ const SettingsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Dijital Kütüphane Kartım */}
+        <div className="mt-6 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/20">
+          <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
+              Dijital Kütüphane Kartım
+            </h3>
+            <button
+              onClick={downloadCard}
+              disabled={downloadingCard || loadingCard}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center disabled:opacity-50"
+            >
+              {downloadingCard ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+              {downloadingCard ? 'İndiriliyor...' : 'PNG İndir'}
+            </button>
+          </div>
+          <div className="p-4 sm:p-6">
+            {loadingCard ? (
+              <div className="flex justify-center py-12">
+                <Loader className="w-8 h-8 animate-spin text-indigo-600" />
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div 
+                  id="digital-library-card"
+                  className="relative w-[340px] h-[212px] rounded-2xl shadow-2xl p-4" 
+                  style={{ background: `linear-gradient(to bottom right, ${cardTemplate?.primaryColor || '#6366f1'}, ${cardTemplate?.secondaryColor || '#8b5cf6'})` }}
+                >
+                  <div className="rounded-xl p-2 mb-3 flex items-center justify-center gap-2" style={{ background: `linear-gradient(to right, ${cardTemplate?.secondaryColor || '#8b5cf6'}, ${cardTemplate?.primaryColor || '#6366f1'})` }}>
+                    {cardTemplate?.showLogo && cardTemplate?.logoUrl && (
+                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center p-0.5">
+                        <img src={cardTemplate.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+                    <h4 className="font-bold text-sm" style={{ color: cardTemplate?.textColor || '#ffffff' }}>KÜTÜPHANE KARTI</h4>
+                  </div>
+                  <div className="flex gap-3 items-start">
+                    <div className="bg-white rounded-xl p-2 flex items-center justify-center flex-shrink-0">
+                      {qrCode ? (
+                        <img src={qrCode} alt="QR" className="w-20 h-20" />
+                      ) : (
+                        <Loader className="w-20 h-20 animate-spin text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0" style={{ color: cardTemplate?.textColor || '#ffffff' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-bold text-sm truncate flex-1">{userData?.displayName}</p>
+                        {cardTemplate?.showPhoto && userData?.photoURL && (
+                          <img 
+                            src={userData.photoURL} 
+                            alt="Profil" 
+                            className="w-10 h-10 rounded-full border-2 object-cover flex-shrink-0"
+                            style={{ borderColor: cardTemplate?.textColor || '#ffffff' }}
+                          />
+                        )}
+                      </div>
+                      <p className="text-xs opacity-90">No: {userData?.studentNumber}</p>
+                      <p className="text-xs opacity-90">Sınıf: {userData?.studentClass}</p>
+                      <p className="text-xs opacity-75 mt-2">{cardTemplate?.schoolName || 'Okul Kütüphanesi'}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>İpuçları:</strong>
+                  </p>
+                  <ul className="mt-2 text-sm text-blue-700 space-y-1 ml-4 list-disc">
+                    <li>Bu kartı hızlı ödünç işlemlerinde kullanabilirsiniz</li>
+                    <li>QR kodu kütüphane personeline göstererek kitap alabilirsiniz</li>
+                    <li>Kartınızı PNG olarak indirip telefonunuzda saklayabilirsiniz</li>
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

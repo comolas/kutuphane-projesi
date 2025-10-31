@@ -91,44 +91,44 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, userId, onC
         </div>
         <div className="p-6 overflow-y-auto">
           {loading ? (
-            <p>Yükleniyor...</p>
+            <p className="text-sm sm:text-base">Yükleniyor...</p>
           ) : user ? (
             <div>
-              <div className="mb-6">
-                <h4 className="text-md font-semibold text-gray-800 mb-2">Kullanıcı Bilgileri</h4>
-                <p><strong>Ad Soyad:</strong> {user.displayName}</p>
-                <p><strong>Sınıf:</strong> {user.studentClass}</p>
-                <p><strong>Okul Numarası:</strong> {user.studentNumber}</p>
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Rol:</strong> {user.role}</p>
+              <div className="mb-4 sm:mb-6">
+                <h4 className="text-sm sm:text-base font-semibold text-gray-800 mb-2">Kullanıcı Bilgileri</h4>
+                <p className="text-xs sm:text-sm mb-1"><strong>Ad Soyad:</strong> {user.displayName}</p>
+                <p className="text-xs sm:text-sm mb-1"><strong>Sınıf:</strong> {user.studentClass}</p>
+                <p className="text-xs sm:text-sm mb-1"><strong>Okul Numarası:</strong> {user.studentNumber}</p>
+                <p className="text-xs sm:text-sm mb-1"><strong>Email:</strong> {user.email}</p>
+                <p className="text-xs sm:text-sm"><strong>Rol:</strong> {user.role}</p>
               </div>
               <div>
-                <h4 className="text-md font-semibold text-gray-800 mb-2">Ödünç Alınan Kitaplar ({borrowedBooks.length})</h4>
-                <div className="space-y-4">
+                <h4 className="text-sm sm:text-base font-semibold text-gray-800 mb-2">Ödünç Alınan Kitaplar ({borrowedBooks.length})</h4>
+                <div className="space-y-3 sm:space-y-4">
                   {borrowedBooks.length > 0 ? (
                     borrowedBooks.map(book => (
-                      <div key={book.id} className="p-4 border rounded-lg">
-                        <p><strong>Kitap Adı:</strong> {book.title}</p>
-                        <p><strong>Yazar:</strong> {book.author}</p>
-                        <p><strong>Alınma Tarihi:</strong> {formatDate(book.borrowedAt)}</p>
-                        <p><strong>Teslim Tarihi:</strong> {formatDate(book.dueDate)}</p>
-                        <p><strong>İade Durumu:</strong> {book.returnStatus === 'returned' ? `İade Edildi (${formatDate(book.returnedAt)})` : 'Ödünç Alındı'}</p>
+                      <div key={book.id} className="p-3 sm:p-4 border rounded-lg">
+                        <p className="text-xs sm:text-sm mb-1"><strong>Kitap Adı:</strong> {book.title}</p>
+                        <p className="text-xs sm:text-sm mb-1"><strong>Yazar:</strong> {book.author}</p>
+                        <p className="text-xs sm:text-sm mb-1"><strong>Alınma Tarihi:</strong> {formatDate(book.borrowedAt)}</p>
+                        <p className="text-xs sm:text-sm mb-1"><strong>Teslim Tarihi:</strong> {formatDate(book.dueDate)}</p>
+                        <p className="text-xs sm:text-sm"><strong>İade Durumu:</strong> {book.returnStatus === 'returned' ? `İade Edildi (${formatDate(book.returnedAt)})` : 'Ödünç Alındı'}</p>
                       </div>
                     ))
                   ) : (
-                    <p>Bu kullanıcı hiç kitap ödünç almamış.</p>
+                    <p className="text-xs sm:text-sm">Bu kullanıcı hiç kitap ödünç almamış.</p>
                   )}
                 </div>
               </div>
             </div>
           ) : (
-            <p>Kullanıcı bulunamadı.</p>
+            <p className="text-sm sm:text-base">Kullanıcı bulunamadı.</p>
           )}
         </div>
-        <div className="p-4 border-t border-gray-200 flex justify-end">
+        <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-semibold min-h-[44px]"
           >
             Kapat
           </button>

@@ -3,12 +3,14 @@ import { Eye, EyeOff } from 'lucide-react';
 import Button from '../common/Button';
 import FormInput from '../common/FormInput';
 import { validateEmail, validatePassword, validateName, validateStudentNumber, validateClass } from '../../utils/validation';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import Swal from 'sweetalert2';
 
 interface Campus {
   id: string;
   name: string;
+  code?: string;
   classes?: string[];
   branches?: string[];
 }
@@ -43,6 +45,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [campusId, setCampusId] = useState('');
+  const [campusCode, setCampusCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
@@ -55,6 +58,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     email?: string;
     password?: string;
     campusId?: string;
+    campusCode?: string;
   }>({});
 
   useEffect(() => {
@@ -66,6 +70,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           return {
             id: doc.id,
             name: data.name || 'İsimsiz Kampüs',
+            code: data.code || '',
             classes: data.classes || [],
             branches: data.branches || []
           };
@@ -125,14 +130,70 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       newErrors.campusId = 'Kampüs seçimi gereklidir';
     }
     
+    // Kampüs kodu validation
+    if (!campusCode.trim()) {
+      newErrors.campusCode = 'Kampüs kodu gereklidir';
+    } else {
+      const selectedCampus = campuses.find(c => c.id === campusId);
+      if (selectedCampus && selectedCampus.code && campusCode.toUpperCase() !== selectedCampus.code.toUpperCase()) {
+        newErrors.campusCode = 'Kampüs kodu hatalı';
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
+    if (!validateForm()) return;
+
+    // E-posta domain kontrolü
+    const allowedDomains = ['gmail.com', 'hotmail.com', 'icloud.com', 'proton.me', 'protonmail.com'];
+    const emailDomain = email.toLowerCase().split('@')[1];
+    
+    if (!allowedDomains.includes(emailDomain)) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Geçersiz E-posta',
+        text: 'Sadece Gmail, Hotmail, iCloud ve Proton e-posta adreslerine izin verilmektedir.'
+      });
+      return;
+    }
+
+    // allowedUsers kontrolü
+    try {
+      const q = query(
+        collection(db, 'allowedUsers'),
+        where('campusId', '==', campusId)
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      // Manuel filtreleme - büyük/küçük harf duyarsız
+      const matchingUser = snapshot.docs.find(doc => {
+        const data = doc.data();
+        return (
+          String(data.firstName || '').toLowerCase().trim() === firstName.toLowerCase().trim() &&
+          String(data.lastName || '').toLowerCase().trim() === lastName.toLowerCase().trim() &&
+          String(data.studentClass || '').trim() === studentClass.trim() &&
+          String(data.studentNumber || '').trim() === studentNumber.trim()
+        );
+      });
+      
+      if (!matchingUser) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Kayıt Başarısız',
+          text: 'Girdiğiniz bilgiler sistemde kayıtlı değil. Lütfen bilgilerinizi kontrol edin veya okul yönetimiyle iletişime geçin.'
+        });
+        return;
+      }
+      
       onSubmit(`${firstName} ${lastName}`, email, password, studentClass, studentNumber, campusId);
+    } catch (error) {
+      console.error('Doğrulama hatası:', error);
+      Swal.fire('Hata!', 'Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
     }
   };
 
@@ -156,7 +217,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   };
   
   const canProceedToStep2 = firstName.trim() && lastName.trim();
-  const canProceedToStep3 = campusId && studentClass && (studentClass !== 'Öğretmen' ? studentNumber.trim() : studentNumber.trim());
+  const canProceedToStep3 = campusId && campusCode.trim() && studentClass && (studentClass !== 'Öğretmen' ? studentNumber.trim() : studentNumber.trim());
   const canSubmit = email.trim() && password.trim();
 
   return (
@@ -267,6 +328,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 
                 setStudentClass('');
                 setStudentNumber('');
+                setCampusCode('');
               }}
               error={errors.campusId}
               icon="building"
@@ -277,6 +339,19 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 <option key={campus.id} value={campus.id}>{campus.name}</option>
               ))}
             </FormInput>
+            
+            {campusId && (
+              <FormInput
+                label="Kampüs Kodu"
+                type="text"
+                value={campusCode}
+                onChange={(e) => setCampusCode(e.target.value.toUpperCase())}
+                error={errors.campusCode}
+                placeholder="Kampüs kodunu girin"
+                icon="key"
+                required
+              />
+            )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormInput

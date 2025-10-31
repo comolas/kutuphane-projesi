@@ -300,7 +300,7 @@ const CatalogPage: React.FC = () => {
 
         <div className="flex gap-6">
           {/* Sidebar */}
-          <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 ${
+          <aside className={`fixed lg:sticky top-0 left-0 h-full lg:h-auto w-80 lg:w-64 bg-white/90 backdrop-blur-xl lg:rounded-2xl shadow-lg p-4 sm:p-6 z-50 transition-transform duration-300 overflow-y-auto ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           } lg:flex-shrink-0 border border-white/20`}>
               <div className="flex justify-between items-center mb-4 sm:mb-6">
@@ -357,7 +357,7 @@ const CatalogPage: React.FC = () => {
                 {/* Category Filter */}
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Kategori</h3>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
                         type="radio"
@@ -369,7 +369,7 @@ const CatalogPage: React.FC = () => {
                       <span className="text-sm">Tümü</span>
                     </label>
                     {categories.map(category => (
-                      <label key={category} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                      <label key={category} className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                         <input
                           type="radio"
                           name="category"
@@ -387,7 +387,7 @@ const CatalogPage: React.FC = () => {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Durum</h3>
                   <div className="space-y-2">
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
                         type="radio"
                         name="availability"
@@ -397,7 +397,7 @@ const CatalogPage: React.FC = () => {
                       />
                       <span className="text-sm">Tümü</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
                         type="radio"
                         name="availability"
@@ -407,7 +407,7 @@ const CatalogPage: React.FC = () => {
                       />
                       <span className="text-sm text-green-600">● Müsait</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
                         type="radio"
                         name="availability"
@@ -417,7 +417,7 @@ const CatalogPage: React.FC = () => {
                       />
                       <span className="text-sm text-orange-600">● Ödünç Verilmiş</span>
                     </label>
-                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
                         type="radio"
                         name="availability"
@@ -489,7 +489,7 @@ const CatalogPage: React.FC = () => {
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden animate-pulse border border-white/20">
                     <div className="w-full aspect-[2/3] bg-gradient-to-br from-gray-200 to-gray-300"></div>
@@ -516,7 +516,7 @@ const CatalogPage: React.FC = () => {
                 <p className="text-gray-500">Aradığınız kriterlere uygun kitap bulunmuyor.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {paginatedBooks.map((book, index) => {
                   const bookStatus = getBookStatus(book.id);
                   const hasPendingRequest = borrowMessages.some(m => 
@@ -552,7 +552,7 @@ const CatalogPage: React.FC = () => {
                         </div>
                         <button
                           onClick={() => handleToggleFavorite(book.id)}
-                          className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 backdrop-blur-sm rounded-full text-gray-600 hover:text-red-500 transition-all duration-300 hover:scale-110 shadow-md"
+                          className="absolute top-2 right-2 z-10 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-600 hover:text-red-500 transition-all duration-300 hover:scale-110 shadow-md min-h-[44px] min-w-[44px] flex items-center justify-center"
                         >
                           <Heart className={`w-5 h-5 transition-all ${userFavorites.includes(book.id) ? 'text-red-500 fill-current scale-110' : ''}`} />
                         </button>
@@ -566,7 +566,7 @@ const CatalogPage: React.FC = () => {
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                             <button
                               onClick={() => handleInspectReviews(book)}
-                              className="w-full px-3 py-2 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
+                              className="w-full px-3 py-2.5 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center min-h-[44px]"
                             >
                               <MessageSquare className="w-3 h-3 mr-1" />
                               Yorumlar
@@ -574,7 +574,7 @@ const CatalogPage: React.FC = () => {
                             {isTeacher && (
                               <button
                                 onClick={() => { setBookToRecommend(book); setShowRecommendModal(true); }}
-                                className="w-full px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                                className="w-full px-3 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-h-[44px]"
                               >
                                 <UserPlus className="w-3 h-3 mr-1" />
                                 Öğrenciye Öner
@@ -584,14 +584,14 @@ const CatalogPage: React.FC = () => {
                               <>
                                 <button
                                   onClick={() => handleInspectBook(book)}
-                                  className="w-full px-3 py-2 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center"
+                                  className="w-full px-3 py-2.5 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center min-h-[44px]"
                                 >
                                   <Eye className="w-3 h-3 mr-1" />
                                   İncele
                                 </button>
                                 <button
                                   onClick={() => handleBorrowRequest(book)}
-                                  className="w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all"
+                                  className="w-full px-3 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all min-h-[44px]"
                                 >
                                   Ödünç Al
                                 </button>
@@ -628,17 +628,17 @@ const CatalogPage: React.FC = () => {
                 <button
                   onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                  className="px-4 sm:px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium min-h-[44px]"
                 >
                   Önceki
                 </button>
-                <span className="px-3 sm:px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-sm sm:text-base text-gray-700 font-semibold shadow-lg">
+                <span className="px-3 sm:px-4 py-2.5 bg-white/60 backdrop-blur-xl rounded-xl text-sm sm:text-base text-gray-700 font-semibold shadow-lg">
                   Sayfa {currentPage} / {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
+                  className="px-4 sm:px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium min-h-[44px]"
                 >
                   Sonraki
                 </button>
@@ -650,9 +650,9 @@ const CatalogPage: React.FC = () => {
 
       {/* Book Details Modal */}
       {showBookDetails && selectedBook && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-0 md:p-4">
-          <div className="bg-white w-full h-full md:max-w-6xl md:h-[95vh] md:rounded-2xl shadow-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-6 flex justify-between items-center">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
+          <div className="bg-white w-full h-full shadow-2xl overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-6 flex justify-between items-center flex-shrink-0">
               <h2 className="text-2xl font-bold text-white flex items-center">
                 <BookOpen className="w-6 h-6 mr-2" />
                 Kitap Detayları
@@ -665,7 +665,7 @@ const CatalogPage: React.FC = () => {
               </button>
             </div>
             
-            <div className="flex flex-col md:flex-row h-[calc(100%-80px)]">
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
               {/* Left Side */}
               <div className="md:w-2/5 bg-gradient-to-br from-gray-100 to-gray-200 p-4 sm:p-8 flex flex-col items-center justify-center">
                 <div className="relative mb-4 sm:mb-6">
@@ -713,7 +713,7 @@ const CatalogPage: React.FC = () => {
                       handleBorrowRequest(selectedBook);
                       setShowBookDetails(false);
                     }}
-                    className="w-full max-w-xs px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                    className="w-full max-w-xs px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all min-h-[44px]"
                   >
                     Ödünç Al
                   </button>
@@ -721,7 +721,7 @@ const CatalogPage: React.FC = () => {
               </div>
 
               {/* Right Side */}
-              <div className="md:w-3/5 overflow-y-auto p-4 sm:p-8 space-y-4 sm:space-y-8">
+              <div className="md:w-3/5 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 md:space-y-8">
                 <div>
                   <h3 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">{selectedBook.title}</h3>
                   <p className="text-lg sm:text-xl text-gray-600 mb-1">{selectedBook.author}</p>
@@ -779,7 +779,7 @@ const CatalogPage: React.FC = () => {
                             <p className="text-xs text-gray-600 line-clamp-1">{book.author}</p>
                             <button
                               onClick={() => handleBorrowRequest(book as Book)}
-                              className="mt-2 w-full px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-xs font-semibold hover:shadow-md transition-all"
+                              className="mt-2 w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-xs font-semibold hover:shadow-md transition-all min-h-[44px]"
                             >
                               Ödünç Al
                             </button>

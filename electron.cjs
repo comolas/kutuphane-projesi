@@ -5,15 +5,16 @@ const path = require('path');
 const { ipcMain } = require('electron');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc } = require('firebase/firestore');
+require('dotenv').config();
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
-  apiKey: "AIzaSyD8YMDfxMgJkIyTI9WCtZRfXthUUpP5vPM",
-  authDomain: "data-49543.firebaseapp.com",
-  projectId: "data-49543",
-  storageBucket: "data-49543.appspot.com",
-  messagingSenderId: "172190505514",
-  appId: "1:172190505514:web:4b222b7ce52dbaeddb0153"
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase

@@ -544,14 +544,14 @@ const BlogManagementTab: React.FC = () => {
 
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar Filters */}
         <div className="w-full lg:w-80 flex-shrink-0">
-          <div className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-80 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 z-50 transition-transform duration-300 ${
+          <div className={`fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-full lg:w-80 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6 z-40 transition-transform duration-300 ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           } lg:top-6`}>
             <div className="flex items-center justify-between mb-6">
@@ -718,10 +718,10 @@ const BlogManagementTab: React.FC = () => {
       
       {/* Enhanced Modal */}
       {viewingPost && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={() => { setViewingPost(null); setModalTab('preview'); }}>
-          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden transform transition-all duration-300 animate-slideUp" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-[9999] flex items-center justify-center p-0 animate-fadeIn" onClick={() => { setViewingPost(null); setModalTab('preview'); }}>
+          <div className="bg-gradient-to-br from-white to-indigo-50 w-full h-full overflow-y-auto transform transition-all duration-300" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 flex-shrink-0">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-3">
                   <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
