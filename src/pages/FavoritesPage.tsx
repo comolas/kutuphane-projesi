@@ -79,7 +79,7 @@ const FavoritesPage: React.FC = () => {
           const booksSnapshot = await getDocs(booksQuery);
           const booksData = booksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as BookType[];
 
-          const favoritedDetailsMap = new Map(favoritedItems.map(item => [item.bookId, { favoriteId: item.favoriteId, favoritedAt: item.favoritedAt.toDate(), note: item.note, shelves: item.shelves || [] }]));
+          const favoritedDetailsMap = new Map(favoritedItems.map(item => [item.bookId, { favoriteId: item.favoriteId, favoritedAt: item.favoritedAt?.toDate() || new Date(), note: item.note, shelves: item.shelves || [] }]));
 
           const combinedBookData = booksData.map(book => ({
             ...book,

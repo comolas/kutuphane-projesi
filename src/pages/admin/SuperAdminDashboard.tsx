@@ -30,18 +30,20 @@ interface PerformanceMetric {
 
 type TabType = 'dashboard' | 'campuses' | 'users' | 'reports' | 'settings' | 'allowedUsers';
 
-const StatCard = ({ title, value, icon: Icon, loading }: { title: string; value: number; icon: any; loading?: boolean }) => (
-  <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow">
+const StatCard = ({ title, value, icon: Icon, loading, gradient }: { title: string; value: number; icon: any; loading?: boolean; gradient: string }) => (
+  <div className={`bg-gradient-to-br ${gradient} p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300`}>
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider">{title}</h3>
+        <p className="text-xs sm:text-sm font-medium text-white/90">{title}</p>
         {loading ? (
-          <div className="mt-2 h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+          <div className="mt-2 h-8 w-16 bg-white/20 rounded animate-pulse"></div>
         ) : (
-          <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+          <p className="text-xl sm:text-3xl font-bold text-white mt-1 sm:mt-2">{value}</p>
         )}
       </div>
-      <Icon className="w-12 h-12 text-indigo-600 opacity-20" />
+      <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4">
+        <Icon className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
+      </div>
     </div>
   </div>
 );
@@ -322,13 +324,13 @@ const SuperAdminDashboard: React.FC = () => {
         {activeTab === 'allowedUsers' && <AllowedUsersTab />}
         {activeTab === 'dashboard' && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6 mb-6 sm:mb-8">
-              <StatCard title="Toplam Kampüs" value={stats.totalCampuses} icon={Building2} loading={loading} />
-              <StatCard title="Toplam Admin" value={stats.totalAdmins} icon={UserCog} loading={loading} />
-              <StatCard title="Toplam Öğretmen" value={stats.totalTeachers} icon={GraduationCap} loading={loading} />
-              <StatCard title="Toplam Kullanıcı" value={stats.totalUsers} icon={Users} loading={loading} />
-              <StatCard title="Toplam Kitap" value={stats.totalBooks} icon={BookOpen} loading={loading} />
-              <StatCard title="Aktif Ödünç" value={stats.activeBorrows} icon={Clock} loading={loading} />
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-6 mb-6 sm:mb-8 animate-fadeIn">
+              <StatCard title="Toplam Kampüs" value={stats.totalCampuses} icon={Building2} loading={loading} gradient="from-indigo-500 to-purple-600" />
+              <StatCard title="Toplam Admin" value={stats.totalAdmins} icon={UserCog} loading={loading} gradient="from-blue-500 to-cyan-600" />
+              <StatCard title="Toplam Öğretmen" value={stats.totalTeachers} icon={GraduationCap} loading={loading} gradient="from-green-500 to-emerald-600" />
+              <StatCard title="Toplam Kullanıcı" value={stats.totalUsers} icon={Users} loading={loading} gradient="from-yellow-500 to-orange-600" />
+              <StatCard title="Toplam Kitap" value={stats.totalBooks} icon={BookOpen} loading={loading} gradient="from-purple-500 to-pink-600" />
+              <StatCard title="Aktif Ödünç" value={stats.activeBorrows} icon={Clock} loading={loading} gradient="from-rose-500 to-red-600" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">

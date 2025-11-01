@@ -864,9 +864,13 @@ export const imageProxy = onRequest({ cors: true }, async (req, res) => {
 
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import QRCode from "qrcode";
+import * as crypto from "crypto";
 
 import { defineSecret } from "firebase-functions/params";
 import { sanitizeInput, validateMessage, validateEmail, MIN_MESSAGE_LENGTH } from "./security";
+
+// QR kod şifreleme için secret key
+const qrEncryptionKey = defineSecret("QR_ENCRYPTION_KEY");
 
 // AWS kimlik bilgileri Secret Manager'dan alınıyor (güvenli)
 const awsAccessKeyId = defineSecret("AWS_ACCESS_KEY_ID");
@@ -2397,13 +2401,38 @@ export const getChatHistory = onCall(async (request: any) => {
   }
 });
 
+// QR kod şifreleme fonksiyonları
+function encryptQRData(data: string, key: string): string {
+  const algorithm = 'aes-256-cbc';
+  const keyBuffer = crypto.createHash('sha256').update(key).digest();
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv);
+  let encrypted = cipher.update(data, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
+}
+
+function decryptQRData(encryptedData: string, key: string): string {
+  const algorithm = 'aes-256-cbc';
+  const keyBuffer = crypto.createHash('sha256').update(key).digest();
+  const parts = encryptedData.split(':');
+  const iv = Buffer.from(parts[0], 'hex');
+  const encrypted = parts[1];
+  const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv);
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+
 // Kütüphane kartı için QR kod oluştur
-export const generateLibraryCardQR = onCall(async (request: any) => {
+export const generateLibraryCardQR = onCall(
+  { secrets: [qrEncryptionKey] },
+  async (request: any) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
   }
 
-  const { userId } = request.data;
+  const { userId, encrypted = false } = request.data;
 
   if (!userId) {
     throw new HttpsError("invalid-argument", "Kullanıcı ID'si gerekli.");
@@ -2423,19 +2452,206 @@ export const generateLibraryCardQR = onCall(async (request: any) => {
     }
 
     const userData = userDoc.data()!;
-    const qrData = JSON.stringify({ userId, type: "library-card" });
+    const timestamp = Date.now();
+    const qrPayload = {
+      userId,
+      type: "library-card",
+      studentNumber: userData.studentNumber,
+      timestamp,
+      campusId: userData.campusId
+    };
+    
+    let qrData: string;
+    if (encrypted) {
+      // Şifreli QR kod
+      const encryptedPayload = encryptQRData(JSON.stringify(qrPayload), qrEncryptionKey.value());
+      qrData = `ENC:${encryptedPayload}`;
+    } else {
+      // Normal QR kod
+      qrData = JSON.stringify(qrPayload);
+    }
+    
     const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 300, margin: 1 });
+
+    // QR kod bilgisini kaydet
+    await db.collection("libraryCards").doc(userId).set({
+      userId,
+      encrypted,
+      generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
 
     return {
       qrCode: qrCodeDataURL,
       userName: userData.displayName,
       studentNumber: userData.studentNumber,
       studentClass: userData.studentClass,
+      encrypted
     };
   } catch (error) {
     const err = error as any;
     logger.error("Error generating library card QR", { code: err.code });
     throw new HttpsError("internal", "QR kod oluşturulurken hata oluştu.");
+  }
+});
+
+// QR kod doğrulama (kütüphane girişinde kullanılır)
+export const verifyLibraryCardQR = onCall(
+  { secrets: [qrEncryptionKey] },
+  async (request: any) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  }
+
+  if (request.auth?.token.role !== "admin") {
+    throw new HttpsError("permission-denied", "Bu işlemi sadece adminler yapabilir.");
+  }
+
+  const { qrData } = request.data;
+
+  if (!qrData) {
+    throw new HttpsError("invalid-argument", "QR kod verisi gerekli.");
+  }
+
+  try {
+    let payload: any;
+    
+    if (qrData.startsWith('ENC:')) {
+      // Şifreli QR kod
+      const encryptedData = qrData.substring(4);
+      const decryptedData = decryptQRData(encryptedData, qrEncryptionKey.value());
+      payload = JSON.parse(decryptedData);
+    } else {
+      // Normal QR kod
+      payload = JSON.parse(qrData);
+    }
+
+    // Payload doğrulama
+    if (!payload.userId || payload.type !== 'library-card') {
+      throw new HttpsError("invalid-argument", "Geçersiz QR kod formatı.");
+    }
+
+    // Zaman damgası kontrolü (24 saat geçerliliği)
+    const now = Date.now();
+    const qrAge = now - (payload.timestamp || 0);
+    const maxAge = 24 * 60 * 60 * 1000; // 24 saat
+
+    if (qrAge > maxAge) {
+      throw new HttpsError("failed-precondition", "QR kod süresi dolmuş. Lütfen yeni bir kart oluşturun.");
+    }
+
+    // Kullanıcı bilgilerini getir
+    const db = admin.firestore();
+    const userDoc = await db.collection("users").doc(payload.userId).get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "Kullanıcı bulunamadı.");
+    }
+
+    const userData = userDoc.data()!;
+
+    // Kampüs kontrolü
+    const adminDoc = await db.collection("users").doc(request.auth.uid).get();
+    const adminCampusId = adminDoc.data()?.campusId;
+
+    if (userData.campusId !== adminCampusId) {
+      throw new HttpsError("permission-denied", "Bu kullanıcı farklı bir kampüse ait.");
+    }
+
+    // Aktif cezaları kontrol et
+    const penaltiesSnapshot = await db.collection("penalties")
+      .where("userId", "==", payload.userId)
+      .where("isPaid", "==", false)
+      .get();
+
+    const activePenalties = penaltiesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Aktif ödünç kitapları kontrol et
+    const borrowedBooksSnapshot = await db.collection("borrowedBooks")
+      .where("userId", "==", payload.userId)
+      .where("returnedAt", "==", null)
+      .get();
+
+    const activeBorrows = borrowedBooksSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Gecikmiş kitapları kontrol et
+    const overdueBooks = activeBorrows.filter(borrow => {
+      const dueDate = borrow.dueDate?.toDate();
+      return dueDate && dueDate < new Date();
+    });
+
+    return {
+      valid: true,
+      user: {
+        id: payload.userId,
+        name: userData.displayName,
+        studentNumber: userData.studentNumber,
+        studentClass: userData.studentClass,
+        photoURL: userData.photoURL,
+        level: userData.level || 1,
+        xp: userData.xp || 0
+      },
+      status: {
+        activePenalties: activePenalties.length,
+        totalPenaltyAmount: activePenalties.reduce((sum, p) => sum + (p.amount || 0), 0),
+        activeBorrows: activeBorrows.length,
+        overdueBooks: overdueBooks.length,
+        canBorrow: activePenalties.length === 0 && overdueBooks.length === 0
+      },
+      penalties: activePenalties,
+      borrows: activeBorrows,
+      overdueBooks
+    };
+  } catch (error) {
+    const err = error as any;
+    logger.error("Error verifying library card QR", { code: err.code, message: err.message });
+    
+    if (err.code) {
+      throw err;
+    }
+    
+    throw new HttpsError("internal", "QR kod doğrulanırken hata oluştu.");
+  }
+});
+
+// QR kod istatistikleri
+export const getQRCodeStats = onCall(async (request: any) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Giriş yapmalısınız.");
+  }
+
+  if (request.auth?.token.role !== "admin") {
+    throw new HttpsError("permission-denied", "Bu işlemi sadece adminler yapabilir.");
+  }
+
+  try {
+    const db = admin.firestore();
+    const adminDoc = await db.collection("users").doc(request.auth.uid).get();
+    const adminCampusId = adminDoc.data()?.campusId;
+
+    const cardsSnapshot = await db.collection("libraryCards")
+      .where("campusId", "==", adminCampusId)
+      .get();
+
+    const totalCards = cardsSnapshot.size;
+    const encryptedCards = cardsSnapshot.docs.filter(doc => doc.data().encrypted).length;
+    const normalCards = totalCards - encryptedCards;
+
+    return {
+      totalCards,
+      encryptedCards,
+      normalCards,
+      encryptionRate: totalCards > 0 ? ((encryptedCards / totalCards) * 100).toFixed(1) : "0"
+    };
+  } catch (error) {
+    logger.error("Error getting QR code stats", error);
+    throw new HttpsError("internal", "İstatistikler alınırken hata oluştu.");
   }
 });
 

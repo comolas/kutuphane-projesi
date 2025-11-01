@@ -1,0 +1,12 @@
+Gelişmiş Düzen Ayarları eklendi!
+
+Yeni özellikler:
+1. QR Kod Boyutu (küçük/orta/büyük)
+2. QR Kod Pozisyonu (sol/orta/sağ)
+3. Profil Fotoğrafı Boyutu (küçük/orta/büyük)
+4. Fotoğraf Pozisyonu (sol üst/sağ üst/sağ alt)
+5. Metin Hizalama (sola/ortala/sağa)
+6. Kart İç Boşluk (8-32px slider)
+
+Interface güncellemeleri tamamlandı.
+Şimdi UI bileşenlerini ve önizleme mantığını eklemek gerekiyor.

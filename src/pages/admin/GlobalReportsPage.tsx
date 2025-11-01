@@ -150,7 +150,7 @@ const GlobalReportsPage: React.FC = () => {
         const changes = detectChanges(oldReport, result.data);
         if (changes.length > 0) {
           setDataChanges(changes);
-          setTimeout(() => setDataChanges([]), 5000);
+          setTimeout(() => setDataChanges([]), 10000);
         }
       }
       
@@ -181,6 +181,7 @@ const GlobalReportsPage: React.FC = () => {
     if (!selectedReport) return;
     
     try {
+      alert('PDF oluşturuluyor, lütfen bekleyin...');
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.width;
       
@@ -225,6 +226,7 @@ const GlobalReportsPage: React.FC = () => {
       }
       
       pdf.save(`${selectedReport.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      setTimeout(() => alert('PDF başarıyla indirildi!'), 100);
     } catch (err) {
       console.error('PDF oluşturulurken hata:', err);
       alert('PDF oluşturulurken bir hata oluştu.');
@@ -245,72 +247,77 @@ const GlobalReportsPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <button 
-              onClick={() => navigate('/super-admin')}
-              className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-            >
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              <span className="hidden sm:inline">Geri Dön</span>
-            </button>
-            <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Global Raporlama</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Sistem genelinde detaylı analiz ve raporlar</p>
-            </div>
-          </div>
-          {selectedReport && (
-            <button 
-              onClick={refreshReport}
-              disabled={refreshing}
-              className="flex items-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm w-full sm:w-auto justify-center min-h-[44px]"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Yenileniyor...' : 'Veriyi Yenile'}
-            </button>
-          )}
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg mb-6 sm:mb-8">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">Filtreler</h3>
-          
-          {/* Date Range */}
-          <div className="mb-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Tarih Aralığı:</span>
+        <div className="mb-6 sm:mb-8 animate-fadeIn">
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <button 
+                onClick={() => navigate('/super-admin')}
+                className="p-2 hover:bg-indigo-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-indigo-600" />
+              </button>
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-xl">
+                <BarChart3 className="w-6 h-6 text-white" />
               </div>
-              <input
-                type="date"
-                value={dateRange.start}
-                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
-                max={new Date().toISOString().split('T')[0]}
-              />
-              <span className="text-gray-500">-</span>
-              <input
-                type="date"
-                value={dateRange.end}
-                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
-                max={new Date().toISOString().split('T')[0]}
-                min={dateRange.start}
-              />
-              {(dateRange.start || dateRange.end) && (
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Global Raporlama</h1>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <p className="text-gray-600 text-lg">Sistem genelinde detaylı analiz ve raporlar</p>
+              {selectedReport && (
                 <button 
-                  onClick={clearDateRange}
-                  className="px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm min-h-[44px]"
+                  onClick={refreshReport}
+                  disabled={refreshing}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 font-semibold min-h-[44px]"
                 >
-                  Temizle
+                  <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Yenileniyor...' : 'Veriyi Yenile'}
                 </button>
               )}
             </div>
           </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fadeIn">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">Filtreler</h3>
+          
+          {/* Date Range */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar className="w-5 h-5 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Tarih Aralığı</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
+                max={new Date().toISOString().split('T')[0]}
+                placeholder="Başlangıç"
+              />
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm min-h-[44px]"
+                max={new Date().toISOString().split('T')[0]}
+                min={dateRange.start}
+                placeholder="Bitiş"
+              />
+            </div>
+            {(dateRange.start || dateRange.end) && (
+              <button 
+                onClick={clearDateRange}
+                className="mt-2 w-full sm:w-auto px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm min-h-[44px]"
+              >
+                Temizle
+              </button>
+            )}
+          </div>
 
           {/* Additional Filters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {/* Campus Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -368,7 +375,7 @@ const GlobalReportsPage: React.FC = () => {
 
           {/* Active Filters Display */}
           {(dateRange.start || dateRange.end || filters.campus || filters.category || filters.userGroup) && (
-            <div className="mt-4 flex items-center gap-2 flex-wrap">
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
               <span className="text-sm font-medium text-gray-700">Aktif Filtreler:</span>
               {dateRange.start && dateRange.end && (
                 <span className="px-3 py-1 bg-blue-50 text-blue-800 rounded-full text-xs">
@@ -404,25 +411,39 @@ const GlobalReportsPage: React.FC = () => {
         </div>
 
         {/* Report Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {reportTypes.map((report) => {
             const Icon = report.icon;
+            const colorMap: Record<string, { bg: string; icon: string; gradient: string }> = {
+              blue: { bg: 'bg-blue-100', icon: 'text-blue-600', gradient: 'from-blue-500 to-cyan-600' },
+              green: { bg: 'bg-green-100', icon: 'text-green-600', gradient: 'from-green-500 to-emerald-600' },
+              purple: { bg: 'bg-purple-100', icon: 'text-purple-600', gradient: 'from-purple-500 to-pink-600' },
+              orange: { bg: 'bg-orange-100', icon: 'text-orange-600', gradient: 'from-orange-500 to-red-600' },
+              indigo: { bg: 'bg-indigo-100', icon: 'text-indigo-600', gradient: 'from-indigo-500 to-purple-600' },
+            };
+            const colors = colorMap[report.color] || colorMap.blue;
             return (
               <button
                 key={report.id}
                 onClick={() => report.available && generateReport(report.id)}
                 disabled={!report.available}
-                className={`bg-white p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all text-left ${
-                  report.available ? 'hover:scale-105 cursor-pointer' : 'opacity-50 cursor-not-allowed'
+                className={`relative bg-white/90 backdrop-blur-xl border-2 rounded-2xl shadow-lg p-6 text-left transition-all overflow-hidden group ${
+                  report.available ? 'border-white/20 hover:border-indigo-300 hover:shadow-2xl hover:scale-105 cursor-pointer' : 'border-gray-200 opacity-60 cursor-not-allowed'
                 }`}
               >
-                <div className={`w-12 h-12 bg-${report.color}-100 rounded-lg flex items-center justify-center mb-4`}>
-                  <Icon className={`w-6 h-6 text-${report.color}-600`} />
+                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colors.gradient} opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500`}></div>
+                <div className={`relative w-14 h-14 bg-gradient-to-br ${colors.gradient} rounded-xl flex items-center justify-center mb-4 shadow-md group-hover:shadow-lg transition-all`}>
+                  <Icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-2">{report.title}</h3>
-                <p className="text-xs sm:text-sm text-gray-600">{report.description}</p>
+                <h3 className="relative text-base font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">{report.title}</h3>
+                <p className="relative text-sm text-gray-600 leading-relaxed">{report.description}</p>
                 {!report.available && (
-                  <span className="inline-block mt-2 text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">Yakında</span>
+                  <div className="absolute top-4 right-4">
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-white bg-gradient-to-r from-gray-500 to-gray-600 px-3 py-1.5 rounded-full shadow-md">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>
+                      Yakında
+                    </span>
+                  </div>
                 )}
               </button>
             );
@@ -575,22 +596,22 @@ const GlobalReportsPage: React.FC = () => {
 
             {/* Visualization Controls */}
             <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Grafik Türü:</span>
-                  <div className="flex gap-2">
-                    <button onClick={() => setChartType('bar')} className={`px-3 py-1 rounded text-sm min-h-[44px] ${chartType === 'bar' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Çubuk</button>
-                    <button onClick={() => setChartType('line')} className={`px-3 py-1 rounded text-sm min-h-[44px] ${chartType === 'line' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Çizgi</button>
-                    <button onClick={() => setChartType('pie')} className={`px-3 py-1 rounded text-sm min-h-[44px] ${chartType === 'pie' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Pasta</button>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block mb-2">Grafik Türü</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button onClick={() => setChartType('bar')} className={`px-3 py-2 rounded text-sm min-h-[44px] transition-all ${chartType === 'bar' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>Çubuk</button>
+                    <button onClick={() => setChartType('line')} className={`px-3 py-2 rounded text-sm min-h-[44px] transition-all ${chartType === 'line' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>Çizgi</button>
+                    <button onClick={() => setChartType('pie')} className={`px-3 py-2 rounded text-sm min-h-[44px] transition-all ${chartType === 'pie' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>Pasta</button>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Renk Teması:</span>
-                  <div className="flex gap-2">
-                    <button onClick={() => setColorTheme('default')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'default' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'}} title="Varsayılan"></button>
-                    <button onClick={() => setColorTheme('warm')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'warm' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)'}} title="Sıcak"></button>
-                    <button onClick={() => setColorTheme('cool')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'cool' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)'}} title="Soğuk"></button>
-                    <button onClick={() => setColorTheme('mono')} className={`w-11 h-11 rounded border-2 ${colorTheme === 'mono' ? 'border-indigo-600' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #1f2937 0%, #9ca3af 100%)'}} title="Mono"></button>
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block mb-2">Renk Teması</span>
+                  <div className="grid grid-cols-4 gap-2">
+                    <button onClick={() => setColorTheme('default')} className={`h-11 rounded-lg border-2 transition-all ${colorTheme === 'default' ? 'border-indigo-600 scale-110' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'}} title="Varsayılan"></button>
+                    <button onClick={() => setColorTheme('warm')} className={`h-11 rounded-lg border-2 transition-all ${colorTheme === 'warm' ? 'border-indigo-600 scale-110' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)'}} title="Sıcak"></button>
+                    <button onClick={() => setColorTheme('cool')} className={`h-11 rounded-lg border-2 transition-all ${colorTheme === 'cool' ? 'border-indigo-600 scale-110' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)'}} title="Soğuk"></button>
+                    <button onClick={() => setColorTheme('mono')} className={`h-11 rounded-lg border-2 transition-all ${colorTheme === 'mono' ? 'border-indigo-600 scale-110' : 'border-gray-300'}`} style={{background: 'linear-gradient(135deg, #1f2937 0%, #9ca3af 100%)'}} title="Mono"></button>
                   </div>
                 </div>
               </div>
@@ -1414,7 +1435,7 @@ const GlobalReportsPage: React.FC = () => {
             {/* Data Table */}
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
               <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">Detaylı Veriler</h3>
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="overflow-x-auto -mx-4 sm:-mx-6">
                 {selectedReport.title.includes('Bütçe') ? (
                   <table className="min-w-full">
                     <thead>
@@ -1598,20 +1619,28 @@ const GlobalReportsPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white p-12 rounded-lg shadow-lg text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">Rapor Seçin</h3>
-            <p className="text-sm text-gray-500">Yukarıdaki kartlardan bir rapor türü seçerek başlayın</p>
+          <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-12 text-center animate-fadeIn">
+            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="w-12 h-12 text-indigo-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-3">Rapor Seçin</h3>
+            <p className="text-base text-gray-600 mb-6">Yukarıdaki kartlardan bir rapor türü seçerek detaylı analiz ve istatistiklere ulaşın</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">Kampüs Analizi</span>
+              <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">Kullanıcı Trendi</span>
+              <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">Kategori İstatistikleri</span>
+              <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-xs font-medium">Aktif Okuyucular</span>
+            </div>
           </div>
         )}
 
         {/* Fullscreen Chart Modal */}
         {fullscreenChart && (
-          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-8" onClick={() => setFullscreenChart(null)}>
-            <div className="bg-white rounded-lg w-full h-full max-w-7xl max-h-[90vh] p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4 sm:p-8" onClick={() => setFullscreenChart(null)}>
+            <div className="bg-white rounded-lg w-full h-full max-w-7xl max-h-[90vh] p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-800">Tam Ekran Görünüm</h3>
-                <button onClick={() => setFullscreenChart(null)} className="text-gray-500 hover:text-gray-700">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800">Tam Ekran Görünüm</h3>
+                <button onClick={() => setFullscreenChart(null)} className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
