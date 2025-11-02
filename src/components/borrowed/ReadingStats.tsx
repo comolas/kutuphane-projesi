@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Book } from '../../types';
 import {
   Chart as ChartJS,
@@ -46,6 +47,7 @@ const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string |
 );
 
 const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateModal }) => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const booksPerPage = 10;
 
@@ -161,8 +163,8 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
     return (
       <div className="bg-white rounded-xl shadow-sm p-8 text-center mt-6">
         <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz Okuma Geçmişiniz Yok</h3>
-        <p className="text-gray-600">Kitapları okuyup iade ettikçe, okuma karneniz burada oluşmaya başlayacak.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">{t('readingStats.noHistory')}</h3>
+        <p className="text-gray-600">{t('readingStats.noHistoryDesc')}</p>
       </div>
     );
   }
@@ -171,7 +173,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
     labels: Object.keys(stats.categoryCounts),
     datasets: [
       {
-        label: 'Okunan Kitap Sayısı',
+        label: t('readingStats.booksRead'),
         data: Object.values(stats.categoryCounts),
         backgroundColor: [
           '#4F46E5', '#7C3AED', '#EC4899', '#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6'
@@ -183,10 +185,10 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
   };
 
   const barChartData = {
-    labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+    labels: t('readingStats.months', { returnObjects: true }) as string[],
     datasets: [
       {
-        label: 'Okunan Kitap Sayısı',
+        label: t('readingStats.booksRead'),
         data: stats.monthlyDistribution,
         backgroundColor: 'rgba(79, 70, 229, 0.8)',
         borderRadius: 4,
@@ -199,27 +201,27 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
     <div className="mt-6 space-y-8">
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={<BookIcon className="w-12 h-12 text-white" />} label="Toplam Okunan Kitap" value={stats.totalBooksRead} gradient="bg-gradient-to-br from-blue-500 to-cyan-600" index={0} />
-        <StatCard icon={<BookOpen className="w-12 h-12 text-white" />} label="Toplam Okunan Sayfa" value={stats.totalPagesRead.toLocaleString()} gradient="bg-gradient-to-br from-green-500 to-emerald-600" index={1} />
-        <StatCard icon={<Clock className="w-12 h-12 text-white" />} label="Ortalama Okuma Süresi" value={`${stats.avgReadingDays} gün`} gradient="bg-gradient-to-br from-yellow-500 to-orange-600" index={2} />
-        <StatCard icon={<Star className="w-12 h-12 text-white" />} label="Favori Yazarınız" value={stats.favoriteAuthor} gradient="bg-gradient-to-br from-purple-500 to-indigo-600" index={3} />
+        <StatCard icon={<BookIcon className="w-12 h-12 text-white" />} label={t('readingStats.totalBooks')} value={stats.totalBooksRead} gradient="bg-gradient-to-br from-blue-500 to-cyan-600" index={0} />
+        <StatCard icon={<BookOpen className="w-12 h-12 text-white" />} label={t('readingStats.totalPages')} value={stats.totalPagesRead.toLocaleString()} gradient="bg-gradient-to-br from-green-500 to-emerald-600" index={1} />
+        <StatCard icon={<Clock className="w-12 h-12 text-white" />} label={t('readingStats.avgReadingTime')} value={t('readingStats.daysCount', { count: stats.avgReadingDays })} gradient="bg-gradient-to-br from-yellow-500 to-orange-600" index={2} />
+        <StatCard icon={<Star className="w-12 h-12 text-white" />} label={t('readingStats.favoriteAuthor')} value={stats.favoriteAuthor} gradient="bg-gradient-to-br from-purple-500 to-indigo-600" index={3} />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3 bg-white/90 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
-          <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Aylık Okuma Performansı</h3>
+          <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">{t('readingStats.monthlyPerformance')}</h3>
           <Bar data={barChartData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
         </div>
         <div className="lg:col-span-2 bg-white/90 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
-          <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Okunan Tür Dağılımı</h3>
+          <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">{t('readingStats.genreDistribution')}</h3>
           <Pie data={pieChartData} options={{ responsive: true }} />
         </div>
       </div>
 
       {/* Reading History Cards */}
       <div className="bg-white/90 backdrop-blur-xl border border-white/20 p-6 rounded-2xl shadow-xl">
-        <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Okuma Geçmişi</h3>
+        <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">{t('readingStats.readingHistory')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {currentHistoryBooks.map((book, index) => (
             <div 
@@ -237,7 +239,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
                 
                 {/* Okundu Badge */}
                 <div className="absolute top-3 right-3 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white backdrop-blur-xl shadow-lg">
-                  Okundu
+                  {t('readingStats.completed')}
                 </div>
               </div>
 
@@ -263,7 +265,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
                   className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center mt-auto"
                 >
                   <Edit className="w-4 h-4 mr-1.5" />
-                  Yorumla ve Puanla
+                  {t('readingStats.reviewAndRate')}
                 </button>
               </div>
             </div>
@@ -278,7 +280,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
                 className="px-4 py-2.5 rounded-xl bg-white/90 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all duration-300 shadow-lg font-medium"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Önceki
+                {t('common.previous')}
               </button>
               {generatePageNumbers().map((page, index) => {
                 if (page === '...') {
@@ -303,7 +305,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ returnedBooks, onOpenRateMo
                 disabled={currentPage === totalPages}
                 className="px-4 py-2.5 rounded-xl bg-white/90 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all duration-300 shadow-lg font-medium"
               >
-                Sonraki
+                {t('common.next')}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             </div>

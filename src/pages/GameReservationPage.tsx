@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useGames } from '../contexts/GameContext';
 import { useGameReservations } from '../contexts/GameReservationContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,12 +8,14 @@ import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, startOfToday } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 import tr from 'date-fns/locale/tr';
+import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { ArrowLeft } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const locales = {
   'tr': tr,
+  'en': enUS,
 };
 
 const localizer = dateFnsLocalizer({
@@ -35,6 +38,7 @@ const breakTimes = [
 ];
 
 const GameReservationPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { id: gameId } = useParams<{ id: string }>();
   const { games } = useGames();
   const { getReservationsForGame, createReservation, getUserActiveReservations, getUserLastReservationForGame } = useGameReservations();
@@ -74,7 +78,7 @@ const GameReservationPage: React.FC = () => {
         })
         .catch(error => {
           console.error("Error fetching reservations: ", error);
-          Swal.fire('Hata!', "Randevuları getirirken bir hata oluştu. Lütfen konsolu kontrol edin.", 'error');
+          Swal.fire(t('gameReservations.error'), t('gameReservations.errorFetchingReservations'), 'error');
         })
         .finally(() => {
           setLoadingSlots(false);
@@ -88,7 +92,7 @@ const GameReservationPage: React.FC = () => {
     // Check for active reservations
     const activeReservations = await getUserActiveReservations(user.uid);
     if (activeReservations.length > 0) {
-      Swal.fire('Hata!', 'Zaten aktif bir oyun randevunuz bulunmaktadır.', 'error');
+      Swal.fire(t('gameReservations.error'), t('gameReservations.activeReservationError'), 'error');
       return;
     }
 
@@ -98,7 +102,7 @@ const GameReservationPage: React.FC = () => {
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
       if (lastReservation.endTime.toDate() > twentyFourHoursAgo) {
-        Swal.fire('Hata!', `Bu oyun için son 24 saat içinde zaten bir randevu almışsınız. Yeni randevu için ${lastReservation.endTime.toDate().toLocaleString('tr-TR')} tarihinden 24 saat sonrasını beklemelisiniz.`, 'error');
+        Swal.fire(t('gameReservations.error'), t('gameReservations.cooldownError', { date: lastReservation.endTime.toDate().toLocaleString(i18n.language === 'tr' ? 'tr-TR' : 'en-US') }), 'error');
         return;
       }
     }
@@ -122,12 +126,12 @@ const GameReservationPage: React.FC = () => {
         status: 'confirmed',
         createdAt: Timestamp.now(),
       });
-      Swal.fire('Başarılı!', 'Randevunuz başarıyla oluşturuldu!', 'success');
+      Swal.fire(t('gameReservations.success'), t('gameReservations.reservationSuccess'), 'success');
       // Refresh slots by re-triggering the effect
       setSelectedDate(new Date(selectedDate)); 
     } catch (error) {
       console.error("Error creating reservation:", error);
-      Swal.fire('Hata!', 'Randevu oluşturulurken bir hata oluştu.', 'error');
+      Swal.fire(t('gameReservations.error'), t('gameReservations.reservationError'), 'error');
     }
   };
 
@@ -146,7 +150,7 @@ const GameReservationPage: React.FC = () => {
   };
 
   if (!game) {
-    return <div className="text-center py-10">Oyun bulunamadı.</div>;
+    return <div className="text-center py-10">{t('gameReservations.gameNotFound')}</div>;
   }
 
   return (
@@ -171,7 +175,7 @@ const GameReservationPage: React.FC = () => {
             style={{ height: 500 }}
             onSelectSlot={(slotInfo) => {
               if (slotInfo.start < startOfToday()) {
-                Swal.fire('Hata!', "Geçmiş bir tarih için randevu alamazsınız.", 'error');
+                Swal.fire(t('gameReservations.error'), t('gameReservations.pastDateError'), 'error');
                 return;
               }
               setSelectedDate(slotInfo.start)
@@ -179,22 +183,22 @@ const GameReservationPage: React.FC = () => {
             selectable
             dayPropGetter={dayPropGetter}
             views={['month']}
-            culture="tr"
+            culture={i18n.language}
             messages={{
-              today: 'Bugün',
-              previous: 'Önceki',
-              next: 'Sonraki',
-              month: 'Ay',
-              date: 'Tarih',
-              time: 'Saat',
-              event: 'Etkinlik',
+              today: t('gameReservations.today'),
+              previous: t('gameReservations.previous'),
+              next: t('gameReservations.next'),
+              month: t('gameReservations.month'),
+              date: t('gameReservations.date'),
+              time: t('gameReservations.time'),
+              event: t('gameReservations.event'),
             }}
           />
         </div>
         <div className="bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-white/20">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Uygun Saatler ({selectedDate.toLocaleDateString('tr-TR')})</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">{t('gameReservations.availableSlots')} ({selectedDate.toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US')})</h2>
           {loadingSlots ? (
-            <p className="text-gray-600 font-medium">Uygun saatler yükleniyor...</p>
+            <p className="text-gray-600 font-medium">{t('gameReservations.loadingSlots')}</p>
           ) : (
             <div className="flex flex-col space-y-2">
               {availableSlots.length > 0 ? (
@@ -212,7 +216,7 @@ const GameReservationPage: React.FC = () => {
                   </div>
                 ))
               ) : (
-                <p className="text-gray-600 font-medium">Bu tarih için uygun saat bulunmamaktadır.</p>
+                <p className="text-gray-600 font-medium">{t('gameReservations.noAvailableSlots')}</p>
               )}
             </div>
           )}
@@ -222,7 +226,7 @@ const GameReservationPage: React.FC = () => {
               disabled={!selectedSlot || loadingSlots}
               className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 transition-all"
             >
-              Randevu Al
+              {t('gameReservations.makeReservation')}
             </button>
           </div>
         </div>

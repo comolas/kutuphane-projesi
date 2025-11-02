@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
 import { MessageCircle, Send, X, Loader2, Bot, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -10,6 +11,7 @@ interface Message {
 }
 
 const ChatBot: React.FC = () => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -18,7 +20,6 @@ const ChatBot: React.FC = () => {
   const [remainingMessages, setRemainingMessages] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -27,7 +28,6 @@ const ChatBot: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Load chat history
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       loadChatHistory();
@@ -87,7 +87,7 @@ const ChatBot: React.FC = () => {
       console.error('Chat error:', error);
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+        content: t('chatbot.errorMessage'),
         timestamp: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -109,7 +109,7 @@ const ChatBot: React.FC = () => {
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className="absolute bottom-20 right-0 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 animate-bounce">
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">Kütüphane Asistanı</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">{t('chatbot.libraryAssistant')}</p>
             <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-3 h-3 bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-700"></div>
           </div>
           <button
@@ -128,12 +128,12 @@ const ChatBot: React.FC = () => {
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-                <img src="https://r.resimlink.com/L2H7vA3-u.png" alt="Kitap Dostu" className="w-full h-full object-cover" />
+                <img src="https://r.resimlink.com/L2H7vA3-u.png" alt={t('chatbot.bookFriend')} className="w-full h-full object-cover" />
               </div>
               <div>
-                <h3 className="font-bold">Kitap Dostu</h3>
+                <h3 className="font-bold">{t('chatbot.bookFriend')}</h3>
                 <p className="text-xs opacity-90">
-                  {remainingMessages !== null ? `${remainingMessages} mesaj hakkı` : 'Kütüphane Asistanınız'}
+                  {remainingMessages !== null ? t('chatbot.messagesRemaining', { count: remainingMessages }) : t('chatbot.yourAssistant')}
                 </p>
               </div>
             </div>
@@ -153,10 +153,10 @@ const ChatBot: React.FC = () => {
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <img src="https://r.resimlink.com/L2H7vA3-u.png" alt="Kitap Dostu" className="w-16 h-16 rounded-full mb-4" />
-                <h4 className="font-bold text-lg mb-2">Merhaba! 👋</h4>
+                <img src="https://r.resimlink.com/L2H7vA3-u.png" alt={t('chatbot.bookFriend')} className="w-16 h-16 rounded-full mb-4" />
+                <h4 className="font-bold text-lg mb-2">{t('chatbot.greeting')}</h4>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Ben senin kişisel kütüphane asistanınım. Kitap önerileri, okuma istatistiklerin veya kütüphane hakkında sorularını yanıtlayabilirim!
+                  {t('chatbot.greetingDesc')}
                 </p>
               </div>
             ) : (
@@ -199,34 +199,34 @@ const ChatBot: React.FC = () => {
           {messages.length === 0 && !loading && (
             <div className="px-4 pb-2 flex flex-wrap gap-2">
               <button
-                onClick={() => { setInput("Bana kitap öner"); }}
+                onClick={() => { setInput(t('chatbot.quickMessages.bookSuggestion')); }}
                 className="px-3 py-1.5 text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
               >
-                📚 Kitap Öner
+                {t('chatbot.quickReplies.bookSuggestion')}
               </button>
               <button
-                onClick={() => { setInput("İstatistiklerimi göster"); }}
+                onClick={() => { setInput(t('chatbot.quickMessages.myStats')); }}
                 className="px-3 py-1.5 text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
               >
-                📊 İstatistiklerim
+                {t('chatbot.quickReplies.myStats')}
               </button>
               <button
-                onClick={() => { setInput("Okuduğum kitaplara benzer kitaplar öner"); }}
+                onClick={() => { setInput(t('chatbot.quickMessages.similarBooks')); }}
                 className="px-3 py-1.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
               >
-                🔍 Benzer Kitap
+                {t('chatbot.quickReplies.similarBooks')}
               </button>
               <button
-                onClick={() => { setInput("Popüler kitaplar neler?"); }}
+                onClick={() => { setInput(t('chatbot.quickMessages.popularBooks')); }}
                 className="px-3 py-1.5 text-xs bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300 rounded-full hover:bg-pink-200 dark:hover:bg-pink-800 transition-colors"
               >
-                🔥 Popüler Kitaplar
+                {t('chatbot.quickReplies.popularBooks')}
               </button>
               <button
-                onClick={() => { setInput("Kısa bir kitap öner"); }}
+                onClick={() => { setInput(t('chatbot.quickMessages.shortBook')); }}
                 className="px-3 py-1.5 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
               >
-                ⚡ Kısa Kitap
+                {t('chatbot.quickReplies.shortBook')}
               </button>
             </div>
           )}
@@ -239,7 +239,7 @@ const ChatBot: React.FC = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Mesajınızı yazın..."
+                placeholder={t('chatbot.messagePlaceholder')}
                 disabled={loading}
                 className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
               />

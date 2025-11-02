@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { ChevronLeft, Plus, AlertCircle, MessageSquare, Search, Filter, X, SortAsc, SortDesc, ChevronRight, CheckCircle, Tag, ShieldQuestion, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,11 +21,17 @@ interface Request {
   responseDate?: Date;
 }
 
-const requestCategories = ['Kitap Önerisi', 'Teknik Sorun', 'Üyelik Bilgileri', 'Genel Geri Bildirim'];
-
 const RequestsPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  const requestCategories = [
+    t('requests.categories.bookSuggestion'),
+    t('requests.categories.technicalIssue'),
+    t('requests.categories.membershipInfo'),
+    t('requests.categories.generalFeedback')
+  ];
   const [requests, setRequests] = useState<Request[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -70,7 +77,7 @@ const RequestsPage: React.FC = () => {
       setRequests(loadedRequests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     } catch (error) {
       console.error('Error loading requests:', error);
-      Swal.fire('Hata!', 'Talepler yüklenirken bir hata oluştu.', 'error');
+      Swal.fire(t('requests.loadError'), t('requests.loadErrorText'), 'error');
     }
   };
 
@@ -96,32 +103,32 @@ const RequestsPage: React.FC = () => {
       setCategory(requestCategories[3]);
       setIsModalOpen(false);
       loadRequests();
-      Swal.fire('Başarılı!', 'Talebiniz başarıyla oluşturuldu!', 'success');
+      Swal.fire(t('requests.createSuccess'), t('requests.createSuccessText'), 'success');
     } catch (error) {
       console.error('Error creating request:', error);
-      Swal.fire('Hata!', 'Talep oluşturulurken bir hata oluştu.', 'error');
+      Swal.fire(t('requests.createError'), t('requests.createErrorText'), 'error');
     }
   };
 
   const handleDeleteRequest = async (requestId: string, requestTitle: string) => {
     Swal.fire({
-      title: 'Emin misiniz?',
-      text: `"${requestTitle}" başlıklı talebinizi geri çekmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      title: t('requests.withdrawConfirmTitle'),
+      text: t('requests.withdrawConfirmText', { title: requestTitle }),
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Evet, geri çek!',
-      cancelButtonText: 'Vazgeç'
+      confirmButtonText: t('requests.withdrawConfirm'),
+      cancelButtonText: t('requests.cancel')
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await deleteDoc(doc(db, 'requests', requestId));
           setRequests(prev => prev.filter(req => req.id !== requestId));
-          Swal.fire('Başarılı!', 'Talebiniz başarıyla geri çekildi.', 'success');
+          Swal.fire(t('requests.withdrawSuccess'), t('requests.withdrawSuccessText'), 'success');
         } catch (error) {
           console.error('Error deleting request:', error);
-          Swal.fire('Hata!', 'Talep geri çekilirken bir hata oluştu.', 'error');
+          Swal.fire(t('requests.withdrawError'), t('requests.withdrawErrorText'), 'error');
         }
       }
     });
@@ -140,31 +147,7 @@ const RequestsPage: React.FC = () => {
     }
   };
 
-  const getPriorityText = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'Yüksek';
-      case 'medium':
-        return 'Orta';
-      case 'low':
-        return 'Düşük';
-      default:
-        return priority;
-    }
-  };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Tamamlandı';
-      case 'in-progress':
-        return 'İşleniyor';
-      case 'pending':
-        return 'Bekliyor';
-      default:
-        return status;
-    }
-  };
 
   const filteredRequests = requests
     .filter(request => {
@@ -256,7 +239,7 @@ const RequestsPage: React.FC = () => {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
+            {t('requests.backButton')}
           </button>
         </div>
 
@@ -271,9 +254,9 @@ const RequestsPage: React.FC = () => {
 
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Taleplerim</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('requests.title')}</h1>
             <p className="mt-2 text-gray-600">
-              Kütüphane yönetimine iletmek istediğiniz talepleri buradan yönetebilirsiniz.
+              {t('requests.description')}
             </p>
           </div>
           <button
@@ -281,7 +264,7 @@ const RequestsPage: React.FC = () => {
             className="w-full sm:w-auto flex items-center justify-center px-4 sm:px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium text-sm sm:text-base"
           >
             <Plus className="w-5 h-5 mr-2" />
-            Yeni Talep
+            {t('requests.newRequest')}
           </button>
         </div>
 
@@ -293,7 +276,7 @@ const RequestsPage: React.FC = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
                 <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Talep</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('requests.stats.total')}</p>
               <p className="text-2xl sm:text-4xl font-bold text-white">{requests.length}</p>
             </div>
           </div>
@@ -304,7 +287,7 @@ const RequestsPage: React.FC = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
                 <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Bekleyen</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('requests.stats.pending')}</p>
               <p className="text-2xl sm:text-4xl font-bold text-white">{requests.filter(r => r.status === 'pending').length}</p>
             </div>
           </div>
@@ -315,7 +298,7 @@ const RequestsPage: React.FC = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
                 <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Tamamlandı</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('requests.stats.completed')}</p>
               <p className="text-2xl sm:text-4xl font-bold text-white">{requests.filter(r => r.status === 'completed').length}</p>
             </div>
           </div>
@@ -326,7 +309,7 @@ const RequestsPage: React.FC = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 w-fit mb-3 sm:mb-4">
                 <ShieldQuestion className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">İşleniyor</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('requests.stats.inProgress')}</p>
               <p className="text-2xl sm:text-4xl font-bold text-white">{requests.filter(r => r.status === 'in-progress').length}</p>
             </div>
           </div>
@@ -338,7 +321,7 @@ const RequestsPage: React.FC = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Talep başlığı veya içeriği ara..."
+                  placeholder={t('requests.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
@@ -351,7 +334,7 @@ const RequestsPage: React.FC = () => {
               className="px-6 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 flex items-center justify-center transition-all shadow-lg font-medium"
             >
               <Filter className="w-5 h-5 mr-2" />
-              Filtrele
+              {t('requests.filter')}
             </button>
           </div>
 
@@ -360,67 +343,67 @@ const RequestsPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Durum
+                    {t('requests.filters.status')}
                   </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as 'all' | 'pending' | 'in-progress' | 'completed')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
-                    <option value="all">Tümü</option>
-                    <option value="pending">Bekleyen</option>
-                    <option value="in-progress">İşlenen</option>
-                    <option value="completed">Tamamlanan</option>
+                    <option value="all">{t('requests.filters.all')}</option>
+                    <option value="pending">{t('requests.status.pending')}</option>
+                    <option value="in-progress">{t('requests.status.inProgress')}</option>
+                    <option value="completed">{t('requests.status.completed')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Öncelik
+                    {t('requests.filters.priority')}
                   </label>
                   <select
                     value={priorityFilter}
                     onChange={(e) => setPriorityFilter(e.target.value as 'all' | 'low' | 'medium' | 'high')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
-                    <option value="all">Tümü</option>
-                    <option value="low">Düşük</option>
-                    <option value="medium">Orta</option>
-                    <option value="high">Yüksek</option>
+                    <option value="all">{t('requests.filters.all')}</option>
+                    <option value="low">{t('requests.priority.low')}</option>
+                    <option value="medium">{t('requests.priority.medium')}</option>
+                    <option value="high">{t('requests.priority.high')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kategori
+                    {t('requests.filters.category')}
                   </label>
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
-                    <option value="all">Tümü</option>
+                    <option value="all">{t('requests.filters.all')}</option>
                     {requestCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sıralama
+                    {t('requests.filters.sortBy')}
                   </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'createdAt' | 'priority')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
-                    <option value="createdAt">Tarih</option>
-                    <option value="priority">Öncelik</option>
+                    <option value="createdAt">{t('requests.filters.date')}</option>
+                    <option value="priority">{t('requests.filters.priority')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sıralama Yönü
+                    {t('requests.filters.sortOrder')}
                   </label>
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
@@ -429,12 +412,12 @@ const RequestsPage: React.FC = () => {
                     {sortOrder === 'asc' ? (
                       <>
                         <SortAsc className="w-5 h-5 mr-2" />
-                        Artan
+                        {t('requests.filters.ascending')}
                       </>
                     ) : (
                       <>
                         <SortDesc className="w-5 h-5 mr-2" />
-                        Azalan
+                        {t('requests.filters.descending')}
                       </>
                     )}
                   </button>
@@ -452,14 +435,14 @@ const RequestsPage: React.FC = () => {
                   <div className="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mb-4">
                     <MessageSquare className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Henüz Talebiniz Yok</h3>
-                  <p className="text-gray-600 mb-6">Kütüphanemizde görmek istediğiniz bir kitap veya başka bir talebiniz mi var? Bize bildirin!</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('requests.noRequests')}</h3>
+                  <p className="text-gray-600 mb-6">{t('requests.noRequestsDesc')}</p>
                   <button
                     onClick={() => setIsModalOpen(true)}
                     className="flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
                   >
                     <Plus className="w-5 h-5 mr-2" />
-                    Yeni Talep Oluştur
+                    {t('requests.createRequest')}
                   </button>
                 </>
               ) : (
@@ -467,8 +450,8 @@ const RequestsPage: React.FC = () => {
                   <div className="w-20 h-20 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center mb-4">
                     <Search className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Sonuç Bulunamadı</h3>
-                  <p className="text-gray-600">Arama veya filtreleme kriterlerinize uygun bir talep bulunamadı.</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('requests.noResults')}</h3>
+                  <p className="text-gray-600">{t('requests.noResultsDesc')}</p>
                 </>
               )}
             </div>
@@ -491,7 +474,7 @@ const RequestsPage: React.FC = () => {
                           ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white'
                           : 'bg-gradient-to-r from-green-400 to-emerald-500 text-white'
                       }`}>
-                        {getPriorityText(request.priority)} Öncelik
+                        {t(`requests.priority.${request.priority}`)} {t('requests.priority.label')}
                       </span>
                       <span className={`inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold shadow-md ${
                         request.status === 'completed'
@@ -500,7 +483,7 @@ const RequestsPage: React.FC = () => {
                           ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
                           : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
                       }`}>
-                        {getStatusText(request.status)}
+                        {t(`requests.status.${request.status === 'in-progress' ? 'inProgress' : request.status}`)}
                       </span>
                       {request.category && (
                         <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md">
@@ -516,7 +499,7 @@ const RequestsPage: React.FC = () => {
                       className="flex items-center px-3 py-2 text-sm bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
-                      Geri Çek
+                      {t('requests.withdraw')}
                     </button>
                   )}
                 </div>
@@ -530,11 +513,11 @@ const RequestsPage: React.FC = () => {
                         <MessageSquare className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <div className="font-bold text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text">Kütüphane Yönetimi Yanıtı:</div>
+                        <div className="font-bold text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text">{t('requests.response')}</div>
                         <div className="mt-1 text-gray-700">{request.response}</div>
                         {request.responseDate && (
                           <div className="mt-2 text-xs text-gray-500">
-                            Yanıt Tarihi: {request.responseDate.toLocaleDateString()}
+                            {t('requests.responseDate')}: {request.responseDate.toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US')}
                           </div>
                         )}
                       </div>
@@ -556,7 +539,7 @@ const RequestsPage: React.FC = () => {
                 className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Önceki
+                {t('requests.previous')}
               </button>
 
               {generatePageNumbers().map((page, index) => (
@@ -583,7 +566,7 @@ const RequestsPage: React.FC = () => {
                 disabled={currentPage === totalPages}
                 className="px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium"
               >
-                Sonraki
+                {t('requests.next')}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             </div>
@@ -596,7 +579,7 @@ const RequestsPage: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-0">
           <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full h-full border border-white/20 overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-900">Yeni Talep Oluştur</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('requests.modalTitle')}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                 <X className="w-6 h-6" />
               </button>
@@ -604,7 +587,7 @@ const RequestsPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4 p-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kategori
+                  {t('requests.modalCategory')}
                 </label>
                 <select
                   value={category}
@@ -617,7 +600,7 @@ const RequestsPage: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Başlık
+                  {t('requests.modalTitle2')}
                 </label>
                 <input
                   type="text"
@@ -630,7 +613,7 @@ const RequestsPage: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  İçerik
+                  {t('requests.modalContent')}
                 </label>
                 <textarea
                   value={content}
@@ -643,16 +626,16 @@ const RequestsPage: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Öncelik
+                  {t('requests.modalPriority')}
                 </label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="low">Düşük</option>
-                  <option value="medium">Orta</option>
-                  <option value="high">Yüksek</option>
+                  <option value="low">{t('requests.priority.low')}</option>
+                  <option value="medium">{t('requests.priority.medium')}</option>
+                  <option value="high">{t('requests.priority.high')}</option>
                 </select>
               </div>
               
@@ -662,13 +645,13 @@ const RequestsPage: React.FC = () => {
                   onClick={() => setIsModalOpen(false)}
                   className="px-5 py-2.5 bg-white/50 border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all font-medium"
                 >
-                  İptal
+                  {t('requests.modalCancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
                 >
-                  Gönder
+                  {t('requests.modalSubmit')}
                 </button>
               </div>
             </form>

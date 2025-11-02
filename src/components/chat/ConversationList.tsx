@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Plus, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -15,6 +16,7 @@ interface AvailableUser {
 
 const ConversationList: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { conversations, getOrCreateConversation } = useChat();
   const { user, userData, isTeacher, isAdmin } = useAuth();
   const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
@@ -25,7 +27,7 @@ const ConversationList: React.FC = () => {
     const otherUserId = conv.participants.find((id: string) => id !== user?.uid);
     return {
       id: otherUserId,
-      name: conv.participantNames[otherUserId] || 'Kullanıcı'
+      name: conv.participantNames[otherUserId] || t('chat.user')
     };
   };
 
@@ -37,13 +39,12 @@ const ConversationList: React.FC = () => {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(hours / 24);
 
-    if (hours < 1) return 'Az önce';
-    if (hours < 24) return `${hours} saat önce`;
-    if (days < 7) return `${days} gün önce`;
-    return date.toLocaleDateString('tr-TR');
+    if (hours < 1) return t('chat.justNow');
+    if (hours < 24) return t('chat.hoursAgo', { count: hours });
+    if (days < 7) return t('chat.daysAgo', { count: days });
+    return date.toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US');
   };
 
-  // Kullanıcı listesini yükle
   useEffect(() => {
     const fetchAvailableUsers = async () => {
       if (!userData) return;
@@ -54,10 +55,8 @@ const ConversationList: React.FC = () => {
         let q;
 
         if (isAdmin) {
-          // Admin herkesle konuşabilir
           q = query(usersRef, where('uid', '!=', user?.uid));
         } else if (isTeacher && userData.teacherData?.assignedClass) {
-          // Öğretmen kendi sınıfındaki öğrenciler ve admin ile konuşabilir
           const snapshot = await getDocs(usersRef);
           const users: AvailableUser[] = [];
           snapshot.forEach(doc => {
@@ -68,7 +67,7 @@ const ConversationList: React.FC = () => {
             )) {
               users.push({
                 uid: data.uid,
-                displayName: data.displayName || 'İsimsiz',
+                displayName: data.displayName || t('chat.user'),
                 role: data.role,
                 studentClass: data.studentClass
               });
@@ -78,7 +77,6 @@ const ConversationList: React.FC = () => {
           setLoading(false);
           return;
         } else {
-          // Öğrenci admin ve kendi sınıfının öğretmeni ile konuşabilir
           const snapshot = await getDocs(usersRef);
           const users: AvailableUser[] = [];
           snapshot.forEach(doc => {
@@ -89,7 +87,7 @@ const ConversationList: React.FC = () => {
             )) {
               users.push({
                 uid: data.uid,
-                displayName: data.displayName || 'İsimsiz',
+                displayName: data.displayName || t('chat.user'),
                 role: data.role,
                 studentClass: data.studentClass
               });
@@ -106,7 +104,7 @@ const ConversationList: React.FC = () => {
           const data = doc.data();
           users.push({
             uid: data.uid,
-            displayName: data.displayName || 'İsimsiz',
+            displayName: data.displayName || t('chat.user'),
             role: data.role,
             studentClass: data.studentClass
           });
@@ -134,29 +132,27 @@ const ConversationList: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      {/* Yeni Sohbet Butonu */}
       {availableUsers.length > 0 && (
         <button
           onClick={() => setShowUserList(!showUserList)}
           className="w-full p-2 sm:p-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 font-semibold text-sm sm:text-base"
         >
           {showUserList ? <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5" />}
-          {showUserList ? 'Sohbetleri Göster' : 'Yeni Sohbet Başlat'}
+          {showUserList ? t('chat.showConversations') : t('chat.newChat')}
         </button>
       )}
 
-      {/* Kullanıcı Listesi */}
       {showUserList && (
         <div className="bg-white rounded-lg border-2 border-indigo-200 p-2 sm:p-3 space-y-1 sm:space-y-2">
           <div className="flex items-center gap-2 mb-2 sm:mb-3 pb-2 border-b border-gray-200">
             <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900">Kullanıcılar</h3>
+            <h3 className="font-semibold text-sm sm:text-base text-gray-900">{t('chat.users')}</h3>
           </div>
           {loading ? (
-            <div className="text-center py-4 text-gray-500 text-sm">Yükleniyor...</div>
+            <div className="text-center py-4 text-gray-500 text-sm">{t('chat.loading')}</div>
           ) : availableUsers.length === 0 ? (
             <div className="text-center py-4 text-gray-500 text-xs sm:text-sm">
-              Mesajlaşabileceğiniz kullanıcı bulunamadı
+              {t('chat.noUsersAvailable')}
             </div>
           ) : (
             availableUsers.map(availableUser => {
@@ -181,7 +177,7 @@ const ConversationList: React.FC = () => {
                             ? 'bg-blue-100 text-blue-700'
                             : 'bg-gray-100 text-gray-700'
                         }`}>
-                          {availableUser.role === 'admin' ? 'Admin' : availableUser.role === 'teacher' ? 'Öğretmen' : 'Öğrenci'}
+                          {availableUser.role === 'admin' ? t('users.admin') : availableUser.role === 'teacher' ? t('users.teacher') : t('users.student')}
                         </span>
                         {availableUser.studentClass && (
                           <span className="text-xs text-gray-600">{availableUser.studentClass}</span>
@@ -201,8 +197,8 @@ const ConversationList: React.FC = () => {
       {!showUserList && conversations.length === 0 ? (
         <div className="text-center py-8 sm:py-12 text-gray-500 px-4">
           <MessageCircle className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-gray-300" />
-          <p className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">Henüz sohbet yok</p>
-          <p className="text-xs sm:text-sm">Yeni bir sohbet başlatmak için yukarıdaki butona tıklayın</p>
+          <p className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">{t('chat.noConversations')}</p>
+          <p className="text-xs sm:text-sm">{t('chat.noConversationsDesc')}</p>
         </div>
       ) : !showUserList && (
         conversations.map((conv) => {
@@ -232,7 +228,7 @@ const ConversationList: React.FC = () => {
                     )}
                   </div>
                   <p className={`text-xs sm:text-sm truncate ${unreadCount > 0 ? 'text-indigo-700 font-medium' : 'text-gray-600'}`}>
-                    {conv.lastMessage || 'Henüz mesaj yok'}
+                    {conv.lastMessage || t('chat.noMessages')}
                   </p>
                 </div>
                 <span className="text-xs text-gray-500 flex-shrink-0">

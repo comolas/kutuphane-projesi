@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { ChevronLeft, AlertCircle, Clock, Search, Filter, X, SortAsc, SortDesc, ChevronRight, BookCheck, History, ShieldQuestion, Book as BookIcon, Bookmark, Calendar as CalendarIcon, BarChart2 } from 'lucide-react';
 import { useBooks } from '../contexts/BookContext';
@@ -15,6 +16,7 @@ import Swal from 'sweetalert2';
 
 // Reusable Confirmation Modal Component
 const BorrowedBooksPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { borrowedBooks, requestReturn, extendBook, canExtend } = useBooks();
   const { user, userData } = useAuth();
@@ -39,20 +41,20 @@ const BorrowedBooksPage: React.FC = () => {
 
   const handleReturn = async (bookId: string, bookTitle: string) => {
     Swal.fire({
-      title: 'İade Talebi Onayı',
-      text: `"${bookTitle}" adlı kitap için iade talebi oluşturmak istediğinizden emin misiniz?`,
+      title: t('borrowedBooks.returnConfirmTitle'),
+      text: t('borrowedBooks.returnConfirmText', { title: bookTitle }),
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Onayla',
-      cancelButtonText: 'Vazgeç',
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await requestReturn(bookId);
-          Swal.fire('Başarılı!', 'Kitap iade talebiniz alındı.', 'success');
+          Swal.fire(t('common.success'), t('borrowedBooks.returnSuccess'), 'success');
         } catch (error: any) {
           console.error('Error returning book:', error);
-          Swal.fire('Hata!', error.message || 'Kitap iade edilirken bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+          Swal.fire(t('common.error'), error.message || t('borrowedBooks.returnError'), 'error');
         }
       }
     });
@@ -60,23 +62,23 @@ const BorrowedBooksPage: React.FC = () => {
 
   const handleExtend = async (bookId: string, bookTitle: string) => {
     Swal.fire({
-      title: 'Süre Uzatma Onayı',
-      text: `"${bookTitle}" adlı kitabın süresini 7 gün uzatmak istediğinizden emin misiniz?`,
+      title: t('borrowedBooks.extendConfirmTitle'),
+      text: t('borrowedBooks.extendConfirmText', { title: bookTitle }),
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Onayla',
-      cancelButtonText: 'Vazgeç',
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await extendBook(bookId);
-          Swal.fire('Başarılı!', 'Kitap süresi başarıyla uzatıldı.', 'success');
+          Swal.fire(t('common.success'), t('borrowedBooks.extendSuccess'), 'success');
         } catch (error: any) {
           console.error('Error extending book:', error);
           if (error.code === 'permission-denied') {
-            Swal.fire('Hata!', 'Bu kitabın süresini uzatma izniniz yok. Kitap zaten uzatılmış olabilir.', 'error');
+            Swal.fire(t('common.error'), t('borrowedBooks.extendPermissionError'), 'error');
           } else {
-            Swal.fire('Hata!', 'Kitap süresi uzatılırken bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+            Swal.fire(t('common.error'), t('borrowedBooks.extendError'), 'error');
           }
         }
       }
@@ -85,7 +87,7 @@ const BorrowedBooksPage: React.FC = () => {
 
   const handleSubmitReview = async ({ rating, text }: { rating: number; text: string }) => {
     if (!selectedBook || !user || !userData) {
-      Swal.fire("Hata!", "Yorum göndermek için giriş yapmalısınız.", "error");
+      Swal.fire(t('common.error'), t('borrowedBooks.reviewLoginRequired'), "error");
       return;
     }
 
@@ -101,10 +103,10 @@ const BorrowedBooksPage: React.FC = () => {
         helpfulVotes: [],
       });
       setIsModalOpen(false);
-      Swal.fire("Başarılı!", "Değerlendirmeniz için teşekkürler! Yorumunuz onaylandıktan sonra yayınlanacaktır.", "success");
+      Swal.fire(t('common.success'), t('borrowedBooks.reviewSuccess'), "success");
     } catch (error) {
       console.error("Error submitting review: ", error);
-      Swal.fire("Hata!", "Yorumunuz gönderilirken bir hata oluştu.", "error");
+      Swal.fire(t('common.error'), t('borrowedBooks.reviewError'), "error");
     }
   };
 
@@ -193,7 +195,7 @@ const BorrowedBooksPage: React.FC = () => {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
+            {t('common.back')}
           </button>
         </div>
 
@@ -207,9 +209,9 @@ const BorrowedBooksPage: React.FC = () => {
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Ödünç Aldığım Kitaplar</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('borrowedBooks.title')}</h1>
           <p className="mt-2 text-gray-600">
-            Kütüphaneden ödünç aldığınız kitapları ve okuma istatistiklerinizi buradan takip edebilirsiniz.
+            {t('borrowedBooks.description')}
           </p>
         </div>
 
@@ -226,7 +228,7 @@ const BorrowedBooksPage: React.FC = () => {
               }`}
             >
               <BookCheck className="w-5 h-5 mr-2" />
-              Aktif Ödünç Aldıklarım
+              {t('borrowedBooks.tabs.active')}
             </button>
             <button
               onClick={() => setActiveTab('stats')}
@@ -237,7 +239,7 @@ const BorrowedBooksPage: React.FC = () => {
               }`}
             >
               <BarChart2 className="w-5 h-5 mr-2" />
-              Okuma Karnem
+              {t('borrowedBooks.tabs.stats')}
             </button>
           </nav>
         </div>
@@ -251,7 +253,7 @@ const BorrowedBooksPage: React.FC = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Kitap adı veya yazar ara..."
+                    placeholder={t('borrowedBooks.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
@@ -264,7 +266,7 @@ const BorrowedBooksPage: React.FC = () => {
                 className="px-6 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 flex items-center justify-center transition-all shadow-lg font-medium"
               >
                 <Filter className="w-5 h-5 mr-2" />
-                Sırala
+                {t('borrowedBooks.sort')}
               </button>
             </div>
 
@@ -273,20 +275,20 @@ const BorrowedBooksPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Sıralama Ölçütü
+                      {t('borrowedBooks.sortBy')}
                     </label>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as 'dueDate' | 'borrowedAt')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
-                      <option value="dueDate">İade Tarihine Göre</option>
-                      <option value="borrowedAt">Ödünç Alma Tarihine Göre</option>
+                      <option value="dueDate">{t('borrowedBooks.sortOptions.dueDate')}</option>
+                      <option value="borrowedAt">{t('borrowedBooks.sortOptions.borrowedAt')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Sıralama Yönü
+                      {t('borrowedBooks.sortOrder')}
                     </label>
                     <button
                       onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
@@ -295,12 +297,12 @@ const BorrowedBooksPage: React.FC = () => {
                       {sortOrder === 'asc' ? (
                         <>
                           <SortAsc className="w-5 h-5 mr-2" />
-                          Artan
+                          {t('borrowedBooks.ascending')}
                         </>
                       ) : (
                         <>
                           <SortDesc className="w-5 h-5 mr-2" />
-                          Azalan
+                          {t('borrowedBooks.descending')}
                         </>
                       )}
                     </button>
@@ -313,16 +315,16 @@ const BorrowedBooksPage: React.FC = () => {
               <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-8 text-center mt-6 border border-white/20">
                 <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Aktif olarak ödünç aldığınız kitap bulunmuyor
+                  {t('borrowedBooks.noBooks')}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Kütüphane kataloğundan yeni maceralar keşfedebilirsiniz.
+                  {t('borrowedBooks.noBooksDescription')}
                 </p>
                 <button
                   onClick={() => navigate('/catalog')}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
                 >
-                  Kataloğa Git
+                  {t('borrowedBooks.goToCatalog')}
                 </button>
               </div>
             ) : (
@@ -355,21 +357,21 @@ const BorrowedBooksPage: React.FC = () => {
                               : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                           }`}>
                             {isOverdue
-                              ? `${Math.abs(daysRemaining)} gün gecikmiş`
-                              : `${daysRemaining} gün`}
+                              ? t('borrowedBooks.daysOverdue', { count: Math.abs(daysRemaining) })
+                              : t('borrowedBooks.daysRemaining', { count: daysRemaining })}
                           </div>
 
                           {/* Extended Badge */}
                           {book.extended && (
                             <div className="absolute top-2 left-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold bg-white/90 backdrop-blur-xl text-indigo-600 shadow-lg">
-                              Uzatılmış
+                              {t('borrowedBooks.extended')}
                             </div>
                           )}
 
                           {/* Extension Reward Badge */}
                           {userSpinData && userSpinData.borrowExtensionCount === 2 && canExtend(book.id) && (
                             <div className="absolute bottom-2 left-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg flex items-center gap-1 animate-pulse">
-                              🎁 2x Uzatma
+                              {t('borrowedBooks.doubleExtension')}
                             </div>
                           )}
                         </div>
@@ -382,7 +384,7 @@ const BorrowedBooksPage: React.FC = () => {
                           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg sm:rounded-xl p-2 sm:p-3 mb-2 sm:mb-3">
                             <div className="flex items-center text-xs text-gray-600">
                               <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                              <span className="text-xs">Son Teslim: {book.dueDate.toLocaleDateString('tr-TR')}</span>
+                              <span className="text-xs">{t('borrowedBooks.dueDate')}: {book.dueDate.toLocaleDateString('tr-TR')}</span>
                             </div>
                           </div>
 
@@ -396,14 +398,14 @@ const BorrowedBooksPage: React.FC = () => {
                                   className="w-full px-3 sm:px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 min-h-[44px]"
                                 >
                                   <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  <span className="hidden sm:inline">Süre Uzat (7 Gün)</span>
-                                  <span className="sm:hidden">Uzat</span>
+                                  <span className="hidden sm:inline">{t('borrowedBooks.extendButton')}</span>
+                                  <span className="sm:hidden">{t('borrowedBooks.extend')}</span>
                                 </button>
                               ) : (
                                 <div className="w-full px-3 sm:px-4 py-2.5 bg-gray-300 text-gray-600 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold text-center cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 min-h-[44px]">
                                   <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  <span className="hidden sm:inline">Uzatma Hakkı Bitti</span>
-                                  <span className="sm:hidden">Uzatılamaz</span>
+                                  <span className="hidden sm:inline">{t('borrowedBooks.noExtensionLeft')}</span>
+                                  <span className="sm:hidden">{t('borrowedBooks.cannotExtend')}</span>
                                 </div>
                               )
                             )}
@@ -411,14 +413,14 @@ const BorrowedBooksPage: React.FC = () => {
                             {/* Return Button - Second */}
                             {book.returnStatus === 'pending' ? (
                               <div className="w-full px-3 sm:px-4 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold text-center shadow-md min-h-[44px] flex items-center justify-center">
-                                İade Talebi Gönderildi
+                                {t('borrowedBooks.returnRequestSent')}
                               </div>
                             ) : (
                               <button
                                 onClick={() => handleReturn(book.id, book.title)}
                                 className="w-full px-3 sm:px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 min-h-[44px]"
                               >
-                                İade Et
+                                {t('borrowedBooks.return')}
                               </button>
                             )}
                           </div>
@@ -452,7 +454,7 @@ const BorrowedBooksPage: React.FC = () => {
                         className="px-3 sm:px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium min-h-[44px]"
                       >
                         <ChevronLeft className="w-4 h-4 mr-1" />
-                        Önceki
+                        {t('common.previous')}
                       </button>
 
                       {/* Page Numbers */}
@@ -481,7 +483,7 @@ const BorrowedBooksPage: React.FC = () => {
                         disabled={currentPage === totalPages}
                         className="px-3 sm:px-4 py-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/20 text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all shadow-lg font-medium min-h-[44px]"
                       >
-                        Sonraki
+                        {t('common.next')}
                         <ChevronRight className="w-4 h-4 ml-1" />
                       </button>
                     </div>

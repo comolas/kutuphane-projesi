@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Button from '../common/Button';
 import FormInput from '../common/FormInput';
 import { validateEmail, validatePassword, validateName, validateStudentNumber, validateClass } from '../../utils/validation';
@@ -38,6 +39,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit,
   onLoginClick,
 }) => {
+  const { t } = useTranslation();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [studentClass, setStudentClass] = useState('');
@@ -110,7 +112,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         newErrors.studentNumber = studentNumberValidation.error;
       }
     } else if (!studentNumber.trim()) {
-      newErrors.studentNumber = 'Branş gereklidir';
+      newErrors.studentNumber = t('register.branchRequired');
     }
     
     // Email validation
@@ -127,16 +129,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     
     // Kampüs validation
     if (!campusId.trim()) {
-      newErrors.campusId = 'Kampüs seçimi gereklidir';
+      newErrors.campusId = t('register.campusRequired');
     }
     
     // Kampüs kodu validation
     if (!campusCode.trim()) {
-      newErrors.campusCode = 'Kampüs kodu gereklidir';
+      newErrors.campusCode = t('register.campusCodeRequired');
     } else {
       const selectedCampus = campuses.find(c => c.id === campusId);
       if (selectedCampus && selectedCampus.code && campusCode.toUpperCase() !== selectedCampus.code.toUpperCase()) {
-        newErrors.campusCode = 'Kampüs kodu hatalı';
+        newErrors.campusCode = t('register.campusCodeInvalid');
       }
     }
     
@@ -155,8 +157,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     if (!allowedDomains.includes(emailDomain)) {
       Swal.fire({
         icon: 'error',
-        title: 'Geçersiz E-posta',
-        text: 'Sadece Gmail, Hotmail, iCloud ve Proton e-posta adreslerine izin verilmektedir.'
+        title: t('register.invalidEmailDomain'),
+        text: t('register.invalidEmailDomainMsg')
       });
       return;
     }
@@ -184,8 +186,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       if (!matchingUser) {
         Swal.fire({
           icon: 'error',
-          title: 'Kayıt Başarısız',
-          text: 'Girdiğiniz bilgiler sistemde kayıtlı değil. Lütfen bilgilerinizi kontrol edin veya okul yönetimiyle iletişime geçin.'
+          title: t('register.registrationFailed'),
+          text: t('register.registrationFailedMsg')
         });
         return;
       }
@@ -193,7 +195,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       onSubmit(`${firstName} ${lastName}`, email, password, studentClass, studentNumber, campusId);
     } catch (error) {
       console.error('Doğrulama hatası:', error);
-      Swal.fire('Hata!', 'Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+      Swal.fire(t('register.error'), t('register.errorMsg'), 'error');
     }
   };
 
@@ -234,14 +236,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           Data Koleji Kütüphanesi
         </h2>
         <p className="text-gray-600 font-medium">
-          Yeni üyelik oluşturun ve bilgiye erişim sağlayın ✨
+          {t('register.subtitle')}
         </p>
       </div>
       
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-3">
-          <span className="text-xs font-medium text-gray-500">Adım {currentStep} / {totalSteps}</span>
+          <span className="text-xs font-medium text-gray-500">{t('register.step')} {currentStep} / {totalSteps}</span>
           <span className="text-xs font-medium text-indigo-600">{Math.round((currentStep / totalSteps) * 100)}%</span>
         </div>
         <div className="flex gap-2 mb-2">
@@ -258,9 +260,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         </div>
         <div className="text-center">
           <p className="text-xs text-gray-500">
-            {currentStep === 1 && 'Kişisel Bilgileriniz'}
-            {currentStep === 2 && 'Eğitim Bilgileriniz'}
-            {currentStep === 3 && 'Hesap Bilgileriniz'}
+            {currentStep === 1 && t('register.stepLabels.personal')}
+            {currentStep === 2 && t('register.stepLabels.education')}
+            {currentStep === 3 && t('register.stepLabels.account')}
           </p>
         </div>
       </div>
@@ -271,23 +273,23 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           <div className="space-y-4 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormInput
-                label="Adınız"
+                label={t('register.firstName')}
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 error={errors.firstName}
-                placeholder="Adınız"
+                placeholder={t('register.firstName')}
                 icon="user"
                 required
               />
               
               <FormInput
-                label="Soyadınız"
+                label={t('register.lastName')}
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 error={errors.lastName}
-                placeholder="Soyadınız"
+                placeholder={t('register.lastName')}
                 icon="user"
                 required
               />
@@ -300,7 +302,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 disabled={!canProceedToStep2}
                 className="px-8"
               >
-                Devam Et →
+                {t('register.continue')}
               </Button>
             </div>
           </div>
@@ -310,7 +312,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         {currentStep === 2 && (
           <div className="space-y-4 animate-fade-in">
             <FormInput
-              label="Kampüs"
+              label={t('register.campus')}
               as="select"
               value={campusId}
               onChange={(e) => {
@@ -334,7 +336,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               icon="building"
               required
             >
-              <option value="">Kampüsünüzü Seçin</option>
+              <option value="">{t('register.selectCampus')}</option>
               {campuses.map(campus => (
                 <option key={campus.id} value={campus.id}>{campus.name}</option>
               ))}
@@ -342,12 +344,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             
             {campusId && (
               <FormInput
-                label="Kampüs Kodu"
+                label={t('register.campusCode')}
                 type="text"
                 value={campusCode}
                 onChange={(e) => setCampusCode(e.target.value.toUpperCase())}
                 error={errors.campusCode}
-                placeholder="Kampüs kodunu girin"
+                placeholder={t('register.campusCodePlaceholder')}
                 icon="key"
                 required
               />
@@ -355,7 +357,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormInput
-                label="Sınıf"
+                label={t('register.class')}
                 as="select"
                 value={studentClass}
                 onChange={(e) => {
@@ -366,30 +368,30 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 icon="book"
                 required
               >
-                <option value="">Sınıfınızı Seçin</option>
+                <option value="">{t('register.selectClass')}</option>
                 {availableClasses.map(s => <option key={s} value={s}>{s}</option>)}
               </FormInput>
               
               {studentClass === 'Öğretmen' ? (
                 <FormInput
-                  label="Branş"
+                  label={t('register.branch')}
                   as="select"
                   value={studentNumber}
                   onChange={(e) => setStudentNumber(e.target.value)}
                   error={errors.studentNumber}
                   icon="id-card"
                 >
-                  <option value="">Branşınızı Seçin</option>
+                  <option value="">{t('register.selectBranch')}</option>
                   {availableBranches.map(b => <option key={b} value={b}>{b}</option>)}
                 </FormInput>
               ) : (
                 <FormInput
-                  label="Öğrenci No"
+                  label={t('register.studentNumber')}
                   type="text"
                   value={studentNumber}
                   onChange={(e) => setStudentNumber(e.target.value)}
                   error={errors.studentNumber}
-                  placeholder="Örn: 1234"
+                  placeholder={t('register.studentNumberPlaceholder')}
                   icon="id-card"
                 />
               )}
@@ -397,14 +399,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             
             <div className="flex justify-between">
               <Button type="button" onClick={prevStep} variant="outline">
-                ← Geri
+                {t('register.back')}
               </Button>
               <Button 
                 type="button" 
                 onClick={nextStep}
                 disabled={!canProceedToStep3}
               >
-                Devam Et →
+                {t('register.continue')}
               </Button>
             </div>
           </div>
@@ -414,7 +416,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         {currentStep === 3 && (
           <div className="space-y-4 animate-fade-in">
             <FormInput
-              label="E-posta Adresiniz"
+              label={t('register.email')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -426,7 +428,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             
             <div className="relative">
               <FormInput
-                label="Şifreniz"
+                label={t('register.password')}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -446,7 +448,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             
             <div className="flex justify-between">
               <Button type="button" onClick={prevStep} variant="outline">
-                ← Geri
+                {t('register.back')}
               </Button>
               <Button 
                 type="submit" 
@@ -454,7 +456,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
               >
                 <span className="flex items-center gap-2">
-                  Kayıt Ol
+                  {t('register.registerButton')}
                   <span className="text-lg">✨</span>
                 </span>
               </Button>
@@ -465,13 +467,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-600">
-          Zaten hesabınız var mı?{' '}
+          {t('register.alreadyHaveAccount')}{' '}
           <button
             type="button"
             onClick={onLoginClick}
             className="text-indigo-600 hover:text-purple-600 font-semibold hover:underline transition-all duration-300"
           >
-            Giriş yapın
+            {t('register.loginNow')}
           </button>
         </p>
       </div>

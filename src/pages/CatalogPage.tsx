@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import OptimizedImage from '../components/common/OptimizedImage';
 import { ChevronLeft, Search, Filter, X, AlertTriangle, Eye, ExternalLink, Tag, BookOpen, Ruler, Star, Heart, MessageSquare, UserPlus } from 'lucide-react';
@@ -16,6 +17,7 @@ import Swal from 'sweetalert2';
 
 // Add borrowMessages to the import from useBooks
 const CatalogPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { allBooks, borrowBook, isBorrowed, getBookStatus, borrowMessages } = useBooks();
@@ -258,7 +260,7 @@ const CatalogPage: React.FC = () => {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
+            {t('common.cancel')}
           </button>
         </div>
 
@@ -272,9 +274,9 @@ const CatalogPage: React.FC = () => {
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Kitap Kataloğu</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{t('books.title')}</h1>
           <p className="mt-2 text-gray-600">
-            Kütüphanemizdeki tüm kitapları keşfedin ve arayın.
+            {t('catalog.searchPlaceholder')}
           </p>
         </div>
 
@@ -306,14 +308,14 @@ const CatalogPage: React.FC = () => {
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h2 className="text-lg font-semibold flex items-center">
                   <Filter className="w-5 h-5 mr-2 text-indigo-600" />
-                  Filtreler
+                  {t('common.filter')}
                 </h2>
                 <div className="flex gap-2">
                   <button
                     onClick={handleClearFilters}
                     className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all"
                   >
-                    Temizle
+                    {t('common.delete')}
                   </button>
                   <button
                     onClick={() => setIsSidebarOpen(false)}
@@ -329,7 +331,7 @@ const CatalogPage: React.FC = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Kitap ara..."
+                    placeholder={t('catalog.searchPlaceholder')}
                     value={searchQuery}
                     onChange={handleSearchChange}
                     className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -341,11 +343,11 @@ const CatalogPage: React.FC = () => {
               <div className="space-y-4 sm:space-y-6">
                 {/* Tag Search */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Etiket Ara</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('common.search')}</h3>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Etiket..."
+                      placeholder={t('common.search')}
                       value={tagQuery}
                       onChange={handleTagChange}
                       className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -356,7 +358,7 @@ const CatalogPage: React.FC = () => {
 
                 {/* Category Filter */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Kategori</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('books.category')}</h3>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
@@ -366,7 +368,7 @@ const CatalogPage: React.FC = () => {
                         onChange={() => setSelectedCategory('all')}
                         className="mr-2"
                       />
-                      <span className="text-sm">Tümü</span>
+                      <span className="text-sm">{t('catalog.all')}</span>
                     </label>
                     {categories.map(category => (
                       <label key={category} className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
@@ -385,7 +387,7 @@ const CatalogPage: React.FC = () => {
 
                 {/* Availability Filter */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Durum</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('books.status')}</h3>
                   <div className="space-y-2">
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
@@ -395,7 +397,7 @@ const CatalogPage: React.FC = () => {
                         onChange={() => setAvailability('all')}
                         className="mr-2"
                       />
-                      <span className="text-sm">Tümü</span>
+                      <span className="text-sm">{t('catalog.all')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
@@ -405,7 +407,7 @@ const CatalogPage: React.FC = () => {
                         onChange={() => setAvailability('available')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-green-600">● Müsait</span>
+                      <span className="text-sm text-green-600">● {t('books.available')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
@@ -415,7 +417,7 @@ const CatalogPage: React.FC = () => {
                         onChange={() => setAvailability('borrowed')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-orange-600">● Ödünç Verilmiş</span>
+                      <span className="text-sm text-orange-600">● {t('books.borrowed')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2.5 rounded touch-manipulation min-h-[44px]">
                       <input
@@ -425,25 +427,25 @@ const CatalogPage: React.FC = () => {
                         onChange={() => setAvailability('lost')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-red-600">● Kayıp</span>
+                      <span className="text-sm text-red-600">● {t('books.lost')}</span>
                     </label>
                   </div>
                 </div>
 
                 {/* Sort Order */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('catalog.sortBy')}</h3>
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
-                    <option value="default">Varsayılan</option>
-                    <option value="title-asc">Başlık (A-Z)</option>
-                    <option value="title-desc">Başlık (Z-A)</option>
-                    <option value="author-asc">Yazar (A-Z)</option>
-                    <option value="author-desc">Yazar (Z-A)</option>
-                    <option value="rating-desc">En Yüksek Puan</option>
+                    <option value="default">{t('catalog.newest')}</option>
+                    <option value="title-asc">{t('catalog.titleAZ')}</option>
+                    <option value="title-desc">{t('catalog.titleZA')}</option>
+                    <option value="author-asc">{t('catalog.authorAZ')}</option>
+                    <option value="author-desc">{t('catalog.authorAZ')}</option>
+                    <option value="rating-desc">{t('common.search')}</option>
                   </select>
                 </div>
               </div>
@@ -456,7 +458,7 @@ const CatalogPage: React.FC = () => {
             <div className="mb-6 flex flex-wrap items-center gap-2">
               {searchQuery && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow-sm">
-                  Aranan: {searchQuery}
+                  {t('common.search')}: {searchQuery}
                   <button onClick={() => setSearchQuery('')} className="ml-2 text-gray-500 hover:text-gray-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -464,7 +466,7 @@ const CatalogPage: React.FC = () => {
               )}
               {tagQuery && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-indigo-800 shadow-sm">
-                  Etiket: {tagQuery}
+                  {t('common.search')}: {tagQuery}
                   <button onClick={() => setTagQuery('')} className="ml-2 text-indigo-500 hover:text-indigo-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -472,7 +474,7 @@ const CatalogPage: React.FC = () => {
               )}
               {selectedCategory !== 'all' && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 shadow-sm">
-                  Kategori: {selectedCategory}
+                  {t('books.category')}: {selectedCategory}
                   <button onClick={() => setSelectedCategory('all')} className="ml-2 text-purple-500 hover:text-purple-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -480,7 +482,7 @@ const CatalogPage: React.FC = () => {
               )}
               {availability !== 'all' && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 shadow-sm">
-                  Durum: {availability === 'available' ? 'Müsait' : availability === 'borrowed' ? 'Ödünç Verilmiş' : 'Kayıp'}
+                  {t('books.status')}: {availability === 'available' ? t('books.available') : availability === 'borrowed' ? t('books.borrowed') : t('books.lost')}
                   <button onClick={() => setAvailability('all')} className="ml-2 text-orange-500 hover:text-orange-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -512,8 +514,8 @@ const CatalogPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Kitap bulunamadı</h3>
-                <p className="text-gray-500">Aradığınız kriterlere uygun kitap bulunmuyor.</p>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">{t('catalog.noResults')}</h3>
+                <p className="text-gray-500">{t('catalog.noResults')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
@@ -542,12 +544,12 @@ const CatalogPage: React.FC = () => {
                               : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                           }`}>
                             {hasPendingRequest 
-                              ? 'Onay Bekliyor' 
+                              ? t('common.loading') 
                               : bookStatus === 'lost' 
-                              ? 'Kayıp' 
+                              ? t('books.lost') 
                               : bookStatus === 'borrowed' 
-                              ? 'Ödünç Verildi' 
-                              : 'Müsait'}
+                              ? t('books.borrowed') 
+                              : t('books.available')}
                           </span>
                         </div>
                         <button
@@ -569,7 +571,7 @@ const CatalogPage: React.FC = () => {
                               className="w-full px-3 py-2.5 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center min-h-[44px]"
                             >
                               <MessageSquare className="w-3 h-3 mr-1" />
-                              Yorumlar
+                              {t('bookDetails.reviews')}
                             </button>
                             {isTeacher && (
                               <button
@@ -577,7 +579,7 @@ const CatalogPage: React.FC = () => {
                                 className="w-full px-3 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center min-h-[44px]"
                               >
                                 <UserPlus className="w-3 h-3 mr-1" />
-                                Öğrenciye Öner
+                                {t('common.search')}
                               </button>
                             )}
                             {bookStatus === 'available' && !hasPendingRequest && (
@@ -587,13 +589,13 @@ const CatalogPage: React.FC = () => {
                                   className="w-full px-3 py-2.5 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center min-h-[44px]"
                                 >
                                   <Eye className="w-3 h-3 mr-1" />
-                                  İncele
+                                  {t('common.search')}
                                 </button>
                                 <button
                                   onClick={() => handleBorrowRequest(book)}
                                   className="w-full px-3 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all min-h-[44px]"
                                 >
-                                  Ödünç Al
+                                  {t('bookDetails.borrow')}
                                 </button>
                               </>
                             )}
@@ -630,17 +632,17 @@ const CatalogPage: React.FC = () => {
                   disabled={currentPage === 1}
                   className="px-4 sm:px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium min-h-[44px]"
                 >
-                  Önceki
+                  {t('catalog.oldest')}
                 </button>
                 <span className="px-3 sm:px-4 py-2.5 bg-white/60 backdrop-blur-xl rounded-xl text-sm sm:text-base text-gray-700 font-semibold shadow-lg">
-                  Sayfa {currentPage} / {totalPages}
+                  {t('bookDetails.pages')} {currentPage} / {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="px-4 sm:px-6 py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium min-h-[44px]"
                 >
-                  Sonraki
+                  {t('catalog.newest')}
                 </button>
               </div>
             )}
@@ -655,7 +657,7 @@ const CatalogPage: React.FC = () => {
             <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-6 flex justify-between items-center flex-shrink-0">
               <h2 className="text-2xl font-bold text-white flex items-center">
                 <BookOpen className="w-6 h-6 mr-2" />
-                Kitap Detayları
+                {t('books.title')}
               </h2>
               <button
                 onClick={() => setShowBookDetails(false)}
@@ -685,10 +687,10 @@ const CatalogPage: React.FC = () => {
                         : 'bg-green-500/90 text-white'
                     }`}>
                       {getBookStatus(selectedBook.id) === 'lost' 
-                        ? 'Kayıp' 
+                        ? t('books.lost') 
                         : getBookStatus(selectedBook.id) === 'borrowed' 
-                        ? 'Ödünç Verildi' 
-                        : 'Müsait'}
+                        ? t('books.borrowed') 
+                        : t('books.available')}
                     </span>
                   </div>
                 </div>
@@ -715,7 +717,7 @@ const CatalogPage: React.FC = () => {
                     }}
                     className="w-full max-w-xs px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all min-h-[44px]"
                   >
-                    Ödünç Al
+                    {t('bookDetails.borrow')}
                   </button>
                 )}
               </div>
@@ -729,7 +731,7 @@ const CatalogPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Hakkında</h4>
+                  <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">{t('footer.about')}</h4>
                   <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6">
                     <p className="text-gray-700 leading-relaxed">
                       {selectedBook.backCover}
@@ -740,23 +742,23 @@ const CatalogPage: React.FC = () => {
                 <div>
                   <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                     <Ruler className="w-6 h-6 mr-2 text-indigo-600" />
-                    Fiziksel Özellikler
+                    {t('common.info')}
                   </h4>
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                      <p className="text-sm text-gray-500 mb-1">Sayfa Sayısı</p>
+                      <p className="text-sm text-gray-500 mb-1">{t('bookDetails.pages')}</p>
                       <p className="text-lg font-semibold text-gray-900">{selectedBook.pageCount}</p>
                     </div>
                     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                      <p className="text-sm text-gray-500 mb-1">Boyut</p>
+                      <p className="text-sm text-gray-500 mb-1">{t('common.info')}</p>
                       <p className="text-lg font-semibold text-gray-900">{selectedBook.dimensions}</p>
                     </div>
                     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                      <p className="text-sm text-gray-500 mb-1">Ağırlık</p>
+                      <p className="text-sm text-gray-500 mb-1">{t('common.info')}</p>
                       <p className="text-lg font-semibold text-gray-900">{selectedBook.weight}</p>
                     </div>
                     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                      <p className="text-sm text-gray-500 mb-1">Cilt</p>
+                      <p className="text-sm text-gray-500 mb-1">{t('common.info')}</p>
                       <p className="text-lg font-semibold text-gray-900">{selectedBook.binding}</p>
                     </div>
                   </div>
@@ -766,7 +768,7 @@ const CatalogPage: React.FC = () => {
                   <div>
                     <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                       <BookOpen className="w-6 h-6 mr-2 text-indigo-600" />
-                      Benzer Kitaplar
+                      {t('books.title')}
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                       {recommendedBooksForModal.slice(0, 6).map(book => (
@@ -781,7 +783,7 @@ const CatalogPage: React.FC = () => {
                               onClick={() => handleBorrowRequest(book as Book)}
                               className="mt-2 w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-xs font-semibold hover:shadow-md transition-all min-h-[44px]"
                             >
-                              Ödünç Al
+                              {t('bookDetails.borrow')}
                             </button>
                           </div>
                         </div>
@@ -794,7 +796,7 @@ const CatalogPage: React.FC = () => {
                   <div>
                     <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
                       <Tag className="w-6 h-6 mr-2 text-indigo-600" />
-                      Etiketler
+                      {t('common.search')}
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedBook.tags.slice(0, 8).map((tag, index) => (
@@ -817,7 +819,7 @@ const CatalogPage: React.FC = () => {
                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl font-semibold hover:shadow-md transition-all"
                   >
                     <ExternalLink className="w-5 h-5 mr-2" />
-                    Daha Fazla Bilgi
+                    {t('common.info')}
                   </a>
                 </div>
               </div>

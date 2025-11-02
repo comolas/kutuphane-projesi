@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthors } from '../../contexts/AuthorContext';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Cake, Cross, X } from 'lucide-react';
@@ -15,6 +16,7 @@ interface TimelineEvent {
 }
 
 const AuthorTimeline: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { authors } = useAuthors();
   const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -77,7 +79,7 @@ const AuthorTimeline: React.FC = () => {
     });
   };
 
-  const monthName = currentMonth.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+  const monthName = currentMonth.toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US', { month: 'long', year: 'numeric' });
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
 
   return (
@@ -85,7 +87,7 @@ const AuthorTimeline: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-          📅 Yazar Takvimi
+          📅 {t('authors.calendar')}
         </h2>
         <div className="flex items-center gap-3 sm:gap-4">
           <button
@@ -109,15 +111,15 @@ const AuthorTimeline: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
         <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 text-center">
-          <p className="text-xs sm:text-sm text-gray-600 mb-1">Toplam</p>
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">{t('authors.total')}</p>
           <p className="text-2xl sm:text-3xl font-bold text-indigo-600">{events.length}</p>
         </div>
         <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 text-center">
-          <p className="text-xs sm:text-sm text-gray-600 mb-1">Doğum</p>
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">{t('authors.birth')}</p>
           <p className="text-2xl sm:text-3xl font-bold text-green-600">{events.filter(e => e.type === 'birth').length}</p>
         </div>
         <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 text-center">
-          <p className="text-xs sm:text-sm text-gray-600 mb-1">Vefat</p>
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">{t('authors.death')}</p>
           <p className="text-2xl sm:text-3xl font-bold text-red-600">{events.filter(e => e.type === 'death').length}</p>
         </div>
       </div>
@@ -196,14 +198,14 @@ const AuthorTimeline: React.FC = () => {
                                     event.type === 'birth' ? 'text-green-600' : 'text-red-600'
                                   }`}>
                                     {event.type === 'birth' ? <Cake className="w-3 h-3 sm:w-4 sm:h-4" /> : <Cross className="w-3 h-3 sm:w-4 sm:h-4" />}
-                                    <span>{event.type === 'birth' ? 'Doğum' : 'Vefat'}</span>
+                                    <span>{event.type === 'birth' ? t('authors.birth') : t('authors.death')}</span>
                                   </div>
                                   <p className="text-xs text-gray-600 mt-1">
-                                    {event.year} ({event.anniversary}. yıl)
+                                    {t('authors.year', { year: event.year, anniversary: event.anniversary })}
                                   </p>
                                   {[25, 50, 75, 100, 125, 150].includes(event.anniversary) && (
                                     <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
-                                      ⭐ Önemli
+                                      ⭐ {t('authors.important')}
                                     </span>
                                   )}
                                 </div>
@@ -227,15 +229,15 @@ const AuthorTimeline: React.FC = () => {
       <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-6 pt-6 border-t border-gray-200">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-400"></div>
-          <span className="text-xs sm:text-sm text-gray-600">Doğum</span>
+          <span className="text-xs sm:text-sm text-gray-600">{t('authors.birth')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-400"></div>
-          <span className="text-xs sm:text-sm text-gray-600">Vefat</span>
+          <span className="text-xs sm:text-sm text-gray-600">{t('authors.death')}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-yellow-500 text-sm sm:text-base">⭐</span>
-          <span className="text-xs sm:text-sm text-gray-600">Önemli</span>
+          <span className="text-xs sm:text-sm text-gray-600">{t('authors.important')}</span>
         </div>
       </div>
     </div>

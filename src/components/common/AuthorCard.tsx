@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Author } from '../types';
 
 interface AuthorCardProps {
@@ -7,6 +8,7 @@ interface AuthorCardProps {
 }
 
 const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleInspectAuthor = () => {
@@ -22,7 +24,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
           onClick={handleInspectAuthor}
           className="mt-4 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
         >
-          Yazarı İncele
+          {t('authors.viewAuthor')}
         </button>
       </div>
     </div>

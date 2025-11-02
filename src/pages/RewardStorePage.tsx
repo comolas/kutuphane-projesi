@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { collection, getDocs, addDoc, query, where, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { PhysicalReward, RewardCoupon, RewardClaim } from '../types';
@@ -7,6 +8,7 @@ import { Gift, Package, Clock, CheckCircle, XCircle, Award, ArrowLeft } from 'lu
 import Swal from 'sweetalert2';
 
 const RewardStorePage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { userData, user } = useAuth();
   const [activeTab, setActiveTab] = useState<'rewards' | 'coupons' | 'claims'>('rewards');
   const [rewards, setRewards] = useState<PhysicalReward[]>([]);
@@ -54,22 +56,22 @@ const RewardStorePage: React.FC = () => {
 
   const handleClaimReward = async (reward: PhysicalReward) => {
     if (availableCoupons < reward.requiredCoupons) {
-      Swal.fire('Yetersiz Kupon!', `Bu ödül için ${reward.requiredCoupons} kupon gerekli.`, 'error');
+      Swal.fire(t('rewardStore.insufficientCoupons'), t('rewardStore.insufficientCouponsText', { count: reward.requiredCoupons }), 'error');
       return;
     }
 
     if (reward.stock <= 0) {
-      Swal.fire('Stokta Yok!', 'Bu ödül şu anda stokta bulunmuyor.', 'error');
+      Swal.fire(t('rewardStore.outOfStockTitle'), t('rewardStore.outOfStockText'), 'error');
       return;
     }
 
     const result = await Swal.fire({
-      title: 'Ödül Talep Et',
-      html: `<p><strong>${reward.name}</strong> ödülünü talep etmek istediğinize emin misiniz?</p><p>${reward.requiredCoupons} kupon kullanılacak.</p>`,
+      title: t('rewardStore.claimRewardTitle'),
+      html: t('rewardStore.claimRewardText', { name: reward.name, count: reward.requiredCoupons }),
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Evet, Talep Et',
-      cancelButtonText: 'İptal'
+      confirmButtonText: t('rewardStore.confirmClaim'),
+      cancelButtonText: t('rewardStore.cancel')
     });
 
     if (result.isConfirmed) {
@@ -102,16 +104,9 @@ const RewardStorePage: React.FC = () => {
         }
       }
 
-      Swal.fire('Başarılı!', 'Ödül talebiniz oluşturuldu. Admin onayından sonra kütüphaneden alabilirsiniz.', 'success');
+      Swal.fire(t('rewardStore.claimSuccess'), t('rewardStore.claimSuccessText'), 'success');
       loadData();
     }
-  };
-
-  const categoryLabels = {
-    experience: '🎭 Deneyim',
-    'gift-card': '💰 Hediye Çeki',
-    food: '🍫 Yiyecek/İçecek',
-    item: '🎁 Eşya'
   };
 
   const statusColors = {
@@ -119,13 +114,6 @@ const RewardStorePage: React.FC = () => {
     approved: 'bg-blue-100 text-blue-800',
     delivered: 'bg-green-100 text-green-800',
     rejected: 'bg-red-100 text-red-800'
-  };
-
-  const statusLabels = {
-    pending: 'Bekliyor',
-    approved: 'Onaylandı',
-    delivered: 'Teslim Edildi',
-    rejected: 'Reddedildi'
   };
 
   return (
@@ -136,19 +124,19 @@ const RewardStorePage: React.FC = () => {
           className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
-          Geri Dön
+          {t('rewardStore.backButton')}
         </button>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">🎁 Ödül Mağazası</h1>
-          <p className="text-sm sm:text-base text-gray-600">Meydan okumalardan kazandığınız kuponlarla ödül kazanın!</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('rewardStore.title')}</h1>
+          <p className="text-sm sm:text-base text-gray-600">{t('rewardStore.description')}</p>
         </div>
 
         {/* Kupon Sayısı */}
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-lg p-4 sm:p-6 mb-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm opacity-90">Kullanılabilir Kuponlarınız</p>
+              <p className="text-xs sm:text-sm opacity-90">{t('rewardStore.availableCoupons')}</p>
               <p className="text-3xl sm:text-4xl font-bold">{availableCoupons}</p>
             </div>
             <Gift className="w-12 h-12 sm:w-16 sm:h-16 opacity-50" />
@@ -167,7 +155,7 @@ const RewardStorePage: React.FC = () => {
               }`}
             >
               <Award className="w-4 h-4 sm:w-5 sm:h-5 inline mr-1 sm:mr-2" />
-              Ödüller
+              {t('rewardStore.tabs.rewards')}
             </button>
             <button
               onClick={() => setActiveTab('coupons')}
@@ -178,7 +166,7 @@ const RewardStorePage: React.FC = () => {
               }`}
             >
               <Gift className="w-4 h-4 sm:w-5 sm:h-5 inline mr-1 sm:mr-2" />
-              Kuponlarım
+              {t('rewardStore.tabs.coupons')}
             </button>
             <button
               onClick={() => setActiveTab('claims')}
@@ -189,7 +177,7 @@ const RewardStorePage: React.FC = () => {
               }`}
             >
               <Package className="w-4 h-4 sm:w-5 sm:h-5 inline mr-1 sm:mr-2" />
-              Taleplerim
+              {t('rewardStore.tabs.claims')}
             </button>
           </div>
 
@@ -207,22 +195,22 @@ const RewardStorePage: React.FC = () => {
                       <div key={reward.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-shadow">
                         <img src={reward.image} alt={reward.name} className="w-full h-40 sm:h-48 object-cover" />
                         <div className="p-3 sm:p-4">
-                          <span className="text-xs font-medium text-gray-500">{categoryLabels[reward.category]}</span>
+                          <span className="text-xs font-medium text-gray-500">{t(`rewardStore.categories.${reward.category}`)}</span>
                           <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-1 mb-2 line-clamp-1">{reward.name}</h3>
                           <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2">{reward.description}</p>
                           <div className="flex items-center justify-between mb-3 sm:mb-4">
                             <div className="flex items-center">
                               <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600 mr-1" />
-                              <span className="text-xs sm:text-sm font-semibold text-indigo-600">{reward.requiredCoupons} Kupon</span>
+                              <span className="text-xs sm:text-sm font-semibold text-indigo-600">{reward.requiredCoupons} {t('rewardStore.couponLabel')}</span>
                             </div>
-                            <span className="text-xs text-gray-500">Stok: {reward.stock}</span>
+                            <span className="text-xs text-gray-500">{t('rewardStore.stock')}: {reward.stock}</span>
                           </div>
                           <button
                             onClick={() => handleClaimReward(reward)}
                             disabled={availableCoupons < reward.requiredCoupons || reward.stock <= 0}
                             className="w-full px-4 py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            {reward.stock <= 0 ? 'Stokta Yok' : 'Talep Et'}
+                            {reward.stock <= 0 ? t('rewardStore.outOfStock') : t('rewardStore.claim')}
                           </button>
                         </div>
                       </div>
@@ -235,7 +223,7 @@ const RewardStorePage: React.FC = () => {
                   <div>
                     <div className="mb-4 sm:mb-6 text-center">
                       <p className="text-4xl sm:text-5xl font-bold text-indigo-600">{availableCoupons}</p>
-                      <p className="text-sm sm:text-base text-gray-600 mt-2">Kullanılabilir Kupon</p>
+                      <p className="text-sm sm:text-base text-gray-600 mt-2">{t('rewardStore.availableCouponsCount')}</p>
                     </div>
                     <div className="space-y-3">
                       {coupons.map(coupon => (
@@ -243,14 +231,14 @@ const RewardStorePage: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm sm:text-base font-semibold text-gray-900">
-                                {coupon.isUsed ? '✓ Kullanılmış Kupon' : '🎫 Aktif Kupon'}
+                                {coupon.isUsed ? t('rewardStore.usedCoupon') : t('rewardStore.activeCoupon')}
                               </p>
                               <p className="text-xs sm:text-sm text-gray-600">
-                                Kazanıldı: {coupon.earnedAt?.toDate().toLocaleDateString('tr-TR')}
+                                {t('rewardStore.earnedOn')}: {coupon.earnedAt?.toDate().toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US')}
                               </p>
                               {coupon.isUsed && coupon.usedAt && (
                                 <p className="text-xs text-gray-500">
-                                  Kullanıldı: {coupon.usedAt.toDate().toLocaleDateString('tr-TR')}
+                                  {t('rewardStore.usedOn')}: {coupon.usedAt.toDate().toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US')}
                                 </p>
                               )}
                             </div>
@@ -265,7 +253,7 @@ const RewardStorePage: React.FC = () => {
                     </div>
                     {coupons.length === 0 && (
                       <div className="text-center py-12 text-sm sm:text-base text-gray-500">
-                        Henüz kuponunuz yok. Meydan okumalara katılarak kupon kazanabilirsiniz!
+                        {t('rewardStore.noCoupons')}
                       </div>
                     )}
                   </div>
@@ -280,36 +268,36 @@ const RewardStorePage: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm sm:text-base font-bold text-gray-900 line-clamp-1">{claim.rewardName}</h3>
                             <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                              {claim.couponsUsed} kupon kullanıldı
+                              {t('rewardStore.couponsUsed', { count: claim.couponsUsed })}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              Talep Tarihi: {claim.claimedAt?.toDate().toLocaleDateString('tr-TR')}
+                              {t('rewardStore.claimDate')}: {claim.claimedAt?.toDate().toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US')}
                             </p>
                             {claim.status === 'approved' && (
                               <p className="text-xs sm:text-sm text-blue-600 mt-2">
-                                ✓ Onaylandı! Kütüphaneden alabilirsiniz.
+                                {t('rewardStore.approved')}
                               </p>
                             )}
                             {claim.status === 'delivered' && claim.deliveredAt && (
                               <p className="text-xs sm:text-sm text-green-600 mt-2">
-                                ✓ Teslim Edildi ({claim.deliveredAt.toDate().toLocaleDateString('tr-TR')})
+                                {t('rewardStore.delivered', { date: claim.deliveredAt.toDate().toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US') })}
                               </p>
                             )}
                             {claim.status === 'rejected' && claim.rejectedReason && (
                               <p className="text-xs sm:text-sm text-red-600 mt-2">
-                                ✗ Reddedildi: {claim.rejectedReason}
+                                {t('rewardStore.rejected', { reason: claim.rejectedReason })}
                               </p>
                             )}
                           </div>
                           <span className={`px-2 sm:px-3 py-1 rounded text-xs font-semibold whitespace-nowrap flex-shrink-0 ${statusColors[claim.status]}`}>
-                            {statusLabels[claim.status]}
+                            {t(`rewardStore.status.${claim.status}`)}
                           </span>
                         </div>
                       </div>
                     ))}
                     {claims.length === 0 && (
                       <div className="text-center py-12 text-sm sm:text-base text-gray-500">
-                        Henüz ödül talebiniz yok.
+                        {t('rewardStore.noClaims')}
                       </div>
                     )}
                   </div>

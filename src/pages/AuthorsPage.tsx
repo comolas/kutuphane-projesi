@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthors } from '../contexts/AuthorContext';
 import AuthorCard from '../components/common/AuthorCard';
 import { Author } from '../types';
@@ -7,6 +8,7 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import AuthorTimeline from '../components/common/AuthorTimeline';
 
 const AuthorsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { authors, fetchAllAuthors } = useAuthors();
   const [searchQuery, setSearchQuery] = useState('');
   const [tagQuery, setTagQuery] = useState('');
@@ -58,9 +60,9 @@ const AuthorsPage: React.FC = () => {
               backgroundColor="transparent"
             />
           </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Yazarlarımız</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">{t('authors.title')}</h1>
           <p className="mt-2 text-lg text-gray-600">
-            Kütüphanemize değer katan yazarları keşfedin.
+            {t('authors.description')}
           </p>
         </div>
 
@@ -73,7 +75,7 @@ const AuthorsPage: React.FC = () => {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Yazar adı ara..."
+              placeholder={t('authors.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -83,7 +85,7 @@ const AuthorsPage: React.FC = () => {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Etiket ara..."
+              placeholder={t('authors.tagPlaceholder')}
               value={tagQuery}
               onChange={(e) => setTagQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -96,15 +98,15 @@ const AuthorsPage: React.FC = () => {
               onChange={(e) => setSortOrder(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
-              <option value="name-asc">Ada Göre (A-Z)</option>
-              <option value="name-desc">Ada Göre (Z-A)</option>
+              <option value="name-asc">{t('authors.sortByName')}</option>
+              <option value="name-desc">{t('authors.sortByNameDesc')}</option>
             </select>
             <button
               onClick={handleClearFilters}
               className="flex items-center px-4 py-2 border border-red-200 bg-red-50 rounded-lg text-red-600 hover:bg-red-100 focus:ring-2 focus:ring-red-400"
             >
               <X className="w-5 h-5 mr-2" />
-              <span>Temizle</span>
+              <span>{t('authors.clear')}</span>
             </button>
           </div>
         </div>
@@ -118,7 +120,7 @@ const AuthorsPage: React.FC = () => {
         {totalPages > 1 && (
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
             <p className="text-sm text-gray-600">
-              Sayfa {currentPage} / {totalPages}
+              {t('authors.page', { current: currentPage, total: totalPages })}
             </p>
             <div className="flex gap-2">
               <button
@@ -126,14 +128,14 @@ const AuthorsPage: React.FC = () => {
                 disabled={currentPage === 1}
                 className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
-                Önceki
+                {t('authors.previous')}
               </button>
               <button
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
-                Sonraki
+                {t('authors.next')}
               </button>
             </div>
           </div>

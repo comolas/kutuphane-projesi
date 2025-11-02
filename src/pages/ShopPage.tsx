@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ShoppingCart, Plus, Minus, Trash2, Package, Search, Filter, X, Eye, Tag, Ticket } from 'lucide-react';
 import { useShop } from '../contexts/ShopContext';
 import { useCoupons } from '../contexts/CouponContext';
@@ -10,6 +11,7 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import OptimizedImage from '../components/common/OptimizedImage';
 
 const ShopPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { products, cart, appliedCoupon, addToCart, removeFromCart, updateCartQuantity, applyCoupon, removeCoupon, getCartTotal, getDiscountAmount, getFinalTotal, getCartItemCount, createOrder } = useShop();
   const { coupons } = useCoupons();
@@ -86,8 +88,8 @@ const ShopPage: React.FC = () => {
       await createOrder(paymentMethod, notes);
       await Swal.fire({
         icon: 'success',
-        title: 'Sipariş Oluşturuldu!',
-        text: 'Siparişiniz başarıyla oluşturuldu. Ürünü kütüphaneden teslim alırken nakit ödeme yapabilirsiniz.',
+        title: t('shop.orderCreated'),
+        text: t('shop.orderCreatedText'),
         confirmButtonColor: '#4F46E5'
       });
       setShowCheckout(false);
@@ -96,7 +98,7 @@ const ShopPage: React.FC = () => {
     } catch (error: any) {
       await Swal.fire({
         icon: 'error',
-        title: 'Hata!',
+        title: t('shop.error'),
         text: error.message,
         confirmButtonColor: '#EF4444'
       });
@@ -117,7 +119,7 @@ const ShopPage: React.FC = () => {
         <div className="mb-4 flex justify-between items-center">
           <button onClick={() => navigate('/dashboard')} className="flex items-center text-gray-600 hover:text-gray-900">
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
+            {t('common.back')}
           </button>
           <button onClick={() => setShowCart(true)} className="relative p-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all">
             <ShoppingCart className="w-6 h-6" />
@@ -139,8 +141,8 @@ const ShopPage: React.FC = () => {
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">🛒 Kütüphane Mağazası</h1>
-          <p className="mt-2 text-gray-600">Okul logolu ürünleri keşfedin ve sipariş verin</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{t('shop.title')}</h1>
+          <p className="mt-2 text-gray-600">{t('shop.description')}</p>
         </div>
 
         {/* Floating Filter Button (Mobile) */}
@@ -167,14 +169,14 @@ const ShopPage: React.FC = () => {
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-lg font-semibold flex items-center">
                 <Filter className="w-5 h-5 mr-2 text-indigo-600" />
-                Filtreler
+                {t('shop.filters')}
               </h2>
               <div className="flex gap-2">
                 <button
                   onClick={handleClearFilters}
                   className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all"
                 >
-                  Temizle
+                  {t('shop.clear')}
                 </button>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
@@ -190,7 +192,7 @@ const ShopPage: React.FC = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Ürün ara..."
+                  placeholder={t('shop.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -202,24 +204,24 @@ const ShopPage: React.FC = () => {
             <div className="space-y-4 sm:space-y-6">
               {/* Sort Order */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('shop.sorting')}</h3>
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="default">Varsayılan</option>
-                  <option value="price-asc">Fiyat (Düşük → Yüksek)</option>
-                  <option value="price-desc">Fiyat (Yüksek → Düşük)</option>
-                  <option value="name-asc">İsim (A → Z)</option>
-                  <option value="name-desc">İsim (Z → A)</option>
-                  <option value="stock-desc">Stok (Çok → Az)</option>
+                  <option value="default">{t('shop.sortDefault')}</option>
+                  <option value="price-asc">{t('shop.sortPriceAsc')}</option>
+                  <option value="price-desc">{t('shop.sortPriceDesc')}</option>
+                  <option value="name-asc">{t('shop.sortNameAsc')}</option>
+                  <option value="name-desc">{t('shop.sortNameDesc')}</option>
+                  <option value="stock-desc">{t('shop.sortStockDesc')}</option>
                 </select>
               </div>
 
               {/* Price Range Filter */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Fiyat Aralığı</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('shop.priceRange')}</h3>
                 <div className="space-y-3">
                   <input
                     type="range"
@@ -235,7 +237,7 @@ const ShopPage: React.FC = () => {
                       value={priceRange[0]}
                       onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Min"
+                      placeholder={t('shop.min')}
                     />
                     <span className="text-gray-500">-</span>
                     <input
@@ -243,7 +245,7 @@ const ShopPage: React.FC = () => {
                       value={priceRange[1]}
                       onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || maxPrice])}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Max"
+                      placeholder={t('shop.max')}
                     />
                   </div>
                   <div className="text-xs text-gray-600 text-center">
@@ -254,7 +256,7 @@ const ShopPage: React.FC = () => {
 
               {/* Category Filter */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Kategori</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('shop.category')}</h3>
                 <div className="space-y-2">
                   <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <input
@@ -264,7 +266,7 @@ const ShopPage: React.FC = () => {
                       onChange={() => setSelectedCategory('all')}
                       className="mr-2"
                     />
-                    <span className="text-sm">Tümü</span>
+                    <span className="text-sm">{t('shop.all')}</span>
                   </label>
                   <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <input
@@ -274,7 +276,7 @@ const ShopPage: React.FC = () => {
                       onChange={() => setSelectedCategory('aksesuar')}
                       className="mr-2"
                     />
-                    <span className="text-sm">Aksesuar</span>
+                    <span className="text-sm">{t('shop.accessory')}</span>
                   </label>
                   <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <input
@@ -284,7 +286,7 @@ const ShopPage: React.FC = () => {
                       onChange={() => setSelectedCategory('kiyafet')}
                       className="mr-2"
                     />
-                    <span className="text-sm">Kıyafet</span>
+                    <span className="text-sm">{t('shop.clothing')}</span>
                   </label>
                   <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <input
@@ -294,7 +296,7 @@ const ShopPage: React.FC = () => {
                       onChange={() => setSelectedCategory('kirtasiye')}
                       className="mr-2"
                     />
-                    <span className="text-sm">Kırtasiye</span>
+                    <span className="text-sm">{t('shop.stationery')}</span>
                   </label>
                 </div>
               </div>
@@ -307,7 +309,7 @@ const ShopPage: React.FC = () => {
             <div className="mb-6 flex flex-wrap items-center gap-2">
               {searchQuery && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow-sm">
-                  Aranan: {searchQuery}
+                  {t('shop.searched')}: {searchQuery}
                   <button onClick={() => setSearchQuery('')} className="ml-2 text-gray-500 hover:text-gray-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -315,7 +317,7 @@ const ShopPage: React.FC = () => {
               )}
               {selectedCategory !== 'all' && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 shadow-sm">
-                  Kategori: {selectedCategory === 'aksesuar' ? 'Aksesuar' : selectedCategory === 'kiyafet' ? 'Kıyafet' : 'Kırtasiye'}
+                  {t('shop.categoryLabel')}: {selectedCategory === 'aksesuar' ? t('shop.accessory') : selectedCategory === 'kiyafet' ? t('shop.clothing') : t('shop.stationery')}
                   <button onClick={() => setSelectedCategory('all')} className="ml-2 text-purple-500 hover:text-purple-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -323,7 +325,7 @@ const ShopPage: React.FC = () => {
               )}
               {sortOrder !== 'default' && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-indigo-800 shadow-sm">
-                  Sıralama: {sortOrder === 'price-asc' ? 'Fiyat ↑' : sortOrder === 'price-desc' ? 'Fiyat ↓' : sortOrder === 'name-asc' ? 'İsim A-Z' : sortOrder === 'name-desc' ? 'İsim Z-A' : 'Stok ↓'}
+                  {t('shop.sorting')}: {sortOrder === 'price-asc' ? t('shop.sortPriceAsc') : sortOrder === 'price-desc' ? t('shop.sortPriceDesc') : sortOrder === 'name-asc' ? t('shop.sortNameAsc') : sortOrder === 'name-desc' ? t('shop.sortNameDesc') : t('shop.sortStockDesc')}
                   <button onClick={() => setSortOrder('default')} className="ml-2 text-indigo-500 hover:text-indigo-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -331,7 +333,7 @@ const ShopPage: React.FC = () => {
               )}
               {(priceRange[0] !== 0 || priceRange[1] !== maxPrice) && (
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 shadow-sm">
-                  Fiyat: {priceRange[0]}-{priceRange[1]} TL
+                  {t('shop.price')}: {priceRange[0]}-{priceRange[1]} TL
                   <button onClick={() => setPriceRange([0, maxPrice])} className="ml-2 text-green-500 hover:text-green-700">
                     <X className="w-4 h-4" />
                   </button>
@@ -342,8 +344,8 @@ const ShopPage: React.FC = () => {
             {paginatedProducts.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-16">
                 <Package className="w-32 h-32 mb-6 text-gray-300" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Ürün bulunamadı</h3>
-                <p className="text-gray-500">Aradığınız kriterlere uygun ürün bulunmuyor.</p>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">{t('shop.noProducts')}</h3>
+                <p className="text-gray-500">{t('shop.noProductsDesc')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
@@ -359,15 +361,15 @@ const ShopPage: React.FC = () => {
                         <div className="absolute top-2 left-2 z-10 space-y-1">
                           {product.stock === 0 ? (
                             <span className="block px-2 py-1 rounded-lg text-xs font-bold shadow-md bg-gradient-to-r from-red-500 to-pink-600 text-white animate-pulse">
-                              ⚠️ Stokta Yok
+                              {t('shop.outOfStock')}
                             </span>
                           ) : product.stock <= 3 ? (
                             <span className="block px-2 py-1 rounded-lg text-xs font-bold shadow-md bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse">
-                              🔥 Son {product.stock} Adet!
+                              {t('shop.lastItems', { count: product.stock })}
                             </span>
                           ) : product.stock <= 10 && (
                             <span className="block px-2 py-1 rounded-lg text-xs font-bold shadow-md bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-                              ⚡ Az Kaldı!
+                              {t('shop.lowStock')}
                             </span>
                           )}
                         </div>
@@ -383,7 +385,7 @@ const ShopPage: React.FC = () => {
                               className="w-full px-3 py-2 bg-white/90 backdrop-blur-sm text-gray-900 rounded-xl text-xs font-semibold shadow-md hover:bg-white transition-all flex items-center justify-center mb-2"
                             >
                               <Eye className="w-3 h-3 mr-1" />
-                              İncele
+                              {t('shop.inspect')}
                             </button>
                           </div>
                         </div>
@@ -393,7 +395,7 @@ const ShopPage: React.FC = () => {
                         <p className="text-xs text-gray-600 line-clamp-2 mb-2">{product.description}</p>
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-xl font-bold text-indigo-600">{product.price} TL</span>
-                          <span className="text-xs text-gray-500">Stok: {product.stock}</span>
+                          <span className="text-xs text-gray-500">{t('shop.stock')}: {product.stock}</span>
                         </div>
                         {cartItem ? (
                           <div className="flex items-center justify-center gap-3">
@@ -407,7 +409,7 @@ const ShopPage: React.FC = () => {
                           </div>
                         ) : (
                           <button onClick={() => addToCart(product.id)} className="w-full py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold" disabled={product.stock === 0}>
-                            {product.stock === 0 ? 'Stokta Yok' : 'Sepete Ekle'}
+                            {product.stock === 0 ? t('shop.outOfStock') : t('shop.addToCart')}
                           </button>
                         )}
                       </div>
@@ -424,17 +426,17 @@ const ShopPage: React.FC = () => {
                   disabled={currentPage === 1}
                   className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
                 >
-                  Önceki
+                  {t('shop.previous')}
                 </button>
                 <span className="px-3 sm:px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-sm sm:text-base text-gray-700 font-semibold shadow-lg">
-                  Sayfa {currentPage} / {totalPages}
+                  {t('shop.page', { current: currentPage, total: totalPages })}
                 </span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium"
                 >
-                  Sonraki
+                  {t('shop.next')}
                 </button>
               </div>
             )}
@@ -452,8 +454,8 @@ const ShopPage: React.FC = () => {
                   <ShoppingCart className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Sepetim</h2>
-                  <p className="text-white/80 text-sm">{cart.length} ürün</p>
+                  <h2 className="text-2xl font-bold text-white">{t('shop.cart')}</h2>
+                  <p className="text-white/80 text-sm">{t('shop.items', { count: cart.length })}</p>
                 </div>
               </div>
               <button onClick={() => setShowCart(false)} className="p-2 hover:bg-white/20 rounded-lg transition-all">
@@ -466,10 +468,10 @@ const ShopPage: React.FC = () => {
                   <div className="p-6 bg-gray-100 rounded-full mb-4">
                     <ShoppingCart className="w-16 h-16 text-gray-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Sepetiniz Boş</h3>
-                  <p className="text-gray-600 mb-6">Mağazadan ürün ekleyerek başlayın</p>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">{t('shop.emptyCart')}</h3>
+                  <p className="text-gray-600 mb-6">{t('shop.emptyCartDesc')}</p>
                   <button onClick={() => setShowCart(false)} className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
-                    Alışverişe Başla
+                    {t('shop.startShopping')}
                   </button>
                 </div>
               ) : (
@@ -513,22 +515,22 @@ const ShopPage: React.FC = () => {
               <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 border-t">
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Ara Toplam</span>
+                    <span className="text-sm text-gray-600">{t('shop.subtotal')}</span>
                     <span className="text-sm font-semibold text-gray-900">{getCartTotal()} TL</span>
                   </div>
                   {appliedCoupon && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-green-600">İndirim (%{appliedCoupon.discountPercent})</span>
+                      <span className="text-sm text-green-600">{t('shop.discount')} (%{appliedCoupon.discountPercent})</span>
                       <span className="text-sm font-semibold text-green-600">-{getDiscountAmount()} TL</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-lg font-semibold text-gray-700">Toplam Tutar</span>
+                    <span className="text-lg font-semibold text-gray-700">{t('shop.total')}</span>
                     <span className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{getFinalTotal()} TL</span>
                   </div>
                 </div>
                 <button onClick={() => setShowCheckout(true)} className="w-full py-4 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 text-white rounded-xl font-bold text-lg hover:shadow-xl transition-all transform hover:scale-[1.02]">
-                  Siparişi Tamamla
+                  {t('shop.completeOrder')}
                 </button>
               </div>
             )}
@@ -545,22 +547,22 @@ const ShopPage: React.FC = () => {
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
                   <Package className="w-6 h-6 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-white">Sipariş Özeti</h2>
+                <h2 className="text-2xl font-bold text-white">{t('shop.orderSummary')}</h2>
               </div>
-              <p className="text-white/80 text-sm">Son adım! Siparişinizi onaylayın</p>
+              <p className="text-white/80 text-sm">{t('shop.lastStep')}</p>
             </div>
             <div className="p-6 space-y-6">
               {/* Ödeme Yöntemi */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Ödeme Yöntemi</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">{t('shop.paymentMethod')}</label>
                 <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-green-500 rounded-lg">
                       <span className="text-2xl">💵</span>
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900">Nakit Ödeme</p>
-                      <p className="text-sm text-gray-600">Teslim alırken ödenecek</p>
+                      <p className="font-bold text-gray-900">{t('shop.cashPayment')}</p>
+                      <p className="text-sm text-gray-600">{t('shop.payOnPickup')}</p>
                     </div>
                   </div>
                 </div>
@@ -568,7 +570,7 @@ const ShopPage: React.FC = () => {
 
               {/* Kupon Seçimi */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">🎫 İndirim Kuponu</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">{t('shop.discountCoupon')}</label>
                 {appliedCoupon ? (
                   <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
                     <div className="flex items-center justify-between">
@@ -577,7 +579,7 @@ const ShopPage: React.FC = () => {
                           <Ticket className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900">%{appliedCoupon.discountPercent} İndirim</p>
+                          <p className="font-bold text-gray-900">{t('shop.couponApplied', { percent: appliedCoupon.discountPercent })}</p>
                           <p className="text-sm text-gray-600">-{getDiscountAmount()} TL</p>
                         </div>
                       </div>
@@ -592,18 +594,18 @@ const ShopPage: React.FC = () => {
                     className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 text-gray-600 hover:text-indigo-600"
                   >
                     <Ticket className="w-5 h-5" />
-                    <span className="font-semibold">Kupon Seç ({availableShopCoupons.length} adet)</span>
+                    <span className="font-semibold">{t('shop.selectCoupon', { count: availableShopCoupons.length })}</span>
                   </button>
                 ) : (
                   <div className="p-4 bg-gray-50 border-2 border-gray-200 rounded-xl text-center">
-                    <p className="text-sm text-gray-500">Kullanılabilir kuponunuz yok</p>
+                    <p className="text-sm text-gray-500">{t('shop.noCoupons')}</p>
                   </div>
                 )}
               </div>
 
               {/* Sipariş Özeti */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Sipariş Detayları</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">{t('shop.orderDetails')}</label>
                 <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl space-y-2">
                   {cart.map(item => {
                     const product = getProductById(item.productId);
@@ -617,17 +619,17 @@ const ShopPage: React.FC = () => {
                   })}
                   <div className="pt-2 border-t border-gray-300 space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Ara Toplam</span>
+                      <span className="text-sm text-gray-600">{t('shop.subtotal')}</span>
                       <span className="text-sm font-semibold text-gray-900">{getCartTotal()} TL</span>
                     </div>
                     {appliedCoupon && (
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-green-600">İndirim (%{appliedCoupon.discountPercent})</span>
+                        <span className="text-sm text-green-600">{t('shop.discount')} (%{appliedCoupon.discountPercent})</span>
                         <span className="text-sm font-semibold text-green-600">-{getDiscountAmount()} TL</span>
                       </div>
                     )}
                     <div className="flex justify-between items-center pt-2 border-t border-gray-300">
-                      <span className="font-bold text-gray-900">Toplam</span>
+                      <span className="font-bold text-gray-900">{t('shop.total')}</span>
                       <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{getFinalTotal()} TL</span>
                     </div>
                   </div>
@@ -636,13 +638,13 @@ const ShopPage: React.FC = () => {
 
               {/* Sipariş Notu */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Sipariş Notu (Opsiyonel)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">{t('shop.orderNote')}</label>
                 <textarea 
                   value={notes} 
                   onChange={(e) => setNotes(e.target.value)} 
                   className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
                   rows={3} 
-                  placeholder="Özel bir talebiniz varsa buraya yazabilirsiniz..."
+                  placeholder={t('shop.orderNotePlaceholder')}
                 ></textarea>
               </div>
 
@@ -655,18 +657,18 @@ const ShopPage: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-blue-900 mb-1">Bilgilendirme</p>
-                    <p className="text-sm text-blue-800">Siparişiniz hazırlandığında size bildirim gönderilecektir. Ürünü kütüphaneden teslim alırken nakit ödeme yapabilirsiniz.</p>
+                    <p className="text-sm font-semibold text-blue-900 mb-1">{t('shop.infoTitle')}</p>
+                    <p className="text-sm text-blue-800">{t('shop.infoText')}</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 border-t flex gap-3">
               <button onClick={() => setShowCheckout(false)} className="flex-1 py-3 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-white transition-all">
-                İptal
+                {t('shop.cancel')}
               </button>
               <button onClick={handleCheckout} className="flex-1 py-3 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 text-white rounded-xl font-bold hover:shadow-xl transition-all transform hover:scale-[1.02]">
-                Siparişi Onayla
+                {t('shop.confirmOrder')}
               </button>
             </div>
           </div>

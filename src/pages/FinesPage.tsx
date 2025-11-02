@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { ChevronLeft, AlertCircle, Clock, DollarSign, CheckCircle, Info, X, History, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -10,6 +11,7 @@ import { useBooks } from '../contexts/BookContext';
 import { useSettings } from '../contexts/SettingsContext';
 
 const FinesPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { borrowedBooks, allBorrowedBooks } = useBooks();
   const { finePerDay, loading: settingsLoading } = useSettings();
@@ -63,7 +65,7 @@ const FinesPage: React.FC = () => {
   const currentList = activeTab === 'unpaid' ? unpaidFines : paidFines;
 
   if (settingsLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Ayarlar yükleniyor...</div>
+    return <div className="flex justify-center items-center min-h-screen">{t('fines.loadingSettings')}</div>
   }
 
   return (
@@ -75,7 +77,7 @@ const FinesPage: React.FC = () => {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
+            {t('common.back')}
           </button>
         </div>
 
@@ -89,9 +91,9 @@ const FinesPage: React.FC = () => {
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Cezalarım</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('fines.title')}</h1>
           <p className="mt-2 text-gray-600">
-            Gecikmiş kitaplarınız ve ceza tutarlarınızı buradan takip edebilirsiniz.
+            {t('fines.description')}
           </p>
         </div>
 
@@ -106,14 +108,14 @@ const FinesPage: React.FC = () => {
                   <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
-              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ödenmemiş Ceza</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('fines.unpaidFines')}</p>
               <p className="text-2xl sm:text-4xl font-bold text-white mb-3 sm:mb-4">{totalUnpaidFine} TL</p>
               {totalUnpaidFine > 0 && (
                 <button 
                   onClick={() => setIsModalOpen(true)}
                   className="w-full px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all text-sm font-medium"
                 >
-                  Nasıl Öderim?
+                  {t('fines.howToPay')}
                 </button>
               )}
             </div>
@@ -128,7 +130,7 @@ const FinesPage: React.FC = () => {
                   <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
-              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ödenen Ceza</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('fines.paidFines')}</p>
               <p className="text-2xl sm:text-4xl font-bold text-white">{totalPaidFine} TL</p>
             </div>
           </div>
@@ -142,7 +144,7 @@ const FinesPage: React.FC = () => {
                   <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
-              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Gecikmiş Kitap</p>
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('fines.overdueBooks')}</p>
               <p className="text-2xl sm:text-4xl font-bold text-white">{overdueCount}</p>
             </div>
           </div>
@@ -161,7 +163,7 @@ const FinesPage: React.FC = () => {
               }`}
             >
               <AlertCircle className="w-5 h-5 mr-2" />
-              Ödenmemiş Cezalar
+              {t('fines.unpaidTab')}
             </button>
             <button
               onClick={() => setActiveTab('paid')}
@@ -172,7 +174,7 @@ const FinesPage: React.FC = () => {
               }`}
             >
               <History className="w-5 h-5 mr-2" />
-              Ödeme Geçmişi
+              {t('fines.paymentHistory')}
             </button>
           </nav>
         </div>
@@ -204,7 +206,7 @@ const FinesPage: React.FC = () => {
                       <div className="mt-4 space-y-2">
                         <div className="flex items-center text-sm">
                           <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                          <span className="text-gray-600">Son Teslim Tarihi:</span>
+                          <span className="text-gray-600">{t('fines.dueDate')}:</span>
                           <span className="ml-2 font-medium">
                             {new Date(book.dueDate).toLocaleDateString()}
                           </span>
@@ -213,9 +215,9 @@ const FinesPage: React.FC = () => {
                         {daysOverdue > 0 && (
                           <div className="flex items-center text-sm">
                             <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
-                            <span className="text-red-600">Gecikme:</span>
+                            <span className="text-red-600">{t('fines.delay')}:</span>
                             <span className="ml-2 font-medium text-red-600">
-                              {daysOverdue} gün
+                              {t('fines.daysCount', { count: daysOverdue })}
                             </span>
                           </div>
                         )}
@@ -233,18 +235,18 @@ const FinesPage: React.FC = () => {
                       </div>
                       {book.appliedDiscount && (
                         <div className="mt-1 px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold inline-block">
-                          %{book.appliedDiscount.discountPercent} indirim uygulandı
+                          {t('fines.discountApplied', { percent: book.appliedDiscount.discountPercent })}
                         </div>
                       )}
                       {book.fineStatus !== 'paid' && daysOverdue > 0 && !book.appliedDiscount && (
                         <p className="text-xs text-gray-500 mt-1">
-                          ({daysOverdue} gün x {fineRate} TL)
+                          ({daysOverdue} {t('fines.days')} x {fineRate} TL)
                         </p>
                       )}
                       {book.fineStatus === 'paid' ? (
                         <div className="mt-2">
                           <div className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-medium flex flex-col items-center shadow-lg mb-2">
-                            <span>Ödendi</span>
+                            <span>{t('fines.paid')}</span>
                             {book.paymentDate && (
                               <span className="text-xs text-white/90 mt-1">
                                 {new Date(book.paymentDate).toLocaleDateString()}
@@ -418,12 +420,12 @@ const FinesPage: React.FC = () => {
                             className="w-full px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-medium hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center touch-manipulation min-h-[40px]"
                           >
                             <Download className="w-3 h-3 mr-1" />
-                            Makbuz İndir
+                            {t('fines.downloadReceipt')}
                           </button>
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 mt-2">
-                          Ödeme bekleniyor
+                          {t('fines.awaitingPayment')}
                         </p>
                       )}
                     </div>
@@ -436,9 +438,9 @@ const FinesPage: React.FC = () => {
             <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-8 text-center flex flex-col items-center justify-center border border-white/20">
                 <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                  {activeTab === 'unpaid' ? 'Harika! Ödenmemiş cezanız yok.' : 'Geçmişe ait ödenmiş bir cezanız bulunmuyor.'}
+                  {activeTab === 'unpaid' ? t('fines.noUnpaidFines') : t('fines.noPaidFines')}
                 </h3>
-                <p className="text-gray-600">{activeTab === 'unpaid' ? 'Kitaplarınızı zamanında getirdiğiniz için teşekkür ederiz.' : 'Tüm kayıtlarınız burada görünecektir.'}</p>
+                <p className="text-gray-600">{activeTab === 'unpaid' ? t('fines.thankYou') : t('fines.allRecordsHere')}</p>
             </div>
           )}
         </div>
@@ -451,7 +453,7 @@ const FinesPage: React.FC = () => {
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900 flex items-center">
                 <Info className="w-6 h-6 mr-2 text-indigo-600" />
-                Ceza Ödeme Bilgisi
+                {t('fines.paymentInfo')}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                 <X className="w-6 h-6" />
@@ -459,7 +461,7 @@ const FinesPage: React.FC = () => {
             </div>
             <div className="p-6">
               <p className="text-gray-700">
-                Tüm para cezaları, kütüphane bankosuna nakit olarak veya kart ile ödenebilir. Lütfen ödeme yaparken öğrenci kimliğinizi yanınızda bulundurunuz.
+                {t('fines.paymentInfoText')}
               </p>
             </div>
             <div className="p-4 bg-gray-50 text-right">
@@ -467,7 +469,7 @@ const FinesPage: React.FC = () => {
                 onClick={() => setIsModalOpen(false)}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
               >
-                Anladım
+                {t('fines.understood')}
               </button>
             </div>
           </div>

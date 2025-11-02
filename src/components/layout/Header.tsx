@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Book, Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationBell from '../common/NotificationBell';
+import LanguageSelector from '../common/LanguageSelector';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -10,6 +12,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
+  const { t } = useTranslation();
   const { isTeacher } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,7 +51,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               to={isTeacher ? "/teacher-dashboard" : "/dashboard"}
               className="relative px-4 py-2 text-gray-700 dark:text-gray-300 font-medium transition-all duration-300 group"
             >
-              <span className="relative z-10">Ana Sayfa</span>
+              <span className="relative z-10">{t('header.home')}</span>
               <span className={`absolute inset-0 bg-gradient-to-r ${isTeacher ? 'from-orange-500/10 to-amber-500/10' : 'from-indigo-500/10 to-purple-500/10'} rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300`}></span>
               <span className={`absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r ${isTeacher ? 'from-orange-500 to-amber-600' : 'from-indigo-500 to-purple-600'} group-hover:w-full group-hover:left-0 transition-all duration-300`}></span>
             </Link>
@@ -56,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               to="/catalog"
               className="relative px-4 py-2 text-gray-700 dark:text-gray-300 font-medium transition-all duration-300 group"
             >
-              <span className="relative z-10">Katalog</span>
+              <span className="relative z-10">{t('header.catalog')}</span>
               <span className={`absolute inset-0 bg-gradient-to-r ${isTeacher ? 'from-orange-500/10 to-amber-500/10' : 'from-indigo-500/10 to-purple-500/10'} rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300`}></span>
               <span className={`absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r ${isTeacher ? 'from-orange-500 to-amber-600' : 'from-indigo-500 to-purple-600'} group-hover:w-full group-hover:left-0 transition-all duration-300`}></span>
             </Link>
@@ -64,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               to="/yazarlar"
               className="relative px-4 py-2 text-gray-700 dark:text-gray-300 font-medium transition-all duration-300 group"
             >
-              <span className="relative z-10">Yazarlarımız</span>
+              <span className="relative z-10">{t('header.authors')}</span>
               <span className={`absolute inset-0 bg-gradient-to-r ${isTeacher ? 'from-orange-500/10 to-amber-500/10' : 'from-indigo-500/10 to-purple-500/10'} rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300`}></span>
               <span className={`absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r ${isTeacher ? 'from-orange-500 to-amber-600' : 'from-indigo-500 to-purple-600'} group-hover:w-full group-hover:left-0 transition-all duration-300`}></span>
             </Link>
@@ -72,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               to="/dergiler"
               className="relative px-4 py-2 text-gray-700 dark:text-gray-300 font-medium transition-all duration-300 group"
             >
-              <span className="relative z-10">Dergiler</span>
+              <span className="relative z-10">{t('header.magazines')}</span>
               <span className={`absolute inset-0 bg-gradient-to-r ${isTeacher ? 'from-orange-500/10 to-amber-500/10' : 'from-indigo-500/10 to-purple-500/10'} rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300`}></span>
               <span className={`absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r ${isTeacher ? 'from-orange-500 to-amber-600' : 'from-indigo-500 to-purple-600'} group-hover:w-full group-hover:left-0 transition-all duration-300`}></span>
             </Link>
@@ -80,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
               to="/blog"
               className="relative px-4 py-2 text-gray-700 dark:text-gray-300 font-medium transition-all duration-300 group"
             >
-              <span className="relative z-10">Blog</span>
+              <span className="relative z-10">{t('header.blog')}</span>
               <span className={`absolute inset-0 bg-gradient-to-r ${isTeacher ? 'from-orange-500/10 to-amber-500/10' : 'from-indigo-500/10 to-purple-500/10'} rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300`}></span>
               <span className={`absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r ${isTeacher ? 'from-orange-500 to-amber-600' : 'from-indigo-500 to-purple-600'} group-hover:w-full group-hover:left-0 transition-all duration-300`}></span>
             </Link>
@@ -88,8 +91,9 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
             </nav>
           </div>
 
-          {/* Notification Bell */}
-          <div className="flex items-center">
+          {/* Language Selector & Notification Bell */}
+          <div className="flex items-center gap-3">
+            <LanguageSelector variant="dropdown" className="hidden md:block" />
             <NotificationBell />
           </div>
 
@@ -102,36 +106,39 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gradient-to-r ${isTeacher ? 'hover:from-orange-500/10 hover:to-amber-500/10' : 'hover:from-indigo-500/10 hover:to-purple-500/10'} transition-all`}
                 >
-                  Ana Sayfa
+                  {t('header.home')}
                 </Link>
                 <Link
                   to="/catalog"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gradient-to-r ${isTeacher ? 'hover:from-orange-500/10 hover:to-amber-500/10' : 'hover:from-indigo-500/10 hover:to-purple-500/10'} transition-all`}
                 >
-                  Katalog
+                  {t('header.catalog')}
                 </Link>
                 <Link
                   to="/yazarlar"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gradient-to-r ${isTeacher ? 'hover:from-orange-500/10 hover:to-amber-500/10' : 'hover:from-indigo-500/10 hover:to-purple-500/10'} transition-all`}
                 >
-                  Yazarlarımız
+                  {t('header.authors')}
                 </Link>
                 <Link
                   to="/dergiler"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gradient-to-r ${isTeacher ? 'hover:from-orange-500/10 hover:to-amber-500/10' : 'hover:from-indigo-500/10 hover:to-purple-500/10'} transition-all`}
                 >
-                  Dergiler
+                  {t('header.magazines')}
                 </Link>
                 <Link
                   to="/blog"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-4 py-3 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gradient-to-r ${isTeacher ? 'hover:from-orange-500/10 hover:to-amber-500/10' : 'hover:from-indigo-500/10 hover:to-purple-500/10'} transition-all`}
                 >
-                  Blog
+                  {t('header.blog')}
                 </Link>
+                <div className="px-4 py-2">
+                  <LanguageSelector variant="dropdown" />
+                </div>
 
               </nav>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMagazines } from '../contexts/MagazineContext';
 import { Search, Tag, ChevronLeft, ChevronRight, ArrowUpDown, Filter, X } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
@@ -6,6 +7,7 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 const ITEMS_PER_PAGE = 8;
 
 const MagazinesPage: React.FC = () => {
+  const { t } = useTranslation();
   const { magazines } = useMagazines();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -91,9 +93,9 @@ const MagazinesPage: React.FC = () => {
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Dergi Arşivi</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('magazines.title')}</h1>
           <p className="text-gray-600">
-            Bilgi ve ilham dolu bir dünyaya dalın. Aradığınız sayıyı bulun, yeni konular keşfedin ve okumaya başlayın.
+            {t('magazines.description')}
           </p>
         </div>
 
@@ -121,7 +123,7 @@ const MagazinesPage: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold flex items-center">
                 <Filter className="w-5 h-5 mr-2 text-indigo-600" />
-                Filtreler
+                {t('magazines.filters')}
               </h2>
               <div className="flex gap-2">
                 <button
@@ -133,7 +135,7 @@ const MagazinesPage: React.FC = () => {
                   }}
                   className="text-sm text-red-600 hover:text-red-700"
                 >
-                  Temizle
+                  {t('magazines.clear')}
                 </button>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
@@ -149,7 +151,7 @@ const MagazinesPage: React.FC = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Dergi ara..."
+                  placeholder={t('magazines.searchPlaceholder')}
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -161,22 +163,22 @@ const MagazinesPage: React.FC = () => {
             <div className="space-y-6">
               {/* Sort Order */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('magazines.sorting')}</h3>
                 <select
                   value={sortOrder}
                   onChange={e => setSortOrder(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="newest">En Yeni</option>
-                  <option value="oldest">En Eski</option>
-                  <option value="title-asc">A'dan Z'ye</option>
-                  <option value="title-desc">Z'den A'ya</option>
+                  <option value="newest">{t('magazines.newest')}</option>
+                  <option value="oldest">{t('magazines.oldest')}</option>
+                  <option value="title-asc">{t('magazines.titleAsc')}</option>
+                  <option value="title-desc">{t('magazines.titleDesc')}</option>
                 </select>
               </div>
 
               {/* Tags Filter */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Etiketler</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('magazines.tags')}</h3>
                 <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto">
                   {allTags.map(tag => (
                     <button
@@ -217,8 +219,8 @@ const MagazinesPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">Dergi bulunamadı</h3>
-                <p className="text-gray-600">Aradığınız kriterlere uygun dergi bulunmuyor.</p>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('magazines.noMagazines')}</h3>
+                <p className="text-gray-600">{t('magazines.noMagazinesDesc')}</p>
               </div>
             ) : (
               <>
@@ -237,7 +239,7 @@ const MagazinesPage: React.FC = () => {
                               className="w-full bg-white text-gray-900 py-2.5 rounded-xl font-semibold shadow-md hover:bg-gray-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0"
                               onClick={() => handleReadClick(magazine.pdfUrl)}
                             >
-                              Oku
+                              {t('magazines.read')}
                             </button>
                           </div>
                         </div>
@@ -267,17 +269,17 @@ const MagazinesPage: React.FC = () => {
                       className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium flex items-center"
                     >
                       <ChevronLeft size={18} className="mr-1" />
-                      Önceki
+                      {t('magazines.previous')}
                     </button>
                     <span className="px-3 sm:px-4 py-2 bg-white/60 backdrop-blur-xl rounded-xl text-sm sm:text-base text-gray-700 font-semibold shadow-lg">
-                      Sayfa {currentPage} / {totalPages}
+                      {t('magazines.page', { current: currentPage, total: totalPages })}
                     </span>
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
                       className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl text-sm sm:text-base text-gray-700 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-medium flex items-center"
                     >
-                      Sonraki
+                      {t('magazines.next')}
                       <ChevronRight size={18} className="ml-1" />
                     </button>
                   </div>

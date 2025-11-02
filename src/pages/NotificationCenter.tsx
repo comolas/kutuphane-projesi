@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Bell, CheckCheck, Trash2, Filter } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNotifications } from '../contexts/NotificationContext';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow, format, isToday, isYesterday, isThisWeek } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr, enUS } from 'date-fns/locale';
 
 const NotificationCenter: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, deleteAllRead } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread' | 'book' | 'penalty' | 'achievement' | 'system' | 'social' | 'admin'>('all');
 
@@ -17,22 +19,22 @@ const NotificationCenter: React.FC = () => {
 
   const groupNotificationsByDate = () => {
     const groups: { [key: string]: typeof notifications } = {
-      'Bugün': [],
-      'Dün': [],
-      'Bu Hafta': [],
-      'Daha Eski': [],
+      [t('notifications.groups.today')]: [],
+      [t('notifications.groups.yesterday')]: [],
+      [t('notifications.groups.thisWeek')]: [],
+      [t('notifications.groups.older')]: [],
     };
 
     filteredNotifications.forEach(notification => {
       const date = notification.createdAt.toDate();
       if (isToday(date)) {
-        groups['Bugün'].push(notification);
+        groups[t('notifications.groups.today')].push(notification);
       } else if (isYesterday(date)) {
-        groups['Dün'].push(notification);
+        groups[t('notifications.groups.yesterday')].push(notification);
       } else if (isThisWeek(date)) {
-        groups['Bu Hafta'].push(notification);
+        groups[t('notifications.groups.thisWeek')].push(notification);
       } else {
-        groups['Daha Eski'].push(notification);
+        groups[t('notifications.groups.older')].push(notification);
       }
     });
 
@@ -58,6 +60,8 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
+  const locale = i18n.language === 'tr' ? tr : enUS;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -67,9 +71,9 @@ const NotificationCenter: React.FC = () => {
             <div className="flex items-center gap-3">
               <Bell className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bildirim Merkezi</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('notifications.title')}</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {unreadCount > 0 ? `${unreadCount} okunmamış bildirim` : 'Tüm bildirimler okundu'}
+                  {unreadCount > 0 ? t('notifications.unreadCount', { count: unreadCount }) : t('notifications.allRead')}
                 </p>
               </div>
             </div>
@@ -80,7 +84,7 @@ const NotificationCenter: React.FC = () => {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
                   <CheckCheck className="w-4 h-4" />
-                  Tümünü Oku
+                  {t('notifications.markAllRead')}
                 </button>
               )}
               {notifications.some(n => n.isRead) && (
@@ -89,7 +93,7 @@ const NotificationCenter: React.FC = () => {
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Okunanları Sil
+                  {t('notifications.deleteAllRead')}
                 </button>
               )}
             </div>
@@ -99,13 +103,13 @@ const NotificationCenter: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <Filter className="w-4 h-4 text-gray-500" />
             {[
-              { value: 'all', label: 'Tümü' },
-              { value: 'unread', label: 'Okunmamış' },
-              { value: 'book', label: '📚 Kitaplar' },
-              { value: 'penalty', label: '⚠️ Cezalar' },
-              { value: 'achievement', label: '🎉 Başarılar' },
-              { value: 'social', label: '💬 Sosyal' },
-              { value: 'admin', label: '🔧 Sistem' },
+              { value: 'all', label: t('notifications.filters.all') },
+              { value: 'unread', label: t('notifications.filters.unread') },
+              { value: 'book', label: t('notifications.filters.books') },
+              { value: 'penalty', label: t('notifications.filters.penalties') },
+              { value: 'achievement', label: t('notifications.filters.achievements') },
+              { value: 'social', label: t('notifications.filters.social') },
+              { value: 'admin', label: t('notifications.filters.system') },
             ].map((f) => (
               <button
                 key={f.value}
@@ -127,7 +131,7 @@ const NotificationCenter: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
             <Bell className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
             <p className="text-gray-600 dark:text-gray-400">
-              {filter === 'all' ? 'Henüz bildiriminiz yok' : 'Bu filtrede bildirim bulunamadı'}
+              {filter === 'all' ? t('notifications.noNotifications') : t('notifications.noFilteredNotifications')}
             </p>
           </div>
         ) : (
@@ -165,9 +169,9 @@ const NotificationCenter: React.FC = () => {
                                   {notification.message}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                                  {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: tr })}
+                                  {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale })}
                                   {' • '}
-                                  {format(notification.createdAt.toDate(), 'dd MMMM yyyy, HH:mm', { locale: tr })}
+                                  {format(notification.createdAt.toDate(), 'dd MMMM yyyy, HH:mm', { locale })}
                                 </p>
                               </Link>
                             ) : (
@@ -179,9 +183,9 @@ const NotificationCenter: React.FC = () => {
                                   {notification.message}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                                  {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: tr })}
+                                  {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale })}
                                   {' • '}
-                                  {format(notification.createdAt.toDate(), 'dd MMMM yyyy, HH:mm', { locale: tr })}
+                                  {format(notification.createdAt.toDate(), 'dd MMMM yyyy, HH:mm', { locale })}
                                 </p>
                               </div>
                             )}
@@ -191,7 +195,7 @@ const NotificationCenter: React.FC = () => {
                               <button
                                 onClick={() => markAsRead(notification.id)}
                                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                title="Okundu olarak işaretle"
+                                title={t('notifications.markAsRead')}
                               >
                                 <CheckCheck className="w-5 h-5" />
                               </button>
@@ -199,7 +203,7 @@ const NotificationCenter: React.FC = () => {
                             <button
                               onClick={() => deleteNotification(notification.id)}
                               className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                              title="Sil"
+                              title={t('notifications.delete')}
                             >
                               <Trash2 className="w-5 h-5" />
                             </button>

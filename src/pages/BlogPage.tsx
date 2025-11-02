@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Post } from '../types';
@@ -8,6 +9,7 @@ import PageAccessGuard from '../components/PageAccessGuard';
 import { Search, X, SlidersHorizontal, FileText, FolderOpen, Heart, MessageCircle, BookOpen, TrendingUp, Clock, Tag, ArrowUp, ChevronLeft } from 'lucide-react';
 
 const BlogPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,21 +137,21 @@ const BlogPage: React.FC = () => {
           className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
         >
           <ChevronLeft className="w-5 h-5 mr-1" />
-          Geri Dön
+          {t('blogPosts.backButton')}
         </button>
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Blog</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">{t('blogPosts.title')}</h1>
         <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <SlidersHorizontal size={20} />
-            Filtrele
+            {t('blogPosts.filter')}
           </button>
           <Link to="/create-post" className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-center text-sm sm:text-base">
-            Yeni Yazı Ekle
+            {t('blogPosts.newPost')}
           </Link>
         </div>
       </div>
@@ -164,7 +166,7 @@ const BlogPage: React.FC = () => {
                 <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yazı</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('blogPosts.totalPosts')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{posts.length}</p>
           </div>
         </div>
@@ -177,7 +179,7 @@ const BlogPage: React.FC = () => {
                 <FolderOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Kategori</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('blogPosts.categories')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{categories.length}</p>
           </div>
         </div>
@@ -190,7 +192,7 @@ const BlogPage: React.FC = () => {
                 <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Beğeni</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('blogPosts.totalLikes')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{posts.reduce((sum, post) => sum + (post.likes?.length || 0), 0)}</p>
           </div>
         </div>
@@ -203,7 +205,7 @@ const BlogPage: React.FC = () => {
                 <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yorum</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('blogPosts.totalComments')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{posts.reduce((sum, post) => sum + ((post as any).commentCount || 0), 0)}</p>
           </div>
         </div>
@@ -225,16 +227,16 @@ const BlogPage: React.FC = () => {
             <X size={20} />
           </button>
 
-          <h2 className="text-xl font-bold mb-6">Filtreler</h2>
+          <h2 className="text-xl font-bold mb-6">{t('blogPosts.filters')}</h2>
           
           {/* Search */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-2">Ara</label>
+            <label className="block text-sm font-semibold mb-2">{t('blogPosts.search')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
-                placeholder="Yazı ara..."
+                placeholder={t('blogPosts.searchPlaceholder')}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -244,7 +246,7 @@ const BlogPage: React.FC = () => {
 
           {/* Categories */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-3">Kategoriler</label>
+            <label className="block text-sm font-semibold mb-3">{t('blogPosts.categoriesLabel')}</label>
             <div className="space-y-2">
               <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
                 <input
@@ -254,7 +256,7 @@ const BlogPage: React.FC = () => {
                   onChange={() => setCategoryFilter('all')}
                   className="mr-3 text-indigo-600 focus:ring-indigo-500"
                 />
-                <span>Tüm Kategoriler</span>
+                <span>{t('blogPosts.allCategories')}</span>
                 <span className="ml-auto text-sm text-gray-500">({posts.length})</span>
               </label>
               {categories.map(cat => (
@@ -277,7 +279,7 @@ const BlogPage: React.FC = () => {
 
           {/* Sort */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-3">Sıralama</label>
+            <label className="block text-sm font-semibold mb-3">{t('blogPosts.sorting')}</label>
             <div className="space-y-2">
               <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
                 <input
@@ -287,7 +289,7 @@ const BlogPage: React.FC = () => {
                   onChange={() => setSortBy('newest')}
                   className="mr-3 text-indigo-600 focus:ring-indigo-500"
                 />
-                <span>En Yeni</span>
+                <span>{t('blogPosts.newest')}</span>
               </label>
               <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
                 <input
@@ -297,7 +299,7 @@ const BlogPage: React.FC = () => {
                   onChange={() => setSortBy('popular')}
                   className="mr-3 text-indigo-600 focus:ring-indigo-500"
                 />
-                <span>En Popüler</span>
+                <span>{t('blogPosts.popular')}</span>
               </label>
               <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
                 <input
@@ -307,7 +309,7 @@ const BlogPage: React.FC = () => {
                   onChange={() => setSortBy('mostCommented')}
                   className="mr-3 text-indigo-600 focus:ring-indigo-500"
                 />
-                <span>En Çok Yorumlanan</span>
+                <span>{t('blogPosts.mostCommented')}</span>
               </label>
             </div>
           </div>
@@ -316,7 +318,7 @@ const BlogPage: React.FC = () => {
           <div className="mb-6">
             <label className="block text-sm font-semibold mb-3 flex items-center gap-2">
               <Tag size={16} />
-              Popüler Etiketler
+              {t('blogPosts.popularTags')}
             </label>
             <div className="flex flex-wrap gap-2">
               {allTags.map(({ tag, count }) => (
@@ -347,7 +349,7 @@ const BlogPage: React.FC = () => {
               className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
             >
               <X size={18} />
-              Filtreleri Temizle
+              {t('blogPosts.clearFilters')}
             </button>
           )}
         </aside>
@@ -367,7 +369,7 @@ const BlogPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2 mb-3">
               {searchTerm && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full text-sm">
-                  Arama: "{searchTerm}"
+                  {t('blogPosts.searchLabel')}: "{searchTerm}"
                   <button onClick={() => setSearchTerm('')} className="hover:bg-indigo-200 dark:hover:bg-indigo-800 rounded-full p-0.5">
                     <X size={14} />
                   </button>
@@ -375,7 +377,7 @@ const BlogPage: React.FC = () => {
               )}
               {categoryFilter !== 'all' && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-sm">
-                  Kategori: {categoryFilter}
+                  {t('blogPosts.categoryLabel')}: {categoryFilter}
                   <button onClick={() => setCategoryFilter('all')} className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full p-0.5">
                     <X size={14} />
                   </button>
@@ -383,7 +385,7 @@ const BlogPage: React.FC = () => {
               )}
               {sortBy !== 'newest' && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300 rounded-full text-sm">
-                  Sıralama: {sortBy === 'popular' ? 'En Popüler' : 'En Çok Yorumlanan'}
+                  {t('blogPosts.sortLabel')}: {sortBy === 'popular' ? t('blogPosts.popular') : t('blogPosts.mostCommented')}
                   <button onClick={() => setSortBy('newest')} className="hover:bg-pink-200 dark:hover:bg-pink-800 rounded-full p-0.5">
                     <X size={14} />
                   </button>
@@ -391,7 +393,7 @@ const BlogPage: React.FC = () => {
               )}
               {selectedTag && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-sm">
-                  Etiket: {selectedTag}
+                  {t('blogPosts.tagLabel')}: {selectedTag}
                   <button onClick={() => setSelectedTag('')} className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5">
                     <X size={14} />
                   </button>
@@ -400,12 +402,12 @@ const BlogPage: React.FC = () => {
             </div>
             <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
               <span>
-                <strong className="text-indigo-600 dark:text-indigo-400">{filteredPosts.length}</strong> yazı bulundu
+                {t('blogPosts.postsFound', { count: filteredPosts.length })}
               </span>
               {filteredPosts.length > 0 && (
                 <span>
-                  Ortalama okuma süresi: <strong className="text-indigo-600 dark:text-indigo-400">
-                    {Math.ceil(filteredPosts.reduce((sum, post) => sum + calculateReadingTime(post.content || ''), 0) / filteredPosts.length)} dk
+                  {t('blogPosts.avgReadingTime')}: <strong className="text-indigo-600 dark:text-indigo-400">
+                    {Math.ceil(filteredPosts.reduce((sum, post) => sum + calculateReadingTime(post.content || ''), 0) / filteredPosts.length)} {t('blogPosts.minutes')}
                   </strong>
                 </span>
               )}
@@ -455,7 +457,7 @@ const BlogPage: React.FC = () => {
                           </span>
                           <span className="px-3 py-1 bg-black/50 backdrop-blur-sm text-white text-sm rounded-full flex items-center gap-1">
                             <Clock size={14} />
-                            {calculateReadingTime(filteredPosts[(currentPage - 1) * postsPerPage].content || '')} dk
+                            {calculateReadingTime(filteredPosts[(currentPage - 1) * postsPerPage].content || '')} {t('blogPosts.minutes')}
                           </span>
                         </div>
                       </div>
@@ -513,17 +515,17 @@ const BlogPage: React.FC = () => {
                 disabled={currentPage === 1}
                 className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm sm:text-base disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
-                Önceki
+                {t('blogPosts.previous')}
               </button>
               <span className="px-3 sm:px-4 py-2 font-semibold text-sm sm:text-base">
-                Sayfa {currentPage} / {Math.ceil(filteredPosts.length / postsPerPage)}
+                {t('blogPosts.page', { current: currentPage, total: Math.ceil(filteredPosts.length / postsPerPage) })}
               </span>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredPosts.length / postsPerPage)))}
                 disabled={currentPage === Math.ceil(filteredPosts.length / postsPerPage)}
                 className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm sm:text-base disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
-                Sonraki
+                {t('blogPosts.next')}
               </button>
             </div>
           )}
@@ -542,10 +544,10 @@ const BlogPage: React.FC = () => {
 
           {/* Mesaj */}
           <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
-            Sonuç Bulunamadı
+            {t('blogPosts.noResults')}
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
-            Aradığınız kriterlere uygun yazı bulunamadı. Farklı filtreler deneyebilir veya arama teriminizi değiştirebilirsiniz.
+            {t('blogPosts.noResultsDesc')}
           </p>
 
           {/* Öneriler */}
@@ -555,10 +557,10 @@ const BlogPage: React.FC = () => {
                 <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
                   <BookOpen size={20} className="text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200">Tüm Yazılar</h4>
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200">{t('blogPosts.allPosts')}</h4>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Filtreleri kaldırarak tüm yazıları görüntüleyin
+                {t('blogPosts.allPostsDesc')}
               </p>
               <button
                 onClick={() => {
@@ -569,7 +571,7 @@ const BlogPage: React.FC = () => {
                 }}
                 className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
               >
-                Filtreleri Temizle →
+                {t('blogPosts.viewAll')}
               </button>
             </div>
 
@@ -578,10 +580,10 @@ const BlogPage: React.FC = () => {
                 <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
                   <TrendingUp size={20} className="text-purple-600 dark:text-purple-400" />
                 </div>
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200">Popüler Yazılar</h4>
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200">{t('blogPosts.popularPosts')}</h4>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                En çok beğenilen yazıları keşfedin
+                {t('blogPosts.popularPostsDesc')}
               </p>
               <button
                 onClick={() => {
@@ -592,7 +594,7 @@ const BlogPage: React.FC = () => {
                 }}
                 className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium"
               >
-                Popülerleri Gör →
+                {t('blogPosts.viewPopular')}
               </button>
             </div>
 
@@ -601,10 +603,10 @@ const BlogPage: React.FC = () => {
                 <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900 rounded-lg flex items-center justify-center">
                   <Clock size={20} className="text-pink-600 dark:text-pink-400" />
                 </div>
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200">Yeni Yazılar</h4>
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200">{t('blogPosts.newPosts')}</h4>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                En son yayınlanan içeriklere göz atın
+                {t('blogPosts.newPostsDesc')}
               </p>
               <button
                 onClick={() => {
@@ -615,7 +617,7 @@ const BlogPage: React.FC = () => {
                 }}
                 className="text-sm text-pink-600 dark:text-pink-400 hover:underline font-medium"
               >
-                Yenileri Gör →
+                {t('blogPosts.viewNew')}
               </button>
             </div>
           </div>
@@ -629,7 +631,7 @@ const BlogPage: React.FC = () => {
         <button
           onClick={scrollToTop}
           className="fixed bottom-8 right-8 p-4 bg-indigo-600 text-white rounded-full shadow-2xl hover:bg-indigo-700 hover:scale-110 transition-all duration-300 z-50 animate-bounce"
-          aria-label="Yukarı Çık"
+          aria-label={t('blogPosts.scrollToTop')}
         >
           <ArrowUp size={24} />
         </button>

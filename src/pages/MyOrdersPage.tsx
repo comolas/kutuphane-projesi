@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Package, Clock, CheckCircle, XCircle, Search, Filter, X, Ticket, Ban, ShoppingBag, TrendingUp, Award } from 'lucide-react';
 import { useShop } from '../contexts/ShopContext';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -7,6 +8,7 @@ import { db } from '../firebase/config';
 import Swal from 'sweetalert2';
 
 const MyOrdersPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { orders, products, fetchOrders } = useShop();
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,11 +46,11 @@ const MyOrdersPage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending': return 'Beklemede';
-      case 'preparing': return 'Hazırlanıyor';
-      case 'ready': return 'Teslim Hazır';
-      case 'completed': return 'Tamamlandı';
-      case 'cancelled': return 'İptal Edildi';
+      case 'pending': return t('orders.status.pending');
+      case 'preparing': return t('orders.status.preparing');
+      case 'ready': return t('orders.status.ready');
+      case 'completed': return t('orders.status.completed');
+      case 'cancelled': return t('orders.status.cancelled');
       default: return status;
     }
   };
@@ -114,14 +116,14 @@ const MyOrdersPage: React.FC = () => {
 
   const handleCancelOrder = async (orderId: string) => {
     const result = await Swal.fire({
-      title: 'Siparişi İptal Et?',
-      text: 'Bu işlem geri alınamaz. Siparişinizi iptal etmek istediğinizden emin misiniz?',
+      title: t('orders.cancelOrderTitle'),
+      text: t('orders.cancelOrderText'),
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#EF4444',
       cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Evet, İptal Et',
-      cancelButtonText: 'Vazgeç'
+      confirmButtonText: t('orders.confirmCancel'),
+      cancelButtonText: t('common.cancel')
     });
 
     if (result.isConfirmed) {
@@ -131,16 +133,16 @@ const MyOrdersPage: React.FC = () => {
         });
         await Swal.fire({
           icon: 'success',
-          title: 'Sipariş İptal Edildi',
-          text: 'Siparişiniz başarıyla iptal edildi.',
+          title: t('orders.orderCancelled'),
+          text: t('orders.orderCancelledSuccess'),
           confirmButtonColor: '#4F46E5'
         });
         await fetchOrders();
       } catch (error) {
         await Swal.fire({
           icon: 'error',
-          title: 'Hata!',
-          text: 'Sipariş iptal edilirken bir hata oluştu.',
+          title: t('common.error'),
+          text: t('orders.cancelError'),
           confirmButtonColor: '#EF4444'
         });
       }
@@ -153,13 +155,13 @@ const MyOrdersPage: React.FC = () => {
         <div className="mb-6">
           <button onClick={() => navigate('/shop')} className="flex items-center text-gray-600 hover:text-gray-900">
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Mağazaya Dön
+            {t('orders.backToShop')}
           </button>
         </div>
 
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Siparişlerim</h1>
-          <p className="text-sm sm:text-base text-gray-600">Tüm siparişlerinizi buradan takip edebilirsiniz</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('orders.title')}</h1>
+          <p className="text-sm sm:text-base text-gray-600">{t('orders.description')}</p>
         </div>
 
         {/* İstatistik Kartları */}
@@ -173,7 +175,7 @@ const MyOrdersPage: React.FC = () => {
                   <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </div>
-              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Sipariş</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">{t('orders.totalOrders')}</p>
               <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">{statistics.totalOrders}</p>
             </div>
 
@@ -185,7 +187,7 @@ const MyOrdersPage: React.FC = () => {
                   <span className="text-xs sm:text-sm font-bold">TL</span>
                 </div>
               </div>
-              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Harcama</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">{t('orders.totalSpent')}</p>
               <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">{statistics.totalSpent} TL</p>
             </div>
 
@@ -197,7 +199,7 @@ const MyOrdersPage: React.FC = () => {
                   <span className="text-xs sm:text-sm font-bold">✓</span>
                 </div>
               </div>
-              <p className="text-xs sm:text-sm font-medium text-white/90">Tamamlanan</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">{t('orders.completed')}</p>
               <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">{statistics.completedOrders}</p>
             </div>
 
@@ -209,7 +211,7 @@ const MyOrdersPage: React.FC = () => {
                   <Award className="w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </div>
-              <p className="text-xs sm:text-sm font-medium text-white/90">Toplam Tasarruf</p>
+              <p className="text-xs sm:text-sm font-medium text-white/90">{t('orders.totalSaved')}</p>
               <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">{statistics.totalSaved} TL</p>
             </div>
           </div>
@@ -223,9 +225,9 @@ const MyOrdersPage: React.FC = () => {
                 <Award className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium">En Çok Sipariş Ettiğiniz Ürün</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium">{t('orders.mostOrdered')}</p>
                 <p className="text-base sm:text-lg font-bold text-gray-900">{statistics.topProduct.name}</p>
-                <p className="text-xs sm:text-sm text-purple-600 font-semibold">{statistics.topProduct.count} adet</p>
+                <p className="text-xs sm:text-sm text-purple-600 font-semibold">{t('orders.pieces', { count: statistics.topProduct.count })}</p>
               </div>
             </div>
           </div>
@@ -258,14 +260,14 @@ const MyOrdersPage: React.FC = () => {
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h2 className="text-lg font-semibold flex items-center">
                   <Filter className="w-5 h-5 mr-2 text-indigo-600" />
-                  Filtreler
+                  {t('orders.filters')}
                 </h2>
                 <div className="flex gap-2">
                   <button
                     onClick={handleClearFilters}
                     className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all"
                   >
-                    Temizle
+                    {t('orders.clear')}
                   </button>
                   <button
                     onClick={() => setIsSidebarOpen(false)}
@@ -281,7 +283,7 @@ const MyOrdersPage: React.FC = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Sipariş ara..."
+                    placeholder={t('orders.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -293,7 +295,7 @@ const MyOrdersPage: React.FC = () => {
               <div className="space-y-4 sm:space-y-6">
                 {/* Durum Filtresi */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Durum</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('orders.statusFilter')}</h3>
                   <div className="space-y-2">
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
@@ -303,7 +305,7 @@ const MyOrdersPage: React.FC = () => {
                         onChange={() => setStatusFilter('all')}
                         className="mr-2"
                       />
-                      <span className="text-sm">Tümü</span>
+                      <span className="text-sm">{t('orders.all')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
@@ -313,7 +315,7 @@ const MyOrdersPage: React.FC = () => {
                         onChange={() => setStatusFilter('pending')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-yellow-600">● Beklemede</span>
+                      <span className="text-sm text-yellow-600">● {t('orders.status.pending')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
@@ -323,7 +325,7 @@ const MyOrdersPage: React.FC = () => {
                         onChange={() => setStatusFilter('preparing')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-blue-600">● Hazırlanıyor</span>
+                      <span className="text-sm text-blue-600">● {t('orders.status.preparing')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
@@ -333,7 +335,7 @@ const MyOrdersPage: React.FC = () => {
                         onChange={() => setStatusFilter('ready')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-green-600">● Teslim Hazır</span>
+                      <span className="text-sm text-green-600">● {t('orders.status.ready')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
@@ -343,7 +345,7 @@ const MyOrdersPage: React.FC = () => {
                         onChange={() => setStatusFilter('completed')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-gray-600">● Tamamlandı</span>
+                      <span className="text-sm text-gray-600">● {t('orders.status.completed')}</span>
                     </label>
                     <label className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
                       <input
@@ -353,21 +355,21 @@ const MyOrdersPage: React.FC = () => {
                         onChange={() => setStatusFilter('cancelled')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-red-600">● İptal Edildi</span>
+                      <span className="text-sm text-red-600">● {t('orders.status.cancelled')}</span>
                     </label>
                   </div>
                 </div>
 
                 {/* Sıralama */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Sıralama</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('orders.sorting')}</h3>
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value as any)}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
-                    <option value="newest">Yeni → Eski</option>
-                    <option value="oldest">Eski → Yeni</option>
+                    <option value="newest">{t('orders.newestFirst')}</option>
+                    <option value="oldest">{t('orders.oldestFirst')}</option>
                   </select>
                 </div>
               </div>
@@ -381,7 +383,7 @@ const MyOrdersPage: React.FC = () => {
               <div className="mb-6 flex flex-wrap items-center gap-2">
                 {searchQuery && (
                   <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow-sm">
-                    Aranan: {searchQuery}
+                    {t('orders.searched')}: {searchQuery}
                     <button onClick={() => setSearchQuery('')} className="ml-2 text-gray-500 hover:text-gray-700">
                       <X className="w-4 h-4" />
                     </button>
@@ -389,7 +391,7 @@ const MyOrdersPage: React.FC = () => {
                 )}
                 {statusFilter !== 'all' && (
                   <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 shadow-sm">
-                    Durum: {getStatusText(statusFilter)}
+                    {t('orders.statusFilter')}: {getStatusText(statusFilter)}
                     <button onClick={() => setStatusFilter('all')} className="ml-2 text-indigo-500 hover:text-indigo-700">
                       <X className="w-4 h-4" />
                     </button>
@@ -401,19 +403,19 @@ const MyOrdersPage: React.FC = () => {
         {filteredAndSortedOrders.length === 0 && orders.length === 0 ? (
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-8 sm:p-12 text-center">
             <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Henüz Siparişiniz Yok</h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-6">Mağazadan ürün sipariş ederek başlayın</p>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">{t('orders.noOrders')}</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-6">{t('orders.startOrdering')}</p>
             <button onClick={() => navigate('/shop')} className="px-6 py-3 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-              Mağazaya Git
+              {t('orders.goToShop')}
             </button>
           </div>
         ) : filteredAndSortedOrders.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center py-16">
             <Filter className="w-32 h-32 mb-6 text-gray-300" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Sipariş bulunamadı</h3>
-            <p className="text-gray-500 mb-6">Aradığınız kriterlere uygun sipariş bulunmuyor.</p>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">{t('orders.noOrdersFound')}</h3>
+            <p className="text-gray-500 mb-6">{t('orders.noMatchingOrders')}</p>
             <button onClick={handleClearFilters} className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-              Filtreleri Temizle
+              {t('orders.clearFilters')}
             </button>
           </div>
         ) : (
@@ -456,7 +458,7 @@ const MyOrdersPage: React.FC = () => {
                             {getStatusText(order.status)}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 truncate">{order.items.length} ürün • {new Date(order.createdAt.seconds * 1000).toLocaleDateString('tr-TR')}</p>
+                        <p className="text-xs text-gray-500 truncate">{t('orders.itemsCount', { count: order.items.length })} • {new Date(order.createdAt.seconds * 1000).toLocaleDateString('tr-TR')}</p>
                       </div>
                     </div>
 
@@ -481,7 +483,7 @@ const MyOrdersPage: React.FC = () => {
                     {/* Mini Timeline */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-gray-600">Sipariş Durumu</span>
+                        <span className="text-xs font-semibold text-gray-600">{t('orders.orderStatus')}</span>
                         <span className="text-xs text-gray-500">{new Date(order.createdAt.seconds * 1000).toLocaleString('tr-TR')}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -515,7 +517,7 @@ const MyOrdersPage: React.FC = () => {
 
                     {/* Ürünler */}
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Ürünler</h4>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">{t('orders.products')}</h4>
                       <div className="space-y-2">
                         {order.items.map((item, idx) => {
                           const product = products?.find(p => p.id === item.productId);
@@ -544,19 +546,19 @@ const MyOrdersPage: React.FC = () => {
                       <div className="mb-4 p-3 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <Ticket className="w-4 h-4 text-green-600" />
-                          <span className="text-xs font-semibold text-green-900">İndirim Kuponu</span>
+                          <span className="text-xs font-semibold text-green-900">{t('orders.discountCoupon')}</span>
                         </div>
                         <div className="space-y-1 text-xs">
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Ara Toplam:</span>
+                            <span className="text-gray-600">{t('orders.subtotal')}:</span>
                             <span className="font-semibold text-gray-900">{order.totalAmount + order.discountAmount} TL</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-green-600">İndirim:</span>
+                            <span className="text-green-600">{t('orders.discount')}:</span>
                             <span className="font-semibold text-green-600">-{order.discountAmount} TL</span>
                           </div>
                           <div className="flex justify-between pt-1 border-t border-green-200">
-                            <span className="font-bold text-gray-900">Toplam:</span>
+                            <span className="font-bold text-gray-900">{t('orders.total')}:</span>
                             <span className="font-bold text-green-600">{order.totalAmount} TL</span>
                           </div>
                         </div>
@@ -565,7 +567,7 @@ const MyOrdersPage: React.FC = () => {
 
                     {order.notes && (
                       <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
-                        <h4 className="text-xs font-semibold text-gray-600 mb-1">Sipariş Notu</h4>
+                        <h4 className="text-xs font-semibold text-gray-600 mb-1">{t('orders.orderNote')}</h4>
                         <p className="text-sm text-gray-700">{order.notes}</p>
                       </div>
                     )}
@@ -573,11 +575,11 @@ const MyOrdersPage: React.FC = () => {
                     {/* Alt Bilgiler */}
                     <div className="flex items-center justify-between pt-3 border-t">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-600">Ödeme:</span>
+                        <span className="text-xs text-gray-600">{t('orders.payment')}:</span>
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${
                           order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                         }`}>
-                          {order.paymentStatus === 'paid' ? '✓ Ödendi' : '💵 Nakit'
+                          {order.paymentStatus === 'paid' ? `✓ ${t('orders.paid')}` : `💵 ${t('orders.cash')}`
                         }
                         </span>
                       </div>
@@ -590,7 +592,7 @@ const MyOrdersPage: React.FC = () => {
                           className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all flex items-center gap-1 text-xs font-semibold"
                         >
                           <Ban className="w-3 h-3" />
-                          İptal Et
+                          {t('orders.cancel')}
                         </button>
                       )}
                     </div>
@@ -598,13 +600,13 @@ const MyOrdersPage: React.FC = () => {
                     {/* Durum Mesajları */}
                     {order.status === 'ready' && (
                       <div className="mt-3 p-3 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-                        <p className="text-xs font-semibold text-green-900">🎉 Siparişiniz hazır! Kütüphaneden teslim alabilirsiniz.</p>
+                        <p className="text-xs font-semibold text-green-900">{t('orders.readyMessage')}</p>
                       </div>
                     )}
 
                     {order.status === 'cancelled' && (
                       <div className="mt-3 p-3 bg-gradient-to-br from-red-50 to-pink-50 border border-red-200 rounded-lg">
-                        <p className="text-xs font-semibold text-red-900">❌ Bu sipariş iptal edilmiştir.</p>
+                        <p className="text-xs font-semibold text-red-900">{t('orders.cancelledMessage')}</p>
                       </div>
                     )}
                   </div>

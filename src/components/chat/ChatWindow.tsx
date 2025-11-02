@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Send, ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +11,7 @@ import MessageBubble from './MessageBubble';
 const ChatWindow: React.FC = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { conversations, markAsRead } = useChat();
   const [messages, setMessages] = useState<any[]>([]);
@@ -19,7 +21,7 @@ const ChatWindow: React.FC = () => {
 
   const conversation = conversations.find(c => c.id === conversationId);
   const otherParticipant = conversation?.participants.find(id => id !== user?.uid);
-  const otherParticipantName = otherParticipant ? conversation?.participantNames[otherParticipant] : 'Kullanıcı';
+  const otherParticipantName = otherParticipant ? conversation?.participantNames[otherParticipant] : t('chat.user');
 
   // Mesajları dinle
   useEffect(() => {
@@ -102,7 +104,7 @@ const ChatWindow: React.FC = () => {
         </button>
         <div className="min-w-0 flex-1">
           <h2 className="font-semibold text-base sm:text-lg truncate">{otherParticipantName}</h2>
-          <p className="text-xs text-white/80">Aktif</p>
+          <p className="text-xs text-white/80">{t('chat.active')}</p>
         </div>
       </div>
 
@@ -110,8 +112,8 @@ const ChatWindow: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gray-50">
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8 px-4">
-            <p className="text-sm sm:text-base">Henüz mesaj yok</p>
-            <p className="text-xs sm:text-sm mt-1">İlk mesajı gönderin!</p>
+            <p className="text-sm sm:text-base">{t('chat.noMessages')}</p>
+            <p className="text-xs sm:text-sm mt-1">{t('chat.sendFirstMessage')}</p>
           </div>
         ) : (
           messages.map((message) => (
@@ -132,7 +134,7 @@ const ChatWindow: React.FC = () => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Mesajınızı yazın..."
+            placeholder={t('chat.messagePlaceholder')}
             className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
             rows={1}
             disabled={isSending}

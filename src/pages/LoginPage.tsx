@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
+import LanguageSelector from '../components/common/LanguageSelector';
 import { auth, db } from '../firebase/config';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -15,6 +17,7 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = React.useState(true);
   const [error, setError] = React.useState<string>('');
   const [isLoading, setIsLoading] = React.useState(false);
@@ -23,9 +26,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const [animatedTitle, setAnimatedTitle] = React.useState('');
-  const fullTitle = ' "Kütüphanemize Hoş Geldiniz!';
 
   React.useEffect(() => {
+    const fullTitle = ` "${t('login.welcomeTitle')}`;
     let i = 0;
     setAnimatedTitle('');
     const interval = setInterval(() => {
@@ -37,7 +40,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
       }
     }, 150);
     return () => clearInterval(interval);
-  }, []);
+  }, [t]);
   
   const handleLoginSubmit = async (email: string, password: string) => {
     setIsLoading(true);
@@ -112,8 +115,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
       const defaultTasks = [
         {
           id: 'daily-reading',
-          title: 'Günlük Okuma',
-          description: 'En az 30 dakika kitap okuyun',
+          title: t('login.tasks.dailyReading'),
+          description: t('login.tasks.dailyReadingDesc'),
           type: 'daily',
           xpReward: 50,
           completed: false,
@@ -123,8 +126,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         },
         {
           id: 'daily-catalog-browse',
-          title: 'Katalog İncelemesi',
-          description: 'Kütüphane kataloğunu inceleyin ve yeni kitaplar keşfedin',
+          title: t('login.tasks.catalogBrowse'),
+          description: t('login.tasks.catalogBrowseDesc'),
           type: 'daily',
           xpReward: 25,
           completed: false,
@@ -134,8 +137,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         },
         {
           id: 'weekly-book-finish',
-          title: 'Kitap Bitirme',
-          description: 'Bir kitabı tamamlayın',
+          title: t('login.tasks.bookFinish'),
+          description: t('login.tasks.bookFinishDesc'),
           type: 'weekly',
           xpReward: 200,
           completed: false,
@@ -145,8 +148,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
         },
         {
           id: 'weekly-event-attend',
-          title: 'Etkinlik Katılımı',
-          description: 'Bir kütüphane etkinliğine katılın',
+          title: t('login.tasks.eventAttend'),
+          description: t('login.tasks.eventAttendDesc'),
           type: 'weekly',
           xpReward: 150,
           completed: false,
@@ -173,7 +176,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
   
   const handlePasswordReset = async () => {
     if (!resetEmail) {
-      setError('Lütfen e-posta adresinizi girin.');
+      setError(t('login.enterEmail'));
       return;
     }
     setIsLoading(true);
@@ -182,8 +185,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
       await sendPasswordResetEmail(auth, resetEmail);
       await Swal.fire({
         icon: 'success',
-        title: 'Başarılı!',
-        text: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
+        title: t('login.resetSuccess'),
+        text: t('login.resetSuccessMsg'),
         confirmButtonColor: '#6366f1'
       });
       setShowForgotPasswordModal(false);
@@ -214,6 +217,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
             <div className="absolute w-72 h-72 bg-pink-200/30 rounded-full blur-3xl animate-blob animation-delay-4000 -bottom-20 left-40"></div>
           </div>
           <div className="relative z-10 w-full max-w-md px-2 sm:px-0">
+          {/* Language Selector */}
+          <div className="mb-6 flex justify-center">
+            <LanguageSelector variant="buttons" />
+          </div>
           {error && (
             <div className="w-full mb-4 p-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm shadow-lg animate-fade-in">
               {error}
@@ -240,8 +247,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
                     <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-purple-400 rounded-full animate-spin" style={{ animationDelay: '150ms', animationDirection: 'reverse' }}></div>
                   </div>
                   <div className="text-center">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-1">İşlem Gerçekleştiriliyor</h3>
-                    <p className="text-sm text-gray-600">Lütfen bekleyin...</p>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1">{t('login.processing')}</h3>
+                    <p className="text-sm text-gray-600">{t('login.pleaseWait')}</p>
                   </div>
                 </div>
               </div>
@@ -263,16 +270,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
               {animatedTitle}<span className="animate-pulse text-white">|</span>
             </h2>
             <p className="text-indigo-100 mb-8 max-w-md text-base xl:text-lg leading-relaxed">
-              Dijital kütüphanemizde binlerce kitaba erişim sağlayın. 
-              Keşfedin, ödünç alın ve bilgi dünyasını keşfedin. 📚
+              {t('login.welcomeDesc')}
             </p>
             
             <div className="space-y-4 mb-8">
               {[
-                'Binlerce kitaba çevrimiçi erişin',
-                'Okuma ilerleyişinizi takip edin',
-                'Kişiselleştirilmiş öneriler alın',
-                'Okuma topluluklarına katılın'
+                t('login.features.onlineAccess'),
+                t('login.features.trackProgress'),
+                t('login.features.recommendations'),
+                t('login.features.community')
               ].map((feature, index) => (
                 <div key={index} className="flex items-center text-sm xl:text-base bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 hover:scale-105 transition-all duration-300 animate-stagger border border-white/20" style={{ animationDelay: `${index * 150}ms` }}>
                   <div className="w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mr-3 flex-shrink-0"></div>
@@ -289,7 +295,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
       {showForgotPasswordModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl max-w-md w-full p-6 border border-white/20 animate-fade-in">
-            <h3 className="text-lg font-medium bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Şifremi Sıfırla</h3>
+            <h3 className="text-lg font-medium bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">{t('login.resetPassword')}</h3>
             {error && (
               <div className="w-full mb-4 p-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg text-sm shadow-lg">
                 {error}
@@ -297,7 +303,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
             )}
             <input
               type="email"
-              placeholder="E-posta adresiniz"
+              placeholder={t('login.emailPlaceholder')}
               value={resetEmail}
               onChange={(e) => setResetEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all duration-300 focus:scale-105"
@@ -313,14 +319,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDarkMode }) => {
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-105"
                 disabled={isLoading}
               >
-                İptal
+                {t('login.cancel')}
               </button>
               <button
                 onClick={handlePasswordReset}
                 className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
               >
-                Sıfırlama Bağlantısı Gönder
+                {t('login.sendResetLink')}
               </button>
             </div>
           </div>

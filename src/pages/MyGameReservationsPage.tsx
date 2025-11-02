@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGameReservations, GameReservation } from '../contexts/GameReservationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Timestamp } from 'firebase/firestore';
 
 const MyGameReservationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { getUserReservations, cancelReservation } = useGameReservations();
   const [reservations, setReservations] = useState<GameReservation[]>([]);
@@ -19,17 +21,17 @@ const MyGameReservationsPage: React.FC = () => {
   }, [user, getUserReservations]);
 
   const handleCancelReservation = async (reservationId: string) => {
-    if (window.confirm('Bu randevuyu iptal etmek istediğinizden emin misiniz?')) {
+    if (window.confirm(t('gameReservations.cancelConfirm'))) {
       try {
         await cancelReservation(reservationId);
-        alert('Randevunuz başarıyla iptal edildi.');
+        alert(t('gameReservations.cancelSuccess'));
         // Refresh the list
         if(user){
             getUserReservations(user.uid).then(setReservations);
         }
       } catch (error) {
         console.error('Error cancelling reservation:', error);
-        alert('Randevu iptal edilirken bir hata oluştu.');
+        alert(t('gameReservations.cancelError'));
       }
     }
   };
@@ -44,15 +46,15 @@ const MyGameReservationsPage: React.FC = () => {
   }
 
   if (loading) {
-    return <div className="text-center py-10">Randevularınız yükleniyor...</div>;
+    return <div className="text-center py-10">{t('gameReservations.loading')}</div>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Oyun Randevularım</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">{t('gameReservations.title')}</h1>
       
       <div className="mb-8">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">Aktif Randevular</h2>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">{t('gameReservations.activeReservations')}</h2>
         {activeReservations.length > 0 ? (
           <div className="space-y-4">
             {activeReservations.map(res => (
@@ -61,7 +63,7 @@ const MyGameReservationsPage: React.FC = () => {
                   <div className="flex items-center gap-3 mb-3">
                     <p className="font-bold text-xl text-gray-900">{res.gameName}</p>
                     <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold rounded-lg shadow-md">
-                      Aktif
+                      {t('gameReservations.active')}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
@@ -84,7 +86,7 @@ const MyGameReservationsPage: React.FC = () => {
                     onClick={() => handleCancelReservation(res.id!)}
                     className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all"
                   >
-                    Vazgeç
+                    {t('gameReservations.cancelButton')}
                   </button>
                 )}
               </div>
@@ -97,13 +99,13 @@ const MyGameReservationsPage: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="text-gray-600 font-semibold">Aktif randevunuz bulunmamaktadır.</p>
+            <p className="text-gray-600 font-semibold">{t('gameReservations.noActiveReservations')}</p>
           </div>
         )}
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent mb-4">Geçmiş Randevular</h2>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent mb-4">{t('gameReservations.pastReservations')}</h2>
         {pastReservations.length > 0 ? (
           <div className="space-y-4">
             {pastReservations.map(res => (
@@ -115,7 +117,7 @@ const MyGameReservationsPage: React.FC = () => {
                       ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white' 
                       : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
                   }`}>
-                    {res.status === 'cancelled-by-user' ? 'İptal Edildi' : 'Tamamlandı'}
+                    {res.status === 'cancelled-by-user' ? t('gameReservations.cancelled') : t('gameReservations.completed')}
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -142,7 +144,7 @@ const MyGameReservationsPage: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="text-gray-600 font-semibold">Geçmiş randevunuz bulunmamaktadır.</p>
+            <p className="text-gray-600 font-semibold">{t('gameReservations.noPastReservations')}</p>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff, X } from 'lucide-react';
 import Button from '../common/Button';
 import FormInput from '../common/FormInput';
@@ -16,6 +16,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onRegisterClick,
   onForgotPasswordClick,
 }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -28,13 +29,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
     let errorMessage = '';
     if (fieldName === 'email') {
       if (!value) {
-        errorMessage = 'E-posta adresi gereklidir';
+        errorMessage = t('login.emailRequired');
       } else if (!/\S+@\S+\.\S+/.test(value)) {
-        errorMessage = 'Geçersiz e-posta adresi';
+        errorMessage = t('login.invalidEmail');
       }
     } else if (fieldName === 'password') {
       if (!value) {
-        errorMessage = 'Şifre gereklidir';
+        errorMessage = t('login.passwordRequired');
       }
     }
     setErrors(prevErrors => ({
@@ -53,7 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     }
     
     if (!password) {
-      newErrors.password = 'Şifre gereklidir';
+      newErrors.password = t('login.passwordRequired');
     }
     
 
@@ -99,7 +100,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <FormInput
-            label="E-posta Adresiniz"
+            label={t('login.email')}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -110,7 +111,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           
           <div className="relative">
             <FormInput
-              label="Şifreniz"
+              label={t('login.password')}
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -137,20 +138,20 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer"
               />
-              <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800 transition-colors">Beni Hatırla</span>
+              <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800 transition-colors">{t('login.rememberMe')}</span>
             </label>
             <button
               type="button"
               onClick={onForgotPasswordClick}
               className="text-sm text-indigo-600 hover:text-indigo-500 font-medium transition-colors"
             >
-              Şifremi Unuttum
+              {t('login.forgotPassword')}
             </button>
           </div>
 
           <Button type="submit" fullWidth className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl">
             <span className="flex items-center justify-center gap-2">
-              Giriş Yap
+              {t('login.loginButton')}
               <span className="text-lg">→</span>
             </span>
           </Button>
@@ -158,33 +159,33 @@ const LoginForm: React.FC<LoginFormProps> = ({
         
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
-            Hesabınız yok mu?{' '}
+            {t('login.noAccount')}{' '}
             <button
               type="button"
               onClick={onRegisterClick}
               className="text-indigo-600 hover:text-purple-600 font-semibold hover:underline transition-all duration-300"
             >
-              Kayıt olun
+              {t('login.registerNow')}
             </button>
           </p>
           <p className="mt-2 text-xs text-gray-500">
-            Giriş yaparak{' '}
+            {t('login.byLoggingIn')}{' '}
             <button
               type="button"
               onClick={() => setShowTerms(true)}
               className="text-blue-600 hover:text-blue-500"
             >
-              Hizmet Koşulları
+              {t('login.termsOfService')}
             </button>
-            {' '}ve{' '}
+            {' '}{t('login.and')}{' '}
             <button
               type="button"
               onClick={() => setShowPrivacyPolicy(true)}
               className="text-blue-600 hover:text-blue-500"
             >
-              Gizlilik Politikası
+              {t('login.privacyPolicy')}
             </button>
-            'nı kabul etmiş olursunuz
+            {' '}{t('login.acceptTerms')}
           </p>
         </div>
       </div>
@@ -194,7 +195,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-end" onClick={() => setShowPrivacyPolicy(false)}>
           <div className="bg-white/95 backdrop-blur-xl w-full max-w-2xl h-full shadow-2xl transform transition-transform duration-300 animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-indigo-500 to-purple-600">
-              <h2 className="text-2xl font-bold text-white">Gizlilik Politikası</h2>
+              <h2 className="text-2xl font-bold text-white">{t('login.privacyPolicy')}</h2>
               <button
                 onClick={() => setShowPrivacyPolicy(false)}
                 className="text-white/80 hover:text-white transition-colors"
@@ -242,7 +243,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-end" onClick={() => setShowTerms(false)}>
           <div className="bg-white/95 backdrop-blur-xl w-full max-w-2xl h-full shadow-2xl transform transition-transform duration-300 animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-indigo-500 to-purple-600">
-              <h2 className="text-2xl font-bold text-white">Hizmet Koşulları</h2>
+              <h2 className="text-2xl font-bold text-white">{t('login.termsOfService')}</h2>
               <button
                 onClick={() => setShowTerms(false)}
                 className="text-white/80 hover:text-white transition-colors"

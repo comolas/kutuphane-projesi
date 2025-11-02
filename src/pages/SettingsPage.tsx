@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Bell, BellOff, User, Award, Calendar, Mail, GraduationCap, Hash, Clock, Target, CreditCard, Download, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGoals } from '../contexts/GoalsContext';
@@ -12,6 +13,7 @@ import { httpsCallable } from 'firebase/functions';
 import html2canvas from 'html2canvas';
 
 const SettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, userData } = useAuth();
   const { monthlyGoal, yearlyGoal, fetchGoals } = useGoals();
@@ -116,14 +118,14 @@ const SettingsPage: React.FC = () => {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
+            {t('common.back')}
           </button>
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Ayarlar</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('settings.title')}</h1>
           <p className="mt-2 text-gray-600">
-            Hesap ayarlarınızı ve tercihlerinizi buradan yönetebilirsiniz.
+            {t('settings.description')}
           </p>
         </div>
 
@@ -159,7 +161,7 @@ const SettingsPage: React.FC = () => {
               {/* XP Progress */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white/90 text-sm font-medium">Seviye İlerlemesi</span>
+                  <span className="text-white/90 text-sm font-medium">{t('settings.levelProgress')}</span>
                   <span className="text-white font-bold">{userData?.totalXP || 0} XP</span>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-3">
@@ -175,17 +177,17 @@ const SettingsPage: React.FC = () => {
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                   <div className="flex items-center justify-center mb-2">
                     <Award className="w-5 h-5 text-yellow-400 mr-2" />
-                    <span className="text-white/80 text-sm">Seviye</span>
+                    <span className="text-white/80 text-sm">{t('settings.level')}</span>
                   </div>
                   <p className="text-2xl font-bold text-white text-center">{userData?.level || 1}</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                   <div className="flex items-center justify-center mb-2">
                     <Calendar className="w-5 h-5 text-blue-300 mr-2" />
-                    <span className="text-white/80 text-sm">Üyelik</span>
+                    <span className="text-white/80 text-sm">{t('settings.membership')}</span>
                   </div>
                   <p className="text-2xl font-bold text-white text-center">
-                    {userData?.createdAt ? Math.floor((Date.now() - new Date(userData.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0} gün
+                    {t('settings.daysCount', { count: userData?.createdAt ? Math.floor((Date.now() - new Date(userData.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0 })}
                   </p>
                 </div>
               </div>
@@ -198,15 +200,14 @@ const SettingsPage: React.FC = () => {
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <User className="w-5 h-5 mr-2 text-indigo-600" />
-              Hesap Bilgileri
+              {t('settings.accountInfo')}
             </h3>
           </div>
           <div className="p-4 sm:p-6">
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-lg p-4 shadow-sm">
                 <p className="text-sm text-yellow-800">
-                  <strong>Not:</strong> Profil bilgileriniz sistem yöneticisi tarafından yönetilmektedir. 
-                  Değişiklik yapmak için kütüphane personeli ile iletişime geçiniz.
+                  <strong>{t('settings.note')}:</strong> {t('settings.profileNote')}
                 </p>
               </div>
 
@@ -214,7 +215,7 @@ const SettingsPage: React.FC = () => {
                 <div className="group">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <User className="w-4 h-4 mr-2 text-indigo-600" />
-                    Ad Soyad
+                    {t('settings.fullName')}
                   </label>
                   <div className="relative">
                     <input
@@ -230,7 +231,7 @@ const SettingsPage: React.FC = () => {
                 <div className="group">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Mail className="w-4 h-4 mr-2 text-indigo-600" />
-                    E-posta
+                    {t('settings.email')}
                   </label>
                   <div className="relative">
                     <input
@@ -246,7 +247,7 @@ const SettingsPage: React.FC = () => {
                 <div className="group">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <GraduationCap className="w-4 h-4 mr-2 text-indigo-600" />
-                    Sınıf
+                    {t('settings.class')}
                   </label>
                   <div className="relative">
                     <input
@@ -262,7 +263,7 @@ const SettingsPage: React.FC = () => {
                 <div className="group">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Hash className="w-4 h-4 mr-2 text-indigo-600" />
-                    Öğrenci Numarası
+                    {t('settings.studentNumber')}
                   </label>
                   <div className="relative">
                     <input
@@ -278,7 +279,7 @@ const SettingsPage: React.FC = () => {
                 <div className="group">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 mr-2 text-indigo-600" />
-                    Kayıt Tarihi
+                    {t('settings.registrationDate')}
                   </label>
                   <div className="relative">
                     <input
@@ -294,7 +295,7 @@ const SettingsPage: React.FC = () => {
                 <div className="group">
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Clock className="w-4 h-4 mr-2 text-indigo-600" />
-                    Son Giriş
+                    {t('settings.lastLogin')}
                   </label>
                   <div className="relative">
                     <input
@@ -316,7 +317,7 @@ const SettingsPage: React.FC = () => {
           <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
-              Dijital Kütüphane Kartım
+              {t('settings.digitalLibraryCard')}
             </h3>
             <button
               onClick={downloadCard}
@@ -324,7 +325,7 @@ const SettingsPage: React.FC = () => {
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center disabled:opacity-50"
             >
               {downloadingCard ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-              {downloadingCard ? 'İndiriliyor...' : 'PNG İndir'}
+              {downloadingCard ? t('settings.downloading') : t('settings.downloadPNG')}
             </button>
           </div>
           <div className="p-4 sm:p-6">
@@ -345,7 +346,7 @@ const SettingsPage: React.FC = () => {
                         <img src={cardTemplate.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                       </div>
                     )}
-                    <h4 className="font-bold text-sm" style={{ color: cardTemplate?.textColor || '#ffffff' }}>KÜTÜPHANE KARTI</h4>
+                    <h4 className="font-bold text-sm" style={{ color: cardTemplate?.textColor || '#ffffff' }}>{t('settings.libraryCard').toUpperCase()}</h4>
                   </div>
                   <div className="flex gap-3 items-start">
                     <div className="bg-white rounded-xl p-2 flex items-center justify-center flex-shrink-0">
@@ -367,20 +368,20 @@ const SettingsPage: React.FC = () => {
                           />
                         )}
                       </div>
-                      <p className="text-xs opacity-90">No: {userData?.studentNumber}</p>
-                      <p className="text-xs opacity-90">Sınıf: {userData?.studentClass}</p>
+                      <p className="text-xs opacity-90">{t('settings.cardNumber')}: {userData?.studentNumber}</p>
+                      <p className="text-xs opacity-90">{t('settings.cardClass')}: {userData?.studentClass}</p>
                       <p className="text-xs opacity-75 mt-2">{cardTemplate?.schoolName || 'Okul Kütüphanesi'}</p>
                     </div>
                   </div>
                 </div>
                 <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    <strong>İpuçları:</strong>
+                    <strong>{t('settings.tips')}:</strong>
                   </p>
                   <ul className="mt-2 text-sm text-blue-700 space-y-1 ml-4 list-disc">
-                    <li>Bu kartı hızlı ödünç işlemlerinde kullanabilirsiniz</li>
-                    <li>QR kodu kütüphane personeline göstererek kitap alabilirsiniz</li>
-                    <li>Kartınızı PNG olarak indirip telefonunuzda saklayabilirsiniz</li>
+                    <li>{t('settings.cardTip1')}</li>
+                    <li>{t('settings.cardTip2')}</li>
+                    <li>{t('settings.cardTip3')}</li>
                   </ul>
                 </div>
               </div>
@@ -393,13 +394,13 @@ const SettingsPage: React.FC = () => {
           <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <Target className="w-5 h-5 mr-2 text-indigo-600" />
-              Okuma Hedefim
+              {t('settings.readingGoal')}
             </h3>
             <button
               onClick={() => setShowReadingGoalsModal(true)}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
             >
-              Düzenle
+              {t('common.edit')}
             </button>
           </div>
           <div className="p-4 sm:p-6">
@@ -408,7 +409,7 @@ const SettingsPage: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-lg font-semibold text-gray-800">
-                      Bu Ayki Hedef: {monthlyGoal.goal} Kitap
+                      {t('settings.monthlyGoal', { count: monthlyGoal.goal })}
                     </p>
                     <p className="text-lg font-bold text-indigo-600">{`${monthlyGoal.progress} / ${monthlyGoal.goal}`}</p>
                   </div>
@@ -420,20 +421,20 @@ const SettingsPage: React.FC = () => {
                   </div>
                   {monthlyGoal.progress >= monthlyGoal.goal && (
                     <div className="mt-2 text-sm text-green-600 font-medium">
-                      🎉 Tebrikler! Bu ayın hedefini tamamladınız!
+                      {t('settings.monthlyGoalComplete')}
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="text-center text-gray-500">
-                  <p>Bu ay için bir hedef belirlemedin.</p>
+                  <p>{t('settings.noMonthlyGoal')}</p>
                 </div>
               )}
               {yearlyGoal ? (
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-lg font-semibold text-gray-800">
-                      Bu Yılki Hedef: {yearlyGoal.goal} Kitap
+                      {t('settings.yearlyGoal', { count: yearlyGoal.goal })}
                     </p>
                     <p className="text-lg font-bold text-indigo-600">{`${yearlyGoal.progress} / ${yearlyGoal.goal}`}</p>
                   </div>
@@ -445,23 +446,23 @@ const SettingsPage: React.FC = () => {
                   </div>
                   {yearlyGoal.progress >= yearlyGoal.goal && (
                     <div className="mt-2 text-sm text-green-600 font-medium">
-                      🎉 Harika! Bu yılın hedefini tamamladınız!
+                      {t('settings.yearlyGoalComplete')}
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="text-center text-gray-500">
-                  <p>Bu yıl için bir hedef belirlemedin.</p>
+                  <p>{t('settings.noYearlyGoal')}</p>
                 </div>
               )}
               {!monthlyGoal && !yearlyGoal && (
                 <div className="text-center">
-                  <p className="text-gray-600 mb-4">Henüz bir okuma hedefin yok.</p>
+                  <p className="text-gray-600 mb-4">{t('settings.noGoalsYet')}</p>
                   <button
                     onClick={() => setShowReadingGoalsModal(true)}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                   >
-                    Hemen Oluştur
+                    {t('settings.createNow')}
                   </button>
                 </div>
               )}
@@ -475,7 +476,7 @@ const SettingsPage: React.FC = () => {
             <div className="p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Bell className="w-5 h-5 mr-2 text-indigo-600" />
-                Bildirim Ayarları
+                {t('settings.notificationSettings')}
               </h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -486,11 +487,11 @@ const SettingsPage: React.FC = () => {
                       <BellOff className="w-6 h-6 text-gray-400" />
                     )}
                     <div>
-                      <p className="font-medium text-gray-900">Bildirimler</p>
+                      <p className="font-medium text-gray-900">{t('settings.notifications')}</p>
                       <p className="text-sm text-gray-500">
                         {notificationsEnabled 
-                          ? 'Kitap iade hatırlatmaları ve yeni içerik bildirimleri aktif' 
-                          : 'Bildirimler kapalı'}
+                          ? t('settings.notificationsActive') 
+                          : t('settings.notificationsOff')}
                       </p>
                     </div>
                   </div>
@@ -511,12 +512,12 @@ const SettingsPage: React.FC = () => {
                 {notificationsEnabled && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
-                      <strong>İpucu:</strong> Bildirimler şunları içerir:
+                      <strong>{t('settings.tip')}:</strong> {t('settings.notificationsTip')}
                     </p>
                     <ul className="mt-2 text-sm text-blue-700 space-y-1 ml-4 list-disc">
-                      <li>Kitap iade tarihi hatırlatmaları (3 gün, 1 gün, iade günü)</li>
-                      <li>Yeni kitap ekleme bildirimleri</li>
-                      <li>Yeni duyuru, etkinlik ve anket bildirimleri</li>
+                      <li>{t('settings.notificationTip1')}</li>
+                      <li>{t('settings.notificationTip2')}</li>
+                      <li>{t('settings.notificationTip3')}</li>
                     </ul>
                   </div>
                 )}

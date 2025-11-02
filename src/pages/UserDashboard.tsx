@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Book, Clock, BookOpen, Menu, X, Home, Library, BookOpen as BookIcon, Settings, LogOut, Calendar, Bell, MessageSquare, ScrollText, DollarSign, Quote, Search, PieChart, MapPin, ExternalLink, Heart, Target, Star, BookPlus, AlertCircle, Gamepad2, Users, BarChart, ShoppingBag, Package } from 'lucide-react';
 import { useSpinWheel } from '../contexts/SpinWheelContext';
 import UpdateButton from '../components/common/UpdateButton';
@@ -27,6 +28,7 @@ import { Event, Survey, Announcement, Request as RequestType, Book as BookType }
 import { useAlert } from '../contexts/AlertContext';
 
 const UserDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, userData, isAdmin, isTeacher } = useAuth();
   const { showAlert } = useAlert();
@@ -70,9 +72,9 @@ const UserDashboard: React.FC = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return '🌅 Günaydın';
-    if (hour < 18) return '☀️ İyi Günler';
-    return '🌙 İyi Akşamlar';
+    if (hour < 12) return t('userDashboard.greeting.morning');
+    if (hour < 18) return t('userDashboard.greeting.afternoon');
+    return t('userDashboard.greeting.evening');
   };
 
   useEffect(() => {
@@ -92,7 +94,7 @@ const UserDashboard: React.FC = () => {
     const nextDueBook = activeBooks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
     
     let dueDateStatus = 'safe';
-    let dueDateText = 'Yaklaşan Teslim';
+    let dueDateText = t('userDashboard.upcomingDue');
     if (nextDueBook) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -104,7 +106,7 @@ const UserDashboard: React.FC = () => {
 
       if (diffDays < 0) {
         dueDateStatus = 'overdue';
-        dueDateText = 'Gecikmiş Kitap';
+        dueDateText = t('userDashboard.overdue');
       } else if (diffDays <= 3) {
         dueDateStatus = 'dueSoon';
       }
@@ -314,63 +316,63 @@ const UserDashboard: React.FC = () => {
   const libraryRules = [
     {
       icon: '📚',
-      title: 'Kitap Ödünç Alma',
-      description: 'Her kullanıcı aynı anda en fazla 3 kitap ödünç alabilir. Ödünç alma süresi 14 gündür.'
+      title: t('libraryRules.borrowing.title'),
+      description: t('libraryRules.borrowing.desc')
     },
     {
       icon: '⏰',
-      title: 'İade Süreleri',
-      description: 'Kitaplar belirlenen süre içinde iade edilmelidir. Geç iade edilen her gün için 5 TL ceza uygulanır.'
+      title: t('libraryRules.returnPeriods.title'),
+      description: t('libraryRules.returnPeriods.desc')
     },
     {
       icon: '💰',
-      title: 'Ceza Sistemi',
-      description: 'Gecikme cezaları ödenmeden yeni kitap ödünç alınamaz. Cezalar admin panelinden ödenebilir.'
+      title: t('libraryRules.fineSystem.title'),
+      description: t('libraryRules.fineSystem.desc')
     },
     {
       icon: '🎯',
-      title: 'Okuma Hedefleri',
-      description: 'Aylık ve yıllık okuma hedefleri belirleyerek ilerlemenizi takip edebilirsiniz.'
+      title: t('libraryRules.readingGoals.title'),
+      description: t('libraryRules.readingGoals.desc')
     },
     {
       icon: '⭐',
-      title: 'Yorum ve Değerlendirme',
-      description: 'Okuduğunuz kitaplar için yorum yapabilir ve 1-5 yıldız arası puan verebilirsiniz.'
+      title: t('libraryRules.reviewsRatings.title'),
+      description: t('libraryRules.reviewsRatings.desc')
     },
     {
       icon: '❤️',
-      title: 'Favoriler',
-      description: 'Beğendiğiniz kitapları favorilerinize ekleyerek kolayca erişebilirsiniz.'
+      title: t('libraryRules.favorites.title'),
+      description: t('libraryRules.favorites.desc')
     },
     {
       icon: '🎡',
-      title: 'Şans Çarkı',
-      description: 'Her gün bir kez şans çarkını çevirerek kupon, rozet veya özel kategori erişimi kazanabilirsiniz.'
+      title: t('libraryRules.spinWheel.title'),
+      description: t('libraryRules.spinWheel.desc')
     },
     {
       icon: '🎫',
-      title: 'Kuponlar',
-      description: 'Kazandığınız kuponları kullanarak ceza indirimi veya ödünç alma süresi uzatma hakkı elde edebilirsiniz.'
+      title: t('libraryRules.coupons.title'),
+      description: t('libraryRules.coupons.desc')
     },
     {
       icon: '📝',
-      title: 'Talep Sistemi',
-      description: 'Kitap önerisi, teknik sorun veya genel geri bildirimlerinizi talep sistemi üzerinden iletebilirsiniz.'
+      title: t('libraryRules.requestSystem.title'),
+      description: t('libraryRules.requestSystem.desc')
     },
     {
       icon: '🎮',
-      title: 'Oyun Rezervasyonu',
-      description: 'Kütüphanedeki masa oyunları için randevu alabilir ve arkadaşlarınızla oyun oynayabilirsiniz.'
+      title: t('libraryRules.gameReservation.title'),
+      description: t('libraryRules.gameReservation.desc')
     },
     {
       icon: '📖',
-      title: 'Blog Yazıları',
-      description: 'Okuduğunuz kitaplar hakkında blog yazıları yazabilir ve diğer kullanıcıların yazılarını okuyabilirsiniz.'
+      title: t('libraryRules.blogPosts.title'),
+      description: t('libraryRules.blogPosts.desc')
     },
     {
       icon: '🏆',
-      title: 'Lider Tablosu',
-      description: 'En çok kitap okuyan kullanıcılar lider tablosunda görüntülenir. Okuyarak sıralamada yükselmeye çalışın!'
+      title: t('libraryRules.leaderboard.title'),
+      description: t('libraryRules.leaderboard.desc')
     }
   ];
 
@@ -384,7 +386,7 @@ const UserDashboard: React.FC = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               <Book className="w-8 h-8 mr-2" />
-              <span className="text-xl font-bold">{isTeacher ? 'Öğretmen Paneli' : 'Data Koleji'}</span>
+              <span className="text-xl font-bold">{isTeacher ? t('sidebar.teacherPanel') : 'Data Koleji'}</span>
             </div>
             <button onClick={toggleSidebar} className={`p-2 ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} rounded-lg`}>
               <X className="w-6 h-6" />
@@ -394,12 +396,12 @@ const UserDashboard: React.FC = () => {
           <nav className="space-y-1" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
             <Link to={isTeacher ? "/teacher-dashboard" : "/dashboard"} className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
               <Home className="w-5 h-5" />
-              <span>Ana Sayfa</span>
+              <span>{t('sidebar.home')}</span>
             </Link>
             {isTeacher && (
               <Link to="/my-class" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
                 <Users className="w-5 h-5" />
-                <span>Sınıfım</span>
+                <span>{t('sidebar.myClass')}</span>
               </Link>
             )}
             
@@ -409,19 +411,19 @@ const UserDashboard: React.FC = () => {
                 onClick={() => setExpandedCategories(prev => ({ ...prev, library: !prev.library }))}
                 className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
               >
-                <span>📚 Kütüphane</span>
+                <span>📚 {t('sidebar.library')}</span>
                 <span>{expandedCategories.library ? '▼' : '▶'}</span>
               </button>
               {expandedCategories.library && (
                 <div className="mt-1 space-y-1 ml-2">
                   <Link to="/catalog" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <Library className="w-5 h-5" />
-                    <span>Katalog</span>
+                    <span>{t('sidebar.catalog')}</span>
                   </Link>
                   <Link to="/borrowed-books" className={`flex items-center justify-between space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <div className="flex items-center space-x-3">
                       <BookIcon className="w-5 h-5" />
-                      <span>Ödünç Aldıklarım</span>
+                      <span>{t('sidebar.borrowedBooks')}</span>
                     </div>
                     {summaryStats.activeBooksCount > 0 && (
                       <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -431,11 +433,11 @@ const UserDashboard: React.FC = () => {
                   </Link>
                   <Link to="/favorites" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <Heart className="w-5 h-5" />
-                    <span>Favorilerim</span>
+                    <span>{t('sidebar.favorites')}</span>
                   </Link>
                   <Link to="/collection-distribution" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <PieChart className="w-5 h-5" />
-                    <span>Eser Dağılımı</span>
+                    <span>{t('sidebar.collectionDistribution')}</span>
                   </Link>
                 </div>
               )}
@@ -447,19 +449,19 @@ const UserDashboard: React.FC = () => {
                 onClick={() => setExpandedCategories(prev => ({ ...prev, communication: !prev.communication }))}
                 className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
               >
-                <span>💬 İletişim</span>
+                <span>💬 {t('sidebar.communication')}</span>
                 <span>{expandedCategories.communication ? '▼' : '▶'}</span>
               </button>
               {expandedCategories.communication && (
                 <div className="mt-1 space-y-1 ml-2">
                   <Link to="/chat" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <MessageSquare className="w-5 h-5" />
-                    <span>Sohbet</span>
+                    <span>{t('sidebar.chat')}</span>
                   </Link>
                   <Link to="/requests" className={`flex items-center justify-between space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <div className="flex items-center space-x-3">
                       <MessageSquare className="w-5 h-5" />
-                      <span>Taleplerim</span>
+                      <span>{t('sidebar.myRequests')}</span>
                     </div>
                     {summaryStats.pendingRequestsCount > 0 && (
                       <span className="bg-yellow-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -470,7 +472,7 @@ const UserDashboard: React.FC = () => {
                   <Link to="/fines" className={`flex items-center justify-between space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <div className="flex items-center space-x-3">
                       <DollarSign className="w-5 h-5" />
-                      <span>Cezalarım</span>
+                      <span>{t('sidebar.myFines')}</span>
                     </div>
                     {summaryStats.totalFine > 0 && (
                       <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -488,7 +490,7 @@ const UserDashboard: React.FC = () => {
                 onClick={() => setExpandedCategories(prev => ({ ...prev, activities: !prev.activities }))}
                 className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
               >
-                <span>🎮 Aktiviteler</span>
+                <span>🎮 {t('sidebar.activities')}</span>
                 <span>{expandedCategories.activities ? '▼' : '▶'}</span>
               </button>
               {expandedCategories.activities && (
@@ -497,21 +499,21 @@ const UserDashboard: React.FC = () => {
                     <>
                       <Link to="/challenges" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
                         <span className="text-lg">🏆</span>
-                        <span>Meydan Okumalar</span>
+                        <span>{t('sidebar.challenges')}</span>
                       </Link>
                       <Link to="/reward-store" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-indigo-800 transition-colors">
                         <span className="text-lg">🎁</span>
-                        <span>Ödül Mağazası</span>
+                        <span>{t('sidebar.rewardStore')}</span>
                       </Link>
                     </>
                   )}
                   <Link to="/my-posts" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <BookIcon className="w-5 h-5" />
-                    <span>Blog Yazılarım</span>
+                    <span>{t('sidebar.myPosts')}</span>
                   </Link>
                   <Link to="/games" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <Gamepad2 className="w-5 h-5" />
-                    <span>Oyun Rezervasyonları</span>
+                    <span>{t('sidebar.gameReservations')}</span>
                   </Link>
                 </div>
               )}
@@ -523,22 +525,22 @@ const UserDashboard: React.FC = () => {
                 onClick={() => setExpandedCategories(prev => ({ ...prev, shopping: !prev.shopping }))}
                 className={`flex items-center justify-between w-full px-2 py-2 text-xs font-semibold ${isTeacher ? 'text-orange-300' : 'text-indigo-300'} uppercase tracking-wider ${isTeacher ? 'hover:text-orange-100' : 'hover:text-indigo-100'} transition-colors`}
               >
-                <span>🛍️ Alışveriş</span>
+                <span>🛍️ {t('sidebar.shopping')}</span>
                 <span>{expandedCategories.shopping ? '▼' : '▶'}</span>
               </button>
               {expandedCategories.shopping && (
                 <div className="mt-1 space-y-1 ml-2">
                   <Link to="/shop" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <ShoppingBag className="w-5 h-5" />
-                    <span>Mağaza</span>
+                    <span>{t('sidebar.store')}</span>
                   </Link>
                   <Link to="/my-orders" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <Package className="w-5 h-5" />
-                    <span>Siparişlerim</span>
+                    <span>{t('sidebar.myOrders')}</span>
                   </Link>
                   <Link to="/my-coupons" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                     <MessageSquare className="w-5 h-5" />
-                    <span>Kuponlarım</span>
+                    <span>{t('sidebar.myCoupons')}</span>
                   </Link>
                 </div>
               )}
@@ -551,17 +553,17 @@ const UserDashboard: React.FC = () => {
                 className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors w-full text-left`}
               >
                 <ScrollText className="w-5 h-5" />
-                <span>Kütüphane Kuralları</span>
+                <span>{t('sidebar.libraryRules')}</span>
               </button>
               {isTeacher && (
                 <Link to="/teacher/reports" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-orange-800 transition-colors">
                   <BarChart className="w-5 h-5" />
-                  <span>Raporlar</span>
+                  <span>{t('sidebar.reports')}</span>
                 </Link>
               )}
               <Link to="/settings" className={`flex items-center space-x-3 p-2 rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors`}>
                 <Settings className="w-5 h-5" />
-                <span>Ayarlar</span>
+                <span>{t('sidebar.settings')}</span>
               </Link>
             </div>
           </nav>
@@ -573,7 +575,7 @@ const UserDashboard: React.FC = () => {
             className={`flex items-center space-x-3 p-3 w-full rounded-lg ${isTeacher ? 'hover:bg-orange-800' : 'hover:bg-indigo-800'} transition-colors text-red-300 hover:text-red-400`}
           >
             <LogOut className="w-5 h-5" />
-            <span>Çıkış Yap</span>
+            <span>{t('sidebar.logout')}</span>
           </button>
         </div>
       </div>
@@ -588,8 +590,8 @@ const UserDashboard: React.FC = () => {
                   <ScrollText className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Kütüphane Rehberi</h2>
-                  <p className="text-white/80 text-sm">Sistemin nasıl çalıştığını öğrenin</p>
+                  <h2 className="text-2xl font-bold text-white">{t('libraryRules.title')}</h2>
+                  <p className="text-white/80 text-sm">{t('libraryRules.subtitle')}</p>
                 </div>
               </div>
               <button
@@ -627,13 +629,13 @@ const UserDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 flex items-center gap-2">
                   <span className="text-2xl">💡</span>
-                  <span>Sorularınız için <strong>Taleplerim</strong> bölümünden bize ulaşabilirsiniz</span>
+                  <span>{t('libraryRules.contactUs')}</span>
                 </p>
                 <button
                   onClick={() => setShowRules(false)}
                   className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300 hover:scale-105 min-h-[44px]"
                 >
-                  Anladım
+                  {t('userDashboard.understood')}
                 </button>
               </div>
             </div>
@@ -645,21 +647,21 @@ const UserDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900">Tebrikler!</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('userDashboard.congratulations')}</h3>
               <button onClick={() => setShowCongratulatoryModal(false)} className="text-gray-400 hover:text-gray-500">
                 <X className="w-6 h-6" />
               </button>
             </div>
             <div className="p-6 text-center">
-              <p className="text-xl font-semibold text-indigo-600 mb-4">Okuma hedefine ulaştın!</p>
-              <p className="text-gray-700">Yeni hedefler belirlemek için Okuma Hedefim bölümünü ziyaret edebilirsin.</p>
+              <p className="text-xl font-semibold text-indigo-600 mb-4">{t('userDashboard.goalReached')}</p>
+              <p className="text-gray-700">{t('userDashboard.setNewGoals')}</p>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end">
               <button
                 onClick={() => setShowCongratulatoryModal(false)}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
               >
-                Tamam
+                {t('userDashboard.ok')}
               </button>
             </div>
           </div>
@@ -712,7 +714,7 @@ const UserDashboard: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <p className={`text-lg ${isTeacher ? 'text-orange-200' : 'text-indigo-200'} mb-1`}>{getGreeting()}</p>
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    <h1 className="text-3xl font-bold">Hoş Geldiniz, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
+                    <h1 className="text-3xl font-bold">{t('userDashboard.welcome')}, {userData?.displayName || user.displayName || user.email?.split('@')[0]}</h1>
                     {campusName && (
                       <span className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-full">
                         {campusName}
@@ -746,12 +748,12 @@ const UserDashboard: React.FC = () => {
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative flex flex-col items-center justify-center h-full">
                 <div className="text-3xl sm:text-4xl md:text-6xl mb-1 sm:mb-2 group-hover:rotate-180 transition-transform duration-700">🎡</div>
-                <p className="text-white font-bold text-xs sm:text-sm md:text-lg text-center">Günlük Şans Çarkı</p>
+                <p className="text-white font-bold text-xs sm:text-sm md:text-lg text-center">{t('userDashboard.dailySpinWheel')}</p>
                 {canSpin && (
                   <div className="mt-1 sm:mt-2 px-2 sm:px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
                     <span className="text-white text-xs font-semibold flex items-center gap-1">
                       <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                      Hakkın Var!
+                      {t('userDashboard.youHaveChance')}
                     </span>
                   </div>
                 )}
@@ -760,7 +762,7 @@ const UserDashboard: React.FC = () => {
             <Link to="/borrowed-books" className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 min-h-[100px] sm:min-h-[120px]">
               <div className="flex items-center justify-between h-full">
                 <div>
-                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Aktif Kitapların</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('userDashboard.activeBooks')}</p>
                   <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{summaryStats.activeBooksCount}</p>
                 </div>
                 <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-colors">
@@ -782,7 +784,7 @@ const UserDashboard: React.FC = () => {
             <Link to="/fines" className="bg-gradient-to-br from-red-500 to-pink-600 p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 min-h-[100px] sm:min-h-[120px]">
               <div className="flex items-center justify-between h-full">
                 <div>
-                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Ödenmemiş Ceza</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('userDashboard.unpaidFines')}</p>
                   <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{summaryStats.totalFine} TL</p>
                 </div>
                 <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-colors">
@@ -793,7 +795,7 @@ const UserDashboard: React.FC = () => {
             <Link to="/requests" className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 sm:p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 min-h-[100px] sm:min-h-[120px]">
               <div className="flex items-center justify-between h-full">
                 <div>
-                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Bekleyen Talepler</p>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('userDashboard.pendingRequests')}</p>
                   <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{summaryStats.pendingRequestsCount}</p>
                 </div>
                 <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-colors">
@@ -827,14 +829,14 @@ const UserDashboard: React.FC = () => {
                         </footer>
                       </blockquote>
                     ) : (
-                      <p className="text-center text-gray-600">Alıntı yükleniyor...</p>
+                      <p className="text-center text-gray-600">{t('userDashboard.loadingQuote')}</p>
                     )}
                   </div>
                   
                   {/* Polaroid Bottom - Handwritten Style */}
                   <div className="text-center">
                     <p className="text-gray-700 font-handwriting text-lg" style={{ fontFamily: 'cursive' }}>
-                      Günün Alıntısı ✨
+                      {t('userDashboard.quoteOfDay')}
                     </p>
                   </div>
                 </div>
@@ -850,7 +852,7 @@ const UserDashboard: React.FC = () => {
                 <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-red-500 via-pink-500 to-purple-600 rounded-2xl shadow-xl">
                   <Heart className="w-10 h-10 text-white fill-white animate-pulse" />
                   <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
-                    Sana Özel Öneriler
+                    {t('userDashboard.specialRecommendations')}
                   </h2>
                 </div>
               </div>
@@ -893,10 +895,10 @@ const UserDashboard: React.FC = () => {
               ) : (
                 <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center min-h-[280px] border border-white/20">
                   <Heart className="w-12 h-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Henüz Size Özel Öneri Yok</h3>
-                  <p className="text-gray-500 mb-4">Daha fazla kitap okuyup etkileşimde bulundukça size özel öneriler burada görünecektir.</p>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{t('userDashboard.noRecommendations')}</h3>
+                  <p className="text-gray-500 mb-4">{t('userDashboard.noRecommendationsDesc')}</p>
                   <Link to="/catalog" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    Kataloğa Göz At
+                    {t('userDashboard.browseCatalog')}
                   </Link>
                 </div>
               )}
@@ -908,7 +910,7 @@ const UserDashboard: React.FC = () => {
                 <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-2xl shadow-xl">
                   <BarChart className="w-10 h-10 text-white animate-pulse" />
                   <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
-                    Bu Ayın Kitap Kurtları
+                    {t('userDashboard.topReaders')}
                   </h2>
                 </div>
               </div>
@@ -943,7 +945,7 @@ const UserDashboard: React.FC = () => {
                     {/* Top Label */}
                     <div className="flex items-center justify-center mb-6">
                       <Star className="w-6 h-6 text-yellow-400 fill-yellow-400 mr-2" />
-                      <span className="text-yellow-400 font-bold text-sm tracking-widest uppercase">ÖNE ÇIKAN YAZAR</span>
+                      <span className="text-yellow-400 font-bold text-sm tracking-widest uppercase">{t('userDashboard.featuredAuthor')}</span>
                     </div>
 
                     {/* Author Name */}
@@ -962,14 +964,14 @@ const UserDashboard: React.FC = () => {
                         to={`/author/${featuredAuthor.id}`}
                         className="inline-flex items-center px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-lg"
                       >
-                        Yazarın Sayfasına Git
+                        {t('userDashboard.authorPage')}
                         <ExternalLink className="w-5 h-5 ml-2" />
                       </Link>
                     </div>
 
                     {/* Polaroid Books Section */}
                     <div className="mt-8">
-                      <h3 className="text-2xl font-bold text-white text-center mb-8">Öne Çıkan Eserleri</h3>
+                      <h3 className="text-2xl font-bold text-white text-center mb-8">{t('userDashboard.featuredWorks')}</h3>
                       <div className="flex flex-wrap justify-center items-center gap-8 max-w-6xl mx-auto">
                         {featuredAuthorBooks.slice(0, 3).map((book, index) => {
                           const status = getBookStatus(book.id);
@@ -1033,7 +1035,7 @@ const UserDashboard: React.FC = () => {
                 <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 rounded-2xl shadow-xl">
                   <BookPlus className="w-10 h-10 text-white animate-pulse" />
                   <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
-                    Yeni Eklenen Kitaplar
+                    {t('userDashboard.newBooks')}
                   </h2>
                 </div>
               </div>
@@ -1052,7 +1054,7 @@ const UserDashboard: React.FC = () => {
                 <div className="inline-flex flex-col items-center gap-3 px-8 py-6 bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-600 rounded-2xl shadow-xl">
                   <Calendar className="w-10 h-10 text-white animate-pulse" />
                   <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center">
-                    Etkinlikler, Anketler ve Duyurular
+                    {t('userDashboard.eventsAndAnnouncements')}
                   </h2>
                 </div>
               </div>
@@ -1069,7 +1071,7 @@ const UserDashboard: React.FC = () => {
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
-                      Tümü ({allItems.length})
+                      {t('userDashboard.all')} ({allItems.length})
                     </button>
                     <button
                       onClick={() => setActiveTab('events')}
@@ -1079,7 +1081,7 @@ const UserDashboard: React.FC = () => {
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
-                      Etkinlikler ({allItems.filter(item => item.type === 'event').length})
+                      {t('userDashboard.events')} ({allItems.filter(item => item.type === 'event').length})
                     </button>
                     <button
                       onClick={() => setActiveTab('surveys')}
@@ -1089,7 +1091,7 @@ const UserDashboard: React.FC = () => {
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
-                      Anketler ({allItems.filter(item => item.type === 'survey').length})
+                      {t('userDashboard.surveys')} ({allItems.filter(item => item.type === 'survey').length})
                     </button>
                     <button
                       onClick={() => setActiveTab('announcements')}
@@ -1099,7 +1101,7 @@ const UserDashboard: React.FC = () => {
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
-                      Duyurular ({allItems.filter(item => item.type === 'announcement').length})
+                      {t('userDashboard.announcements')} ({allItems.filter(item => item.type === 'announcement').length})
                     </button>
                   </nav>
                 </div>

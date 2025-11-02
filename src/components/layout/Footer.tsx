@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Book, Mail, Phone, MapPin, X, Instagram, Clock, Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const [showSecurityPolicy, setShowSecurityPolicy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -36,13 +38,13 @@ const Footer: React.FC = () => {
                 </h2>
               </div>
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                Kitap ve bilgi dünyasına açılan dijital kapınız. Kapsamlı koleksiyonumuzla keşfedin, öğrenin ve gelişin.
+                {t('footer.description')}
               </p>
               
               {/* Download Buttons */}
               <div className="flex flex-col gap-2 mt-4">
                 <a
-                  href="https://firebasestorage.googleapis.com/v0/b/data-49543.firebasestorage.app/o/app-debug.apk?alt=media&token=488ecf9f-0ca2-4cf1-b2d5-81e993c987d7"
+                  href="https://firebasestorage.googleapis.com/v0/b/data-49543.firebasestorage.app/o/app-debug.apk?alt=media&token=cbd139e7-91b5-4dcf-9dac-734ab2a9dce5"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-3 px-4 py-2.5 bg-black hover:bg-gray-900 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-black/30 hover:-translate-y-0.5"
@@ -53,14 +55,14 @@ const Footer: React.FC = () => {
                     <path d="M16.5 2L14.5 4L16.5 6" stroke="#3DDC84" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   <div className="flex-1 text-left">
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wide">Android için</div>
-                    <div className="text-sm font-semibold text-white">Google Play'den İndir</div>
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wide">{t('footer.downloadAndroid')}</div>
+                    <div className="text-sm font-semibold text-white">{t('footer.downloadGooglePlay')}</div>
                   </div>
                   <Download className="w-4 h-4 text-white group-hover:translate-y-0.5 transition-transform" />
                 </a>
                 
                 <a
-                  href="https://firebasestorage.googleapis.com/v0/b/data-49543.firebasestorage.app/o/K%C3%BCt%C3%BCphane%20Projesi%20Setup%201.1.0.exe?alt=media&token=810dd81d-1322-47c3-8c34-9e2b83174166"
+                  href="https://firebasestorage.googleapis.com/v0/b/data-49543.firebasestorage.app/o/K%C3%BCt%C3%BCphane%20Projesi%20Setup%201.1.0.exe?alt=media&token=4232da10-a3d0-4975-a3af-81aa6894b494"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
@@ -73,8 +75,8 @@ const Footer: React.FC = () => {
                     <path d="M13 13H21V21H13V13Z" fill="#7FBA00"/>
                   </svg>
                   <div className="flex-1 text-left">
-                    <div className="text-[10px] text-blue-100 uppercase tracking-wide">Windows için</div>
-                    <div className="text-sm font-semibold text-white">Masaüstü Sürümü İndir</div>
+                    <div className="text-[10px] text-blue-100 uppercase tracking-wide">{t('footer.downloadWindows')}</div>
+                    <div className="text-sm font-semibold text-white">{t('footer.downloadDesktop')}</div>
                   </div>
                   <Download className="w-4 h-4 text-white group-hover:translate-y-0.5 transition-transform" />
                 </a>
@@ -85,7 +87,7 @@ const Footer: React.FC = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
                 <span className="w-1 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></span>
-                Sosyal Medyada Bizi Takip Edin!
+                {t('footer.followUs')}
               </h3>
               <div className="flex flex-wrap gap-3">
                 {socialLinks.map((social) => (
@@ -108,7 +110,7 @@ const Footer: React.FC = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
                 <span className="w-1 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></span>
-                İletişim
+                {t('footer.contactTitle')}
               </h3>
               <ul className="space-y-3">
                 <li className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-800/50 transition-all duration-300">
@@ -136,20 +138,20 @@ const Footer: React.FC = () => {
               <div className="mt-6 p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
                 <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
                   <Clock size={16} className="text-indigo-600 dark:text-indigo-400" />
-                  Çalışma Saatleri
+                  {t('footer.workingHours')}
                 </h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Pazartesi - Cuma</span>
+                    <span className="text-gray-600 dark:text-gray-400">{t('footer.mondayFriday')}</span>
                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">08:00 - 17:00</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Cumartesi</span>
+                    <span className="text-gray-600 dark:text-gray-400">{t('footer.saturday')}</span>
                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">09:00 - 14:00</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Pazar</span>
-                    <span className="font-semibold text-red-600 dark:text-red-400">Kapalı</span>
+                    <span className="text-gray-600 dark:text-gray-400">{t('footer.sunday')}</span>
+                    <span className="font-semibold text-red-600 dark:text-red-400">{t('footer.closed')}</span>
                   </div>
                 </div>
               </div>
@@ -176,20 +178,20 @@ const Footer: React.FC = () => {
           {/* Bottom Section */}
           <div className="flex flex-col sm:flex-row justify-between items-center text-sm">
             <p className="text-gray-600 dark:text-gray-300 font-medium">
-              © {currentYear} Data Koleji Kütüphanesi. Tüm hakları saklıdır.
+              {t('footer.rightsReserved', { year: currentYear })}
             </p>
             <div className="flex gap-4 mt-4 sm:mt-0">
               <button 
                 onClick={() => setShowSecurityPolicy(true)}
                 className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-white bg-white/60 dark:bg-gray-800/60 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50 hover:border-transparent transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/30"
               >
-                Güvenlik Politikası
+                {t('footer.securityPolicy')}
               </button>
               <button
                 onClick={() => setShowTerms(true)}
                 className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-white bg-white/60 dark:bg-gray-800/60 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50 hover:border-transparent transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/30"
               >
-                Hizmet Koşulları
+                {t('footer.termsOfService')}
               </button>
             </div>
           </div>
@@ -201,7 +203,7 @@ const Footer: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-end" onClick={() => setShowSecurityPolicy(false)}>
           <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl w-full max-w-2xl h-full shadow-2xl transform transition-transform duration-300 animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-indigo-500 to-purple-600">
-              <h2 className="text-2xl font-bold text-white">Güvenlik Politikası</h2>
+              <h2 className="text-2xl font-bold text-white">{t('footer.securityPolicy')}</h2>
               <button
                 onClick={() => setShowSecurityPolicy(false)}
                 className="text-white/80 hover:text-white transition-colors"
@@ -246,7 +248,7 @@ const Footer: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-end" onClick={() => setShowTerms(false)}>
           <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl w-full max-w-2xl h-full shadow-2xl transform transition-transform duration-300 animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-indigo-500 to-purple-600">
-              <h2 className="text-2xl font-bold text-white">Hizmet Koşulları</h2>
+              <h2 className="text-2xl font-bold text-white">{t('footer.termsOfService')}</h2>
               <button
                 onClick={() => setShowTerms(false)}
                 className="text-white/80 hover:text-white transition-colors"

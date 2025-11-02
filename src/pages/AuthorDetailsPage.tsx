@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthors } from '../contexts/AuthorContext';
 import { useBooks } from '../contexts/BookContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -9,6 +10,7 @@ import { ChevronLeft, Tag, BookOpen, Star, BookCheck, TrendingUp, Calendar, Awar
 const AuthorDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { fetchAuthorById, getAuthorBooks } = useAuthors();
   const { borrowBook, getBookStatus, borrowedBooks } = useBooks();
   const { showAlert } = useAlert();
@@ -39,18 +41,18 @@ const AuthorDetailsPage: React.FC = () => {
   const handleBorrow = async (book: Book) => {
     try {
       await borrowBook(book);
-      showAlert('Başarılı', `${book.title} için ödünç alma isteğiniz alındı.`, 'success');
+      showAlert(t('common.success'), t('authors.borrowSuccess', { title: book.title }), 'success');
     } catch (error) {
-      showAlert('Hata', `Hata: ${error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.'}`, 'error');
+      showAlert(t('common.error'), t('authors.borrowError', { message: error instanceof Error ? error.message : 'Unknown error' }), 'error');
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Yükleniyor...</div>;
+    return <div className="flex justify-center items-center min-h-screen">{t('authors.loading')}</div>;
   }
 
   if (!author) {
-    return <div className="flex justify-center items-center min-h-screen">Yazar bulunamadı.</div>;
+    return <div className="flex justify-center items-center min-h-screen">{t('authors.notFound')}</div>;
   }
 
   const totalPagesRead = readBooksByAuthor.reduce((sum, book) => sum + (book.pageCount || 0), 0);
@@ -67,7 +69,7 @@ const AuthorDetailsPage: React.FC = () => {
           className="absolute top-6 left-6 flex items-center text-white hover:text-gray-200 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl transition-all shadow-lg"
         >
           <ChevronLeft className="w-5 h-5 mr-1" />
-          Tüm Yazarlar
+          {t('authors.allAuthors')}
         </button>
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
           <div className="max-w-7xl mx-auto">
@@ -95,7 +97,7 @@ const AuthorDetailsPage: React.FC = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
                 <BookOpen className="w-8 h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Toplam Kitap</p>
+              <p className="text-white/80 text-sm font-medium mb-2">{t('authors.totalBooks')}</p>
               <p className="text-4xl font-bold text-white">{books.length}</p>
             </div>
           </div>
@@ -105,7 +107,7 @@ const AuthorDetailsPage: React.FC = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
                 <BookCheck className="w-8 h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Okuduğun Kitap</p>
+              <p className="text-white/80 text-sm font-medium mb-2">{t('authors.readBooks')}</p>
               <p className="text-4xl font-bold text-white">{readBooksByAuthor.length}</p>
             </div>
           </div>
@@ -115,7 +117,7 @@ const AuthorDetailsPage: React.FC = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
                 <TrendingUp className="w-8 h-8 text-white" />
               </div>
-              <p className="text-white/80 text-sm font-medium mb-2">Müsait Kitap</p>
+              <p className="text-white/80 text-sm font-medium mb-2">{t('authors.availableBooks')}</p>
               <p className="text-4xl font-bold text-white">{availableBooks}</p>
             </div>
           </div>
@@ -123,7 +125,7 @@ const AuthorDetailsPage: React.FC = () => {
 
         {/* Biography */}
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-8 mb-8 border border-white/20">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">Biyografi</h2>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">{t('authors.biography')}</h2>
           <p className="text-gray-700 leading-relaxed text-lg">{author.biography}</p>
         </div>
 
@@ -131,7 +133,7 @@ const AuthorDetailsPage: React.FC = () => {
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-8 mb-8 border border-white/20">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6 flex items-center">
             <BookOpen className="w-8 h-8 mr-3 text-indigo-600" />
-            Kitapları
+            {t('authors.books')}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {books.map((book, index) => {
@@ -150,7 +152,7 @@ const AuthorDetailsPage: React.FC = () => {
                           ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                           : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
                       }`}>
-                        {status === 'available' ? 'Müsait' : 'Dolu'}
+                        {status === 'available' ? t('authors.available') : t('authors.unavailable')}
                       </span>
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -164,7 +166,7 @@ const AuthorDetailsPage: React.FC = () => {
                               : 'bg-gray-400 text-white cursor-not-allowed'
                           }`}
                         >
-                          {status === 'available' ? 'Ödünç Al' : 'Müsait Değil'}
+                          {status === 'available' ? t('authors.borrow') : t('authors.notAvailable')}
                         </button>
                       </div>
                     </div>
@@ -192,7 +194,7 @@ const AuthorDetailsPage: React.FC = () => {
           <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg p-8 mb-8 border border-white/20">
             <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6 flex items-center">
               <Award className="w-8 h-8 mr-3 text-green-600" />
-              {author.name}'dan Okuduğun Kitaplar
+              {t('authors.readBooksFrom', { name: author.name })}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
               {readBooksByAuthor.map((book, index) => (
@@ -208,7 +210,7 @@ const AuthorDetailsPage: React.FC = () => {
                     </div>
                     <div className="absolute top-2 left-2">
                       <span className="px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg text-xs font-bold shadow-md">
-                        Okundu
+                        {t('authors.completed')}
                       </span>
                     </div>
                   </div>
@@ -224,13 +226,13 @@ const AuthorDetailsPage: React.FC = () => {
             <div className="w-24 h-24 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <BookCheck className="w-12 h-12 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Henüz Okumadın</h3>
-            <p className="text-gray-600 mb-6">{author.name}'dan henüz bir kitap okumadın.</p>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('authors.notReadYet')}</h3>
+            <p className="text-gray-600 mb-6">{t('authors.notReadYetDesc', { name: author.name })}</p>
             <button 
               onClick={() => navigate('/catalog')}
               className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all"
             >
-              Kitapları Keşfet
+              {t('authors.exploreBooks')}
             </button>
           </div>
         )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Heart, Search, Edit, StickyNote, X, PlusCircle, Bookmark as BookmarkIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase/config';
@@ -23,6 +24,7 @@ interface Shelf {
 }
 
 const FavoritesPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { getBookStatus, borrowBook, borrowMessages } = useBooks();
@@ -95,7 +97,7 @@ const FavoritesPage: React.FC = () => {
         }
       } catch (err: any) {
         console.error('Error fetching favorite books:', err);
-        Swal.fire('Hata!', 'Favori kitaplar yüklenirken bir hata oluştu.', 'error');
+        Swal.fire(t('common.error'), t('favorites.loadError'), 'error');
       } finally {
         setLoading(false);
       }
@@ -108,14 +110,14 @@ const FavoritesPage: React.FC = () => {
     if (!user) return;
 
     Swal.fire({
-      title: 'Emin misiniz?',
-      text: `"${bookTitle}" kitabını favorilerinizden kaldırmak istediğinizden emin misiniz?`,
+      title: t('favorites.removeConfirmTitle'),
+      text: t('favorites.removeConfirmText', { title: bookTitle }),
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Evet, kaldır!',
-      cancelButtonText: 'Vazgeç'
+      confirmButtonText: t('favorites.removeConfirm'),
+      cancelButtonText: t('common.cancel')
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -126,10 +128,10 @@ const FavoritesPage: React.FC = () => {
             await deleteDoc(doc.ref);
           });
           setFavoriteBooks(prev => prev.filter(book => book.id !== bookId));
-          Swal.fire('Başarılı!', 'Kitap favorilerinizden kaldırıldı.', 'success');
+          Swal.fire(t('common.success'), t('favorites.removeSuccess'), 'success');
         } catch (err: any) {
           console.error('Error removing favorite:', err);
-          Swal.fire('Hata!', 'Favorilerden kaldırılırken bir hata oluştu.', 'error');
+          Swal.fire(t('common.error'), t('favorites.removeError'), 'error');
         }
       }
     });
@@ -138,10 +140,10 @@ const FavoritesPage: React.FC = () => {
   const handleBorrowRequest = async (book: BookType) => {
     try {
       await borrowBook(book);
-      Swal.fire('Başarılı!', 'Ödünç alma talebiniz gönderildi! Admin onayından sonra kitap size ödünç verilecektir.', 'success');
+      Swal.fire(t('common.success'), t('favorites.borrowSuccess'), 'success');
     } catch (err: any) {
       console.error('Error borrowing book:', err);
-      Swal.fire('Hata!', err.message || 'Kitap ödünç alınırken bir hata oluştu.', 'error');
+      Swal.fire(t('common.error'), err.message || t('favorites.borrowError'), 'error');
     }
   };
 
@@ -161,10 +163,10 @@ const FavoritesPage: React.FC = () => {
       setFavoriteBooks(prev => prev.map(book => 
         book.id === editingNoteBook.id ? { ...book, note: noteText } : book
       ));
-      Swal.fire('Başarılı!', 'Not başarıyla kaydedildi.', 'success');
+      Swal.fire(t('common.success'), t('favorites.noteSaved'), 'success');
     } catch (err) {
       console.error('Error saving note:', err);
-      Swal.fire('Hata!', 'Not kaydedilirken bir hata oluştu.', 'error');
+      Swal.fire(t('common.error'), t('favorites.noteSaveError'), 'error');
     } finally {
       setIsNoteModalOpen(false);
       setEditingNoteBook(null);
@@ -181,21 +183,21 @@ const FavoritesPage: React.FC = () => {
       });
       setShelves(prev => [...prev, { id: shelfRef.id, name: newShelfName.trim() }]);
       setNewShelfName('');
-      Swal.fire('Başarılı!', 'Yeni rafınız oluşturuldu.', 'success');
+      Swal.fire(t('common.success'), t('favorites.shelfCreated'), 'success');
     } catch (error) {
       console.error('Error creating shelf:', error);
-      Swal.fire('Hata!', 'Raf oluşturulurken bir hata oluştu.', 'error');
+      Swal.fire(t('common.error'), t('favorites.shelfCreateError'), 'error');
     }
   };
 
   const handleDeleteShelf = async (shelfId: string, shelfName: string) => {
     Swal.fire({
-      title: 'Rafı Sil',
-      text: `"${shelfName}" rafını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      title: t('favorites.deleteShelfTitle'),
+      text: t('favorites.deleteShelfText', { name: shelfName }),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Evet, Sil',
-      cancelButtonText: 'İptal',
+      confirmButtonText: t('favorites.deleteShelfConfirm'),
+      cancelButtonText: t('common.cancel'),
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -222,10 +224,10 @@ const FavoritesPage: React.FC = () => {
           if (selectedShelf === shelfId) {
             setSelectedShelf('all');
           }
-          Swal.fire('Silindi!', 'Raf başarıyla silindi.', 'success');
+          Swal.fire(t('favorites.deleted'), t('favorites.shelfDeleted'), 'success');
         } catch (error) {
           console.error('Error deleting shelf:', error);
-          Swal.fire('Hata!', 'Raf silinirken bir hata oluştu.', 'error');
+          Swal.fire(t('common.error'), t('favorites.shelfDeleteError'), 'error');
         }
       }
     });
@@ -247,10 +249,10 @@ const FavoritesPage: React.FC = () => {
       ));
       setIsShelfModalOpen(false);
       setEditingShelvesBook(null);
-      Swal.fire('Başarılı', 'Kitabın rafları güncellendi.', 'success');
+      Swal.fire(t('common.success'), t('favorites.shelvesUpdated'), 'success');
     } catch (error) {
       console.error('Error updating book shelves:', error);
-      Swal.fire('Hata!', 'Kitap rafları güncellenirken bir hata oluştu.', 'error');
+      Swal.fire(t('common.error'), t('favorites.shelvesUpdateError'), 'error');
     }
   };
 
@@ -299,7 +301,7 @@ const FavoritesPage: React.FC = () => {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
-            Geri Dön
+            {t('common.back')}
           </button>
         </div>
 
@@ -313,19 +315,19 @@ const FavoritesPage: React.FC = () => {
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Kişisel Kütüphanem</h1>
-          <p className="mt-2 text-gray-600">Favori kitaplarınızı raflar halinde düzenleyin ve yönetin.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('favorites.title')}</h1>
+          <p className="mt-2 text-gray-600">{t('favorites.description')}</p>
         </div>
 
         {/* Shelf Management UI */}
         <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
-          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 sm:mb-4">Raflarım</h2>
+          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 sm:mb-4">{t('favorites.myShelves')}</h2>
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <button
               onClick={() => setSelectedShelf('all')}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedShelf === 'all' ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg scale-105' : 'bg-white/50 text-gray-700 hover:bg-white/80'}`}
             >
-              Tüm Favoriler
+              {t('favorites.allFavorites')}
             </button>
             {shelves.map(shelf => (
               <div key={shelf.id} className="relative group">
@@ -346,7 +348,7 @@ const FavoritesPage: React.FC = () => {
               type="text"
               value={newShelfName}
               onChange={(e) => setNewShelfName(e.target.value)}
-              placeholder="Yeni raf adı..."
+              placeholder={t('favorites.newShelfPlaceholder')}
               className="flex-grow px-4 py-3 bg-white/50 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all"
             />
             <button
@@ -354,7 +356,7 @@ const FavoritesPage: React.FC = () => {
               className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2 font-medium whitespace-nowrap"
             >
               <PlusCircle size={18} />
-              Oluştur
+              {t('favorites.create')}
             </button>
           </div>
         </div>
@@ -366,7 +368,7 @@ const FavoritesPage: React.FC = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input 
                 type="text"
-                placeholder="Favorilerimde ara..."
+                placeholder={t('favorites.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
@@ -378,12 +380,12 @@ const FavoritesPage: React.FC = () => {
                 onChange={(e) => setSortOrder(e.target.value)}
                 className="w-full px-4 py-3 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all shadow-lg"
               >
-                <option value="date-desc">Eklenme Tarihi (Yeni)</option>
-                <option value="date-asc">Eklenme Tarihi (Eski)</option>
-                <option value="title-asc">Başlık (A-Z)</option>
-                <option value="title-desc">Başlık (Z-A)</option>
-                <option value="author-asc">Yazar (A-Z)</option>
-                <option value="author-desc">Yazar (Z-A)</option>
+                <option value="date-desc">{t('favorites.sortOptions.dateDesc')}</option>
+                <option value="date-asc">{t('favorites.sortOptions.dateAsc')}</option>
+                <option value="title-asc">{t('favorites.sortOptions.titleAsc')}</option>
+                <option value="title-desc">{t('favorites.sortOptions.titleDesc')}</option>
+                <option value="author-asc">{t('favorites.sortOptions.authorAsc')}</option>
+                <option value="author-desc">{t('favorites.sortOptions.authorDesc')}</option>
               </select>
             </div>
           </div>
@@ -391,7 +393,7 @@ const FavoritesPage: React.FC = () => {
 
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-gray-600">Favori kitaplar yükleniyor...</p>
+            <p className="text-gray-600">{t('favorites.loading')}</p>
           </div>
         ) : filteredAndSortedBooks.length === 0 ? (
           <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-8 text-center flex flex-col items-center justify-center border border-white/20">
@@ -399,11 +401,11 @@ const FavoritesPage: React.FC = () => {
               <Heart className="w-10 h-10 text-white fill-current" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              {searchQuery ? 'Aramanıza uygun favori bulunamadı.' : selectedShelf !== 'all' ? 'Bu rafta henüz kitap yok.' : 'Henüz Favori Kitabınız Yok'}
+              {searchQuery ? t('favorites.noSearchResults') : selectedShelf !== 'all' ? t('favorites.emptyShelf') : t('favorites.noFavorites')}
             </h3>
-            <p className="text-gray-600 mb-6">Katalogdan beğendiğiniz kitapları favorilerinize ekleyip raflarınıza yerleştirebilirsiniz.</p>
+            <p className="text-gray-600 mb-6">{t('favorites.noFavoritesDesc')}</p>
             <Link to="/catalog" className="inline-flex items-center px-6 py-3 text-sm font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:shadow-xl hover:scale-105 transition-all">
-              Kataloğa Git
+              {t('favorites.goToCatalog')}
             </Link>
           </div>
         ) : (
@@ -461,12 +463,12 @@ const FavoritesPage: React.FC = () => {
                               : 'bg-gradient-to-r from-green-400 to-emerald-500 text-white'
                           }`}>
                             {hasPendingRequest 
-                              ? 'Onay Bekliyor' 
+                              ? t('favorites.pendingApproval') 
                               : bookStatus === 'lost' 
-                              ? 'Kayıp' 
+                              ? t('favorites.lost') 
                               : bookStatus === 'borrowed' 
-                              ? 'Ödünç Verildi' 
-                              : 'Müsait'}
+                              ? t('favorites.borrowed') 
+                              : t('favorites.available')}
                           </span>
                           <div className="flex items-center gap-1">
                             <button onClick={() => handleOpenNoteModal(book)} className="p-2 rounded-xl text-gray-500 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white transition-all shadow-sm hover:shadow-md">
@@ -482,7 +484,7 @@ const FavoritesPage: React.FC = () => {
                             onClick={() => handleBorrowRequest(book)}
                             className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all"
                           >
-                            Ödünç Al
+                            {t('favorites.borrow')}
                           </button>
                         )}
                       </div>
@@ -494,7 +496,7 @@ const FavoritesPage: React.FC = () => {
             {totalPages > 1 && (
               <div className="mt-8 flex justify-center items-center">
                 <p className="text-sm text-gray-600 mr-4">
-                  Sayfa {currentPage} / {totalPages}
+                  {t('favorites.pageInfo', { current: currentPage, total: totalPages })}
                 </p>
                 <div className="flex space-x-2">
                   <button
@@ -502,14 +504,14 @@ const FavoritesPage: React.FC = () => {
                     disabled={currentPage === 1}
                     className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl hover:bg-white/80 disabled:opacity-50 transition-all shadow-lg"
                   >
-                    Önceki
+                    {t('common.previous')}
                   </button>
                   <button
                     onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
                     className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white/60 backdrop-blur-xl border border-white/20 rounded-xl hover:bg-white/80 disabled:opacity-50 transition-all shadow-lg"
                   >
-                    Sonraki
+                    {t('common.next')}
                   </button>
                 </div>
               </div>
@@ -525,7 +527,7 @@ const FavoritesPage: React.FC = () => {
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900 flex items-center">
                 <StickyNote className="w-6 h-6 mr-2 text-indigo-600" />
-                Notu Düzenle
+                {t('favorites.editNote')}
               </h3>
               <button onClick={() => setIsNoteModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                 <X className="w-6 h-6" />
@@ -536,17 +538,17 @@ const FavoritesPage: React.FC = () => {
               <textarea
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Bu kitapla ilgili kişisel notunuz..."
+                placeholder={t('favorites.notePlaceholder')}
                 className="w-full mt-4 p-3 bg-white/50 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white/80 transition-all"
                 rows={4}
               />
             </div>
             <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex justify-end space-x-2">
               <button onClick={() => setIsNoteModalOpen(false)} className="px-5 py-2.5 bg-white/50 border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all">
-                İptal
+                {t('common.cancel')}
               </button>
               <button onClick={handleSaveNote} className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium">
-                Kaydet
+                {t('common.save')}
               </button>
             </div>
           </div>
@@ -575,6 +577,7 @@ interface ShelfManagementModalProps {
 }
 
 const ShelfManagementModal: React.FC<ShelfManagementModalProps> = ({ book, allShelves, onClose, onSave }) => {
+  const { t } = useTranslation();
   const [selectedShelves, setSelectedShelves] = useState<string[]>(book.shelves || []);
 
   const handleToggleShelf = (shelfId: string) => {
@@ -589,7 +592,7 @@ const ShelfManagementModal: React.FC<ShelfManagementModalProps> = ({ book, allSh
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-medium text-gray-900 flex items-center">
             <BookmarkIcon className="w-6 h-6 mr-2 text-indigo-600" />
-            Rafları Yönet
+            {t('favorites.manageShelves')}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
             <X className="w-6 h-6" />
@@ -609,16 +612,16 @@ const ShelfManagementModal: React.FC<ShelfManagementModalProps> = ({ book, allSh
                 <span className="ml-3 text-gray-700">{shelf.name}</span>
               </label>
             )) : (
-              <p className="text-gray-500 text-center">Henüz hiç raf oluşturmadınız.</p>
+              <p className="text-gray-500 text-center">{t('favorites.noShelvesYet')}</p>
             )}
           </div>
         </div>
         <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex justify-end space-x-2">
           <button onClick={onClose} className="px-5 py-2.5 bg-white/50 border border-white/20 rounded-xl text-gray-700 hover:bg-white/80 transition-all">
-            İptal
+            {t('common.cancel')}
           </button>
           <button onClick={() => onSave(selectedShelves)} className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium">
-            Kaydet
+            {t('common.save')}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, getCountFromServer } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,6 +33,7 @@ const categories = [
 ];
 
 const MyPostsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user, userData } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -116,15 +118,15 @@ const MyPostsPage: React.FC = () => {
       });
       setPosts(posts.map(post => post.id === editingPost.id ? { ...editingPost, status: 'pending' } : post));
       setEditingPost(null);
-      alert('Yazınız güncellendi ve admin onayına gönderildi.');
+      alert(t('myPosts.updateSuccess'));
     } catch (error) {
       console.error('Error updating post:', error);
-      alert('Yazı güncellenirken bir hata oluştu.');
+      alert(t('myPosts.updateError'));
     }
   };
 
   const handleDelete = async (postId: string) => {
-    if (!confirm('Bu yazıyı silmek istediğinizden emin misiniz?')) return;
+    if (!confirm(t('myPosts.deleteConfirm'))) return;
     try {
       await deleteDoc(doc(db, 'posts', postId));
       setPosts(posts.filter(post => post.id !== postId));
@@ -136,7 +138,7 @@ const MyPostsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
-        <h1 className="text-3xl font-bold mb-6">Yazılarım</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('myPosts.title')}</h1>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm animate-pulse">
@@ -179,10 +181,10 @@ const MyPostsPage: React.FC = () => {
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <ChevronLeft className="w-5 h-5 mr-1" />
-          Geri Dön
+          {t('myPosts.backButton')}
         </button>
       </div>
-      <h1 className="text-3xl font-bold mb-6">Yazılarım</h1>
+      <h1 className="text-3xl font-bold mb-6">{t('myPosts.title')}</h1>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
@@ -194,7 +196,7 @@ const MyPostsPage: React.FC = () => {
                 <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yazı</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('myPosts.totalPosts')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{stats.total}</p>
           </div>
         </div>
@@ -206,7 +208,7 @@ const MyPostsPage: React.FC = () => {
                 <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Onaylanan</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('myPosts.approved')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{stats.approved}</p>
           </div>
         </div>
@@ -218,7 +220,7 @@ const MyPostsPage: React.FC = () => {
                 <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Bekleyen</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('myPosts.pending')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{stats.pending}</p>
           </div>
         </div>
@@ -230,7 +232,7 @@ const MyPostsPage: React.FC = () => {
                 <Trash2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Reddedilen</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('myPosts.rejected')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{stats.rejected}</p>
           </div>
         </div>
@@ -242,7 +244,7 @@ const MyPostsPage: React.FC = () => {
                 <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Beğeni</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('myPosts.totalLikes')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{stats.totalLikes}</p>
           </div>
         </div>
@@ -254,7 +256,7 @@ const MyPostsPage: React.FC = () => {
                 <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Toplam Yorum</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t('myPosts.totalComments')}</p>
             <p className="text-2xl sm:text-4xl font-bold text-white">{stats.totalComments}</p>
           </div>
         </div>
@@ -264,14 +266,14 @@ const MyPostsPage: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-2xl font-bold">Yazıyı Düzenle</h3>
+              <h3 className="text-2xl font-bold">{t('myPosts.editPost')}</h3>
               <button onClick={() => setEditingPost(null)} className="text-gray-500 hover:text-gray-700">
                 ✕
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Başlık</label>
+                <label className="block text-sm font-medium mb-1">{t('myPosts.title2')}</label>
                 <input
                   type="text"
                   value={editingPost.title}
@@ -280,7 +282,7 @@ const MyPostsPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Kapak Resmi URL</label>
+                <label className="block text-sm font-medium mb-1">{t('myPosts.coverImageURL')}</label>
                 <input
                   type="text"
                   value={editingPost.coverImageURL}
@@ -289,7 +291,7 @@ const MyPostsPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Kategori</label>
+                <label className="block text-sm font-medium mb-1">{t('myPosts.category')}</label>
                 <select
                   value={editingPost.category}
                   onChange={(e) => setEditingPost({...editingPost, category: e.target.value})}
@@ -299,7 +301,7 @@ const MyPostsPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Etiketler (virgülle ayırın)</label>
+                <label className="block text-sm font-medium mb-1">{t('myPosts.tags')}</label>
                 <input
                   type="text"
                   value={editingPost.tags.join(', ')}
@@ -308,7 +310,7 @@ const MyPostsPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">İçerik</label>
+                <label className="block text-sm font-medium mb-1">{t('myPosts.content')}</label>
                 <ReactQuill
                   value={editingPost.content}
                   onChange={(value) => setEditingPost({...editingPost, content: value})}
@@ -329,7 +331,7 @@ const MyPostsPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Kaynaklar</label>
+                <label className="block text-sm font-medium mb-1">{t('myPosts.sources')}</label>
                 <ReactQuill
                   value={editingPost.sources || ''}
                   onChange={(value) => setEditingPost({...editingPost, sources: value})}
@@ -349,13 +351,13 @@ const MyPostsPage: React.FC = () => {
                   onClick={handleSaveEdit}
                   className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
                 >
-                  Kaydet ve Onaya Gönder
+                  {t('myPosts.saveAndSubmit')}
                 </button>
                 <button
                   onClick={() => setEditingPost(null)}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
                 >
-                  İptal
+                  {t('myPosts.cancel')}
                 </button>
               </div>
             </div>
@@ -368,7 +370,7 @@ const MyPostsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <input
             type="text"
-            placeholder="Yazı ara..."
+            placeholder={t('myPosts.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -378,19 +380,19 @@ const MyPostsPage: React.FC = () => {
             onChange={(e) => setStatusFilter(e.target.value as any)}
             className="p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           >
-            <option value="all">Tüm Durumlar</option>
-            <option value="approved">Onaylanan</option>
-            <option value="pending">Bekleyen</option>
-            <option value="rejected">Reddedilen</option>
+            <option value="all">{t('myPosts.allStatuses')}</option>
+            <option value="approved">{t('myPosts.approved')}</option>
+            <option value="pending">{t('myPosts.pending')}</option>
+            <option value="rejected">{t('myPosts.rejected')}</option>
           </select>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
             className="p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           >
-            <option value="newest">En Yeni</option>
-            <option value="popular">En Popüler</option>
-            <option value="mostCommented">En Çok Yorumlanan</option>
+            <option value="newest">{t('myPosts.sortNewest')}</option>
+            <option value="popular">{t('myPosts.sortPopular')}</option>
+            <option value="mostCommented">{t('myPosts.sortMostCommented')}</option>
           </select>
         </div>
       )}
@@ -402,13 +404,13 @@ const MyPostsPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Henüz yazınız yok</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">Hemen ilk yazınızı oluşturun ve paylaşın!</p>
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('myPosts.noPostsYet')}</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">{t('myPosts.noPostsYetDesc')}</p>
           <button
             onClick={() => navigate('/create-post')}
             className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Yeni Yazı Oluştur
+            {t('myPosts.createNewPost')}
           </button>
         </div>
       ) : filteredPosts.length === 0 ? (
@@ -418,8 +420,8 @@ const MyPostsPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Sonuç bulunamadı</h3>
-          <p className="text-gray-500 dark:text-gray-400">Aradığınız kriterlere uygun yazı bulunmuyor.</p>
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('myPosts.noResults')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('myPosts.noResultsDesc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -432,7 +434,7 @@ const MyPostsPage: React.FC = () => {
                     post.status === 'approved' ? 'bg-green-500 text-white' : 
                     post.status === 'rejected' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white'
                   }`}>
-                    {post.status === 'approved' ? '✓ Onaylanı' : post.status === 'rejected' ? '✕ Reddedildi' : '⏳ Bekliyor'}
+                    {post.status === 'approved' ? t('myPosts.statusApproved') : post.status === 'rejected' ? t('myPosts.statusRejected') : t('myPosts.statusPending')}
                   </span>
                 </div>
               </div>
@@ -455,7 +457,7 @@ const MyPostsPage: React.FC = () => {
                   post.status === 'approved' ? 'text-green-600' : 
                   post.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
                 }`}>
-                  Durum: {post.status === 'approved' ? 'Onaylandı' : post.status === 'rejected' ? 'Reddedildi' : 'Beklemede'}
+                  {t('myPosts.statusLabel')}: {post.status === 'approved' ? t('myPosts.approved') : post.status === 'rejected' ? t('myPosts.rejected') : t('myPosts.pending')}
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -463,14 +465,14 @@ const MyPostsPage: React.FC = () => {
                     className="flex-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center"
                   >
                     <Eye className="w-4 h-4 mr-1" />
-                    Görüntüle
+                    {t('myPosts.view')}
                   </button>
                   <button
                     onClick={() => setEditingPost(post)}
                     className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center justify-center"
                   >
                     <Edit className="w-4 h-4 mr-1" />
-                    Düzenle
+                    {t('myPosts.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(post.id)}

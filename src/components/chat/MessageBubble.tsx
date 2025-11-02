@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, CheckCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface MessageBubbleProps {
   message: any;
@@ -7,10 +8,12 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
+  const { i18n } = useTranslation();
+  
   const formatTime = (timestamp: any) => {
     if (!timestamp) return '';
     const date = timestamp.toDate();
-    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(i18n.language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
